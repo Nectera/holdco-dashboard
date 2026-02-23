@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "intuit-oauth": "^4.2.2",
     "next": "16.1.6",
+    "node-quickbooks": "^2.0.48",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
