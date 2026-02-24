@@ -73,15 +73,29 @@ const extractRows = (report) => {
   return results
 }
 
-const extractMonthly = (report) => {
+const extractMonthly = (report, year) => {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const yr = parseInt(year)
+  const shortYear = String(yr).slice(2)
+
+  // Build full 12-month skeleton with correct labels
+  const allMonths = monthNames.map(m => ({ month: m + ' ' + shortYear, income: 0, expenses: 0, net: 0 }))
+
   const columns = report?.Columns?.Column || []
   const monthCols = columns.filter(c => c.ColType === 'Money')
-  const months = monthCols.map((c, i) => {
+
+  // Map each column to month slot 0-11 based on actual QB start date
+  const colToMonthIdx = monthCols.map((c) => {
     const meta = c.MetaData || []
     const startDate = meta.find(m => m.Name === 'StartDate')?.Value
-    return startDate ? new Date(startDate).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) : 'M' + (i+1)
+    if (!startDate) return -1
+    const parts = startDate.split('-')
+    const colYear = parseInt(parts[0])
+    const colMonth = parseInt(parts[1]) - 1 // 0-indexed
+    if (colYear !== yr) return -1
+    return colMonth
   })
-  const monthly = months.map(month => ({ month, income: 0, expenses: 0, net: 0 }))
+
   const rows = report?.Rows?.Row || []
   const processRows = (rows) => {
     for (const row of rows) {
@@ -90,17 +104,19 @@ const extractMonthly = (report) => {
         const label = row.Summary?.ColData?.[0]?.value || row.Header?.ColData?.[0]?.value || ''
         const cols = row.Summary.ColData.slice(1)
         cols.forEach((col, i) => {
-          if (!monthly[i]) return
+          const monthIdx = colToMonthIdx[i]
+          if (monthIdx === -1 || monthIdx === undefined) return
           const val = parseFloat(col.value || 0)
-          if (label.includes('Income') && !label.includes('Net')) monthly[i].income = val
-          if (label.includes('Expenses')) monthly[i].expenses = val
-          if (label.includes('Net Income')) monthly[i].net = val
+          if (label === 'Total Income') allMonths[monthIdx].income = val
+          if (label === 'Total Expenses') allMonths[monthIdx].expenses += val
+          if (label === 'Total Cost of Goods Sold') allMonths[monthIdx].expenses += val
+          if (label === 'Net Income') allMonths[monthIdx].net = val
         })
       }
     }
   }
   processRows(rows)
-  return monthly.filter(m => m.income !== 0 || m.expenses !== 0 || m.net !== 0)
+  return allMonths
 }
 
 export async function GET(request) {
@@ -112,14 +128,14 @@ export async function GET(request) {
   try {
     const token = await getValidToken(company)
     if (!token) return new Response(JSON.stringify({ error: 'No token' }), { status: 401 })
-    const year = new Date().getFullYear()
+    const year = searchParams.get("year") || new Date().getFullYear()
     const params = 'start_date=' + year + '-01-01&end_date=' + year + '-12-31'
     const [ytdReport, monthlyReport] = await Promise.all([
       fetchReport(token, 'ProfitAndLoss', params),
       fetchReport(token, 'ProfitAndLoss', params + '&summarize_column_by=Month'),
     ])
     const rows = extractRows(ytdReport)
-    const monthly = extractMonthly(monthlyReport)
+    const monthly = extractMonthly(monthlyReport, year)
     return new Response(JSON.stringify({
       company: companyNames[company],
       rows,

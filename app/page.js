@@ -122,6 +122,7 @@ export default function Home() {
   const [creating, setCreating] = useState(false)
   const [drilldown, setDrilldown] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
+  const [period, setPeriod] = useState('monthly')
   const [drilldownData, setDrilldownData] = useState(null)
   const [loadingDrilldown, setLoadingDrilldown] = useState(false)
 
@@ -227,6 +228,38 @@ export default function Home() {
     const s = (t.status || '').toLowerCase()
     return !s.includes('complete') && s !== ''
   })
+
+  const aggregateByPeriod = (monthly, p) => {
+    if (!monthly || monthly.length === 0) return []
+    if (p === 'monthly') return monthly
+    if (p === 'yearly') {
+      const total = monthly.reduce((acc, m) => ({ month: selectedYear, income: acc.income + m.income, expenses: acc.expenses + m.expenses, net: acc.net + m.net }), { income: 0, expenses: 0, net: 0 })
+      return [{ ...total, month: selectedYear }]
+    }
+    if (p === 'quarterly') {
+      const quarters = { Q1: { month: 'Q1', income: 0, expenses: 0, net: 0 }, Q2: { month: 'Q2', income: 0, expenses: 0, net: 0 }, Q3: { month: 'Q3', income: 0, expenses: 0, net: 0 }, Q4: { month: 'Q4', income: 0, expenses: 0, net: 0 } }
+      const monthToQ = { Jan: 'Q1', Feb: 'Q1', Mar: 'Q1', Apr: 'Q2', May: 'Q2', Jun: 'Q2', Jul: 'Q3', Aug: 'Q3', Sep: 'Q3', Oct: 'Q4', Nov: 'Q4', Dec: 'Q4' }
+      monthly.forEach(m => {
+        const prefix = m.month.substring(0, 3)
+        const q = monthToQ[prefix] || 'Q1'
+        quarters[q].income += m.income
+        quarters[q].expenses += m.expenses
+        quarters[q].net += m.net
+      })
+      return Object.values(quarters)
+    }
+    return monthly
+  }
+
+  const periodToggle = (
+    <div style={{ display: 'flex', gap: '0.25rem', background: '#f0ece0', borderRadius: '6px', padding: '0.2rem' }}>
+      {['monthly', 'quarterly', 'yearly'].map(p => (
+        <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: 'none', background: period === p ? 'white' : 'transparent', color: period === p ? '#0f0e0d' : '#8a8070', fontSize: '0.7rem', cursor: 'pointer', fontWeight: period === p ? '600' : '400', textTransform: 'capitalize' }}>
+          {p.charAt(0).toUpperCase() + p.slice(1)}
+        </button>
+      ))}
+    </div>
+  )
 
   const selectStyle = (colors) => ({
     background: colors.bg,
@@ -367,18 +400,22 @@ export default function Home() {
 
         {drilldown && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <button onClick={() => { setDrilldown(null); setDrilldownData(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.85rem', padding: 0 }}>
                 Back
               </button>
               <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.8rem', margin: 0 }}>{drilldownData?.company || '...'}</h1>
+              <select value={selectedYear} onChange={async e => { const y = e.target.value; setSelectedYear(y); setDrilldownData(null); setLoadingDrilldown(true); const res = await fetch("/api/qb/details?company=" + drilldown + "&year=" + y); const d = await res.json(); setDrilldownData(d); setLoadingDrilldown(false); }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
             </div>
             {loadingDrilldown ? <p style={{ color: '#8a8070' }}>Loading details...</p> : drilldownData && (
               <>
                 <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem', marginBottom: '1.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Monthly Trend</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070' }}>Trend</div>
+                    {periodToggle}
+                  </div>
                   <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={drilldownData.monthly} barGap={4}>
+                    <BarChart data={aggregateByPeriod(drilldownData.monthly, period)} barGap={4}>
                       <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#8a8070' }} axisLine={false} tickLine={false} />
                       <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: '#8a8070' }} axisLine={false} tickLine={false} />
                       <Tooltip content={<CustomTooltip />} />
