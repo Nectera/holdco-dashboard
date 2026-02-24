@@ -53,14 +53,16 @@ const getQBO = (accessToken, realmId) => new QuickBooks(
   false
 )
 
-const fetchPL = (qbo) => new Promise((resolve) => {
-  qbo.reportProfitAndLoss({}, (err, report) => {
+const fetchPL = (qbo, year) => new Promise((resolve) => {
+  qbo.reportProfitAndLoss({ start_date: `${year}-01-01`, end_date: `${year}-12-31` }, (err, report) => {
     if (err) resolve(null)
     else resolve(report)
   })
 })
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const year = searchParams.get('year') || new Date().getFullYear().toString()
   const subs = [
     { name: "Xtract Environmental Services", key: "xtract" },
     { name: "Bug Control Specialist", key: "bcs" },
@@ -72,7 +74,7 @@ export async function GET() {
       const token = await getValidToken(sub.key)
       if (!token) return { name: sub.name, report: null }
       const qbo = getQBO(token.accessToken, token.realmId)
-      const report = await fetchPL(qbo)
+      const report = await fetchPL(qbo, year)
       return { name: sub.name, report }
     })
   )

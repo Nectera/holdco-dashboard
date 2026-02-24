@@ -121,6 +121,7 @@ export default function Home() {
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [drilldown, setDrilldown] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [drilldownData, setDrilldownData] = useState(null)
   const [loadingDrilldown, setLoadingDrilldown] = useState(false)
 
@@ -135,7 +136,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!authed) return
-    fetch('/api/qb/financials')
+    setLoadingFinancials(true)
+    fetch(`/api/qb/financials?year=${selectedYear}`)
       .then(res => res.json())
       .then(d => { setData(d); setLoadingFinancials(false) })
       .catch(() => setLoadingFinancials(false))
@@ -143,7 +145,7 @@ export default function Home() {
       .then(res => res.json())
       .then(d => { setTasks(d.tasks || []); setLoadingTasks(false) })
       .catch(() => setLoadingTasks(false))
-  }, [authed])
+  }, [authed, selectedYear])
 
   const handleEdit = async (task, field, value) => {
     const globalIndex = tasks.indexOf(task)
@@ -177,7 +179,7 @@ export default function Home() {
     setDrilldown(companyKey)
     setDrilldownData(null)
     setLoadingDrilldown(true)
-    const res = await fetch(`/api/qb/details?company=${companyKey}`)
+    const res = await fetch(`/api/qb/details?company=${companyKey}&year=${selectedYear}`)
     const d = await res.json()
     setDrilldownData(d)
     setLoadingDrilldown(false)
@@ -403,8 +405,16 @@ export default function Home() {
 
         {!drilldown && page === 'financials' && (
           <>
-            <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', marginBottom: '0.25rem' }}>Portfolio Overview</h1>
-            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>Year to date · Live from QuickBooks</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Portfolio Overview</h1>
+              <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
+            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>{selectedYear} · Live from QuickBooks</p>
 
             <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Consolidated</h2>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
