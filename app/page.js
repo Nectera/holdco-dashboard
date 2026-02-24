@@ -95,6 +95,19 @@ const labelStyle = {
 }
 
 export default function Home() {
+  const [authed, setAuthed] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState(false)
+
+  const handleLogin = () => {
+    if (passwordInput === 'Nectera2026!') {
+      setAuthed(true)
+      setPasswordError(false)
+    } else {
+      setPasswordError(true)
+    }
+  }
+
   const [page, setPage] = useState('financials')
   const [data, setData] = useState([])
   const [tasks, setTasks] = useState([])
@@ -195,6 +208,33 @@ export default function Home() {
     fontWeight: '500',
     cursor: 'pointer',
   })
+
+  if (!authed) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0f0e0d', fontFamily: 'sans-serif' }}>
+        <div style={{ background: 'white', borderRadius: '8px', padding: '2.5rem', width: '360px', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+          <h1 style={{ fontSize: '1.3rem', marginBottom: '0.25rem', color: '#0f0e0d' }}>Nectera Holdings</h1>
+          <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Enter your password to continue</p>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={e => { setPasswordInput(e.target.value); setPasswordError(false) }}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()}
+            placeholder="Password"
+            autoFocus
+            style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: passwordError ? '1px solid #b85c38' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }}
+          />
+          {passwordError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>Incorrect password</p>}
+          <button
+            onClick={handleLogin}
+            style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500' }}
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
