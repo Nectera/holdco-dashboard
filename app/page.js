@@ -469,7 +469,7 @@ export default function Home() {
                   const gross = getMetric(sub.report, 'Gross Profit')
                   const net = getMetric(sub.report, 'Net Income')
                   const margin = income > 0 ? ((net / income) * 100).toFixed(1) : '0.0'
-                  const marginPct = Math.min(Math.max(parseFloat(margin), 0), 100)
+                  const marginPct = Math.min(Math.max(parseFloat(margin), 0), 30) / 30 * 100
                   return (
                     <div key={sub.name} onClick={() => companyKeys[sub.name] && openDrilldown(companyKeys[sub.name])} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem', cursor: companyKeys[sub.name] ? 'pointer' : 'default' }} onMouseEnter={e => companyKeys[sub.name] && (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)')} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -491,8 +491,13 @@ export default function Home() {
                           <span>Net margin</span>
                           <strong style={{ color: parseFloat(margin) < 0 ? '#b85c38' : '#4a6741' }}>{margin}%</strong>
                         </div>
-                        <div style={{ background: '#f0ece0', borderRadius: '4px', height: '5px', overflow: 'hidden' }}>
-                          <div style={{ width: marginPct + '%', height: '100%', background: parseFloat(margin) < 0 ? '#b85c38' : '#4a6741', borderRadius: '4px' }} />
+                        <div style={{ background: '#f0ece0', borderRadius: '4px', height: '8px', position: 'relative', overflow: 'visible' }}>
+                          <div style={{ width: marginPct + '%', height: '100%', background: parseFloat(margin) < 0 ? '#b85c38' : parseFloat(margin) >= 15 ? '#4a6741' : '#c9a84c', borderRadius: '4px' }} />
+                          <div style={{ position: 'absolute', top: '-4px', left: '50%', width: '3px', height: '16px', background: '#333', borderRadius: '2px', zIndex: 2 }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.6rem', color: '#8a8070', marginTop: '0.3rem' }}>
+                          <span style={{ color: parseFloat(margin) >= 15 ? '#4a6741' : '#c9a84c' }}>{parseFloat(margin) >= 15 ? 'Goal reached' : 'Below goal'}</span>
+                          <span>Goal: 15%</span>
                         </div>
                       </div>
                     </div>
