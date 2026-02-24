@@ -31,11 +31,17 @@ export async function POST(request) {
 
     const client = await auth.getClient()
     const sheetsApi = google.sheets({ version: 'v4', auth: client })
-    await sheetsApi.spreadsheets.values.update({
+    const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+
+    await sheetsApi.spreadsheets.values.batchUpdate({
       spreadsheetId: sheetId,
-      range,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[value]] },
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: [
+          { range, values: [[value]] },
+          { range: 'G' + (rowIndex + 2), values: [[today]] },
+        ],
+      },
     })
     return new Response(JSON.stringify({ success: true }), { headers: { 'content-type': 'application/json' } })
   } catch (err) {
