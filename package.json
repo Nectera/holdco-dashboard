@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@upstash/redis": "^1.36.2",
     "intuit-oauth": "^4.2.2",
     "next": "16.1.6",
     "node-quickbooks": "^2.0.48",

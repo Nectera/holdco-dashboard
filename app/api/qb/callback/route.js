@@ -1,4 +1,10 @@
 import OAuthClient from 'intuit-oauth'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+})
 
 const oauthClient = new OAuthClient({
   clientId: process.env.INTUIT_CLIENT_ID,
@@ -8,19 +14,27 @@ const oauthClient = new OAuthClient({
 })
 
 export async function GET(request) {
-  const url = request.url
+  const { searchParams } = new URL(request.url)
+  const realmId = searchParams.get('realmId')
+  const state = searchParams.get('state') || ''
 
   try {
-    const authResponse = await oauthClient.createToken(url)
+    const authResponse = await oauthClient.createToken(request.url)
     const tokens = authResponse.getJson()
-    
-    console.log('✓ QB tokens received:', tokens)
-    
-    return new Response(JSON.stringify(tokens, null, 2), {
+
+    const company = state.replace('holdco-', '') || 'unknown'
+
+    await redis.set(`tokens:${company}`, {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      realmId: realmId,
+      expiresAt: Date.now() + (tokens.expires_in * 1000),
+    })
+
+    return new Response(JSON.stringify({ success: true, company, realmId }, null, 2), {
       headers: { 'content-type': 'application/json' },
     })
-  } catch (error) {
-    console.error('QB auth error:', error)
-    return new Response('Auth failed: ' + error.message, { status: 500 })
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
   }
 }
