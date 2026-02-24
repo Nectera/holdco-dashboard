@@ -10,13 +10,10 @@ const sheets = {
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { companyKey, rowIndex, field, value } = body
+    const { companyKey, name, lead, status, priority, dueDate, teamMembers, notes } = body
+
     const sheetId = sheets[companyKey]
     if (!sheetId) return new Response(JSON.stringify({ error: 'Unknown company' }), { status: 400 })
-    const fieldToCol = { status: 'C', priority: 'D', dueDate: 'E', teamMembers: 'F', notes: 'H' }
-    const col = fieldToCol[field]
-    if (!col) return new Response(JSON.stringify({ error: 'Unknown field' }), { status: 400 })
-    const range = col + (rowIndex + 2)
 
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT.replace(/"/g, '')
     const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/"/g, '').replace(/\\n/g, '\n')
@@ -31,13 +28,19 @@ export async function POST(request) {
 
     const client = await auth.getClient()
     const sheetsApi = google.sheets({ version: 'v4', auth: client })
-    await sheetsApi.spreadsheets.values.update({
+
+    await sheetsApi.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range,
+      range: 'A:H',
       valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[value]] },
+      requestBody: {
+        values: [[name, lead, status, priority, dueDate, teamMembers, '', notes]],
+      },
     })
-    return new Response(JSON.stringify({ success: true }), { headers: { 'content-type': 'application/json' } })
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'content-type': 'application/json' },
+    })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 })
   }

@@ -75,6 +75,25 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null
 }
 
+const inputStyle = {
+  width: '100%',
+  padding: '0.5rem 0.75rem',
+  borderRadius: '4px',
+  border: '1px solid #e0d8cc',
+  fontSize: '0.85rem',
+  background: 'white',
+  boxSizing: 'border-box',
+}
+
+const labelStyle = {
+  fontSize: '0.75rem',
+  color: '#8a8070',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  marginBottom: '0.3rem',
+  display: 'block',
+}
+
 export default function Home() {
   const [page, setPage] = useState('financials')
   const [data, setData] = useState([])
@@ -84,6 +103,10 @@ export default function Home() {
   const [filterCompany, setFilterCompany] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [saving, setSaving] = useState({})
+  const [showModal, setShowModal] = useState(false)
+  const [expandedTask, setExpandedTask] = useState(null)
+  const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
+  const [creating, setCreating] = useState(false)
 
   useEffect(() => {
     fetch('/api/qb/financials')
@@ -107,6 +130,24 @@ export default function Home() {
     setSaving(s => ({ ...s, [`${globalIndex}-${field}`]: false }))
   }
 
+  const handleCreate = async () => {
+    if (!newTask.name || !newTask.companyKey) return
+    setCreating(true)
+    const res = await fetch('/api/tasks/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTask),
+    })
+    const result = await res.json()
+    if (result.success) {
+      const companyNames = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+      setTasks(t => [...t, { ...newTask, company: companyNames[newTask.companyKey] }])
+      setNewTask({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
+      setShowModal(false)
+    }
+    setCreating(false)
+  }
+
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
   const totalExpenses = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Expenses'), 0)
   const totalNet = data.reduce((sum, s) => sum + getMetric(s.report, 'Net Income'), 0)
@@ -120,7 +161,7 @@ export default function Home() {
 
   const companies = ['all', 'nectera', 'xtract', 'bcs', 'lush']
   const companyLabels = { all: 'All Companies', nectera: 'Nectera Holdings', xtract: 'Xtract', bcs: 'Bug Control', lush: 'Lush Green' }
-  const statuses = ['all', 'In Progress', 'Planning', 'Not started', 'Complete', 'Urgent']
+  const statuses = ['all', 'Planning', 'In Progress', 'Complete']
 
   const filteredTasks = tasks
     .filter(t => {
@@ -157,6 +198,80 @@ export default function Home() {
 
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
+
+      {/* Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '2rem', width: '500px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New Task</h2>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Company *</label>
+                <select value={newTask.companyKey} onChange={e => setNewTask(t => ({ ...t, companyKey: e.target.value }))} style={inputStyle}>
+                  <option value="">Select company...</option>
+                  <option value="nectera">Nectera Holdings</option>
+                  <option value="xtract">Xtract Environmental Services</option>
+                  <option value="bcs">Bug Control Specialist</option>
+                  <option value="lush">Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={newTask.name} onChange={e => setNewTask(t => ({ ...t, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={newTask.status} onChange={e => setNewTask(t => ({ ...t, status: e.target.value }))} style={inputStyle}>
+                    <option value="">No status</option>
+                            <option value="Planning">Planning</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Complete">Complete</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={newTask.priority} onChange={e => setNewTask(t => ({ ...t, priority: e.target.value }))} style={inputStyle}>
+                    <option value="">No priority</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Project Lead</label>
+                  <input value={newTask.lead} onChange={e => setNewTask(t => ({ ...t, lead: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input value={newTask.dueDate} onChange={e => setNewTask(t => ({ ...t, dueDate: e.target.value }))} placeholder="MM/DD/YYYY" style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Team Members</label>
+                <input value={newTask.teamMembers} onChange={e => setNewTask(t => ({ ...t, teamMembers: e.target.value }))} placeholder="Names separated by commas..." style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={newTask.notes} onChange={e => setNewTask(t => ({ ...t, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, height: '100px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={handleCreate} disabled={creating || !newTask.name || !newTask.companyKey} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', opacity: (creating || !newTask.name || !newTask.companyKey) ? 0.5 : 1 }}>
+                  {creating ? 'Creating...' : 'Create Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sidebar */}
       <div style={{ width: "220px", background: "#0f0e0d", color: "#f5f1ea", padding: "2rem 1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem", flexShrink: 0 }}>
         <h2 style={{ fontSize: "1.1rem", borderBottom: "1px solid #333", paddingBottom: "1rem", margin: 0 }}>Nectera Holdings</h2>
         <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.9rem" }}>
@@ -172,11 +287,10 @@ export default function Home() {
             }}>{item.label}</button>
           ))}
         </nav>
-        <div style={{ marginTop: 'auto', fontSize: '0.7rem', color: '#555' }}>
-          Live · QuickBooks + Sheets
-        </div>
+        <div style={{ marginTop: 'auto', fontSize: '0.7rem', color: '#555' }}>Live · QuickBooks + Sheets</div>
       </div>
 
+      {/* Main */}
       <div style={{ flex: 1, padding: "2rem", background: "#f5f1ea", overflowY: "auto" }}>
 
         {page === 'financials' && (
@@ -184,7 +298,6 @@ export default function Home() {
             <h1 style={{ fontSize: "1.8rem", marginBottom: "0.25rem" }}>Portfolio Overview</h1>
             <p style={{ color: "#8a8070", marginBottom: "2rem" }}>Year to date · Live from QuickBooks</p>
 
-            {/* Consolidated metrics */}
             <h2 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Consolidated</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
               {[
@@ -199,10 +312,8 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Charts */}
             {!loadingFinancials && chartData.length > 0 && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
-                {/* Revenue vs Expenses */}
                 <div style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1.25rem" }}>
                   <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Revenue vs Expenses</div>
                   <ResponsiveContainer width="100%" height={200}>
@@ -223,8 +334,6 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-
-                {/* Net Income */}
                 <div style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1.25rem" }}>
                   <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Net Income by Subsidiary</div>
                   <ResponsiveContainer width="100%" height={200}>
@@ -243,7 +352,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Subsidiary cards */}
             <h2 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Subsidiaries</h2>
             {loadingFinancials ? <p style={{ color: "#8a8070" }}>Loading...</p> : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -289,7 +397,12 @@ export default function Home() {
 
         {page === 'tasks' && (
           <>
-            <h1 style={{ fontSize: "1.8rem", marginBottom: "0.25rem" }}>Dev Tasks</h1>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
+              <h1 style={{ fontSize: "1.8rem", margin: 0 }}>Dev Tasks</h1>
+              <button onClick={() => setShowModal(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>
+                + New Task
+              </button>
+            </div>
             <p style={{ color: "#8a8070", marginBottom: "1.5rem" }}>
               {activeTasks.length} active tasks across {tasks.length} total · Live from Google Sheets
             </p>
@@ -309,11 +422,18 @@ export default function Home() {
                 {filteredTasks.map((task, i) => {
                   const sc = statusColor(task.status)
                   const pc = priorityColor(task.priority)
+                  const isExpanded = expandedTask === i
                   return (
                     <div key={i} style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1rem 1.25rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: "500", marginBottom: "0.35rem" }}>{task.name}</div>
+                          <div
+                            onClick={() => setExpandedTask(isExpanded ? null : i)}
+                            style={{ fontWeight: "500", marginBottom: "0.35rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}
+                          >
+                            <span style={{ fontSize: "0.7rem", color: "#8a8070" }}>{isExpanded ? '▾' : '▸'}</span>
+                            {task.name}
+                          </div>
                           <div style={{ fontSize: "0.75rem", color: "#8a8070", display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
                             {task.lead && <span>Lead: {task.lead}</span>}
                             <input
@@ -331,33 +451,34 @@ export default function Home() {
                           </div>
                         </div>
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
-                          <select
-                            value={task.priority}
-                            onChange={e => handleEdit(task, 'priority', e.target.value)}
-                            style={selectStyle(pc)}
-                          >
+                          <select value={task.priority} onChange={e => handleEdit(task, 'priority', e.target.value)} style={selectStyle(pc)}>
                             <option value="">No priority</option>
                             <option value="High">High</option>
                             <option value="Medium">Medium</option>
                             <option value="Low">Low</option>
                           </select>
-                          <select
-                            value={task.status}
-                            onChange={e => handleEdit(task, 'status', e.target.value)}
-                            style={selectStyle(sc)}
-                          >
+                          <select value={task.status} onChange={e => handleEdit(task, 'status', e.target.value)} style={selectStyle(sc)}>
                             <option value="">No status</option>
-                            <option value="Not started">Not started</option>
                             <option value="Planning">Planning</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Complete">Complete</option>
-                            <option value="Urgent">Urgent</option>
                           </select>
                           <span style={{ fontSize: "0.65rem", padding: "0.15rem 0.5rem", borderRadius: "20px", background: "#f0ece0", color: "#8a8070" }}>
                             {task.company}
                           </span>
                         </div>
                       </div>
+                      {isExpanded && (
+                        <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #f0ece0" }}>
+                          <div style={{ fontSize: "0.65rem", color: "#8a8070", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.4rem" }}>Notes</div>
+                          <textarea
+                            defaultValue={task.notes}
+                            onBlur={e => e.target.value !== task.notes && handleEdit(task, 'notes', e.target.value)}
+                            placeholder="Add notes..."
+                            style={{ width: "100%", minHeight: "100px", padding: "0.5rem", borderRadius: "4px", border: "1px solid #e0d8cc", fontSize: "0.85rem", color: "#3a3530", background: "#fdfaf5", resize: "vertical", boxSizing: "border-box", outline: "none" }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )
                 })}
