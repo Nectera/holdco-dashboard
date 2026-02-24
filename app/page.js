@@ -126,7 +126,7 @@ export default function Home() {
     const newTasks = [...tasks]
     newTasks[globalIndex] = { ...task, [field]: value }
     setTasks(newTasks)
-    await updateTask(task.companyKey, globalIndex, field, value)
+    await updateTask(task.companyKey, task.rowIndex, field, value)
     setSaving(s => ({ ...s, [`${globalIndex}-${field}`]: false }))
   }
 

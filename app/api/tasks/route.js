@@ -26,10 +26,12 @@ export async function GET(request) {
       if (!data.values) return []
       const [, ...rows] = data.values
       return rows
-        .filter(row => row[0])
-        .map(row => ({
+        .map((row, i) => ({ row, i }))
+        .filter(({ row }) => row[0])
+        .map(({ row, i }) => ({
           company: companyNames[key],
           companyKey: key,
+          rowIndex: i,
           name: row[0] || '',
           lead: row[1] || '',
           status: row[2] || '',
