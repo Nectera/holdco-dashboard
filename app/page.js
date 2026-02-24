@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
+const getTotalExpenses = (report) => {
+  return getMetric(report, 'Total Expenses') + getMetric(report, 'Total Cost of Goods Sold')
+}
+
 const getMetric = (report, label) => {
   try {
     const rows = report?.Rows?.Row || []
@@ -187,13 +191,13 @@ export default function Home() {
   }
 
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
-  const totalExpenses = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Expenses'), 0)
+  const totalExpenses = data.reduce((sum, s) => sum + getTotalExpenses(s.report), 0)
   const totalNet = data.reduce((sum, s) => sum + getMetric(s.report, 'Net Income'), 0)
 
   const chartData = data.map(sub => ({
     name: shortName(sub.name),
     Revenue: getMetric(sub.report, 'Total Income'),
-    Expenses: getMetric(sub.report, 'Total Expenses'),
+    Expenses: getTotalExpenses(sub.report),
     'Net Income': getMetric(sub.report, 'Net Income'),
   }))
 
@@ -512,7 +516,7 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {data.map((sub) => {
                   const income = getMetric(sub.report, 'Total Income')
-                  const expenses = getMetric(sub.report, 'Total Expenses')
+                  const expenses = getTotalExpenses(sub.report)
                   const gross = getMetric(sub.report, 'Gross Profit')
                   const net = getMetric(sub.report, 'Net Income')
                   const margin = income > 0 ? ((net / income) * 100).toFixed(1) : '0.0'
