@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 const getMetric = (report, label) => {
   try {
@@ -17,6 +18,11 @@ const fmt = (val) => {
   const abs = Math.abs(val)
   const str = abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   return (val < 0 ? '-$' : '$') + str
+}
+
+const fmtK = (val) => {
+  if (Math.abs(val) >= 1000) return (val < 0 ? '-$' : '$') + Math.round(Math.abs(val) / 1000) + 'k'
+  return fmt(val)
 }
 
 const statusColor = (status) => {
@@ -47,6 +53,27 @@ const updateTask = async (companyKey, rowIndex, field, value) => {
 }
 
 const priorityOrder = { 'urgent': 0, 'high': 1, 'medium': 2, 'low': 3, '': 4 }
+
+const shortName = (name) => {
+  if (name.includes('Xtract')) return 'Xtract'
+  if (name.includes('Bug')) return 'Bug Control'
+  if (name.includes('Lush')) return 'Lush Green'
+  return name
+}
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
+        <div style={{ fontWeight: '600', marginBottom: '0.4rem' }}>{label}</div>
+        {payload.map((p, i) => (
+          <div key={i} style={{ color: p.color }}>{p.name}: {fmtK(p.value)}</div>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
 
 export default function Home() {
   const [page, setPage] = useState('financials')
@@ -83,6 +110,13 @@ export default function Home() {
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
   const totalExpenses = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Expenses'), 0)
   const totalNet = data.reduce((sum, s) => sum + getMetric(s.report, 'Net Income'), 0)
+
+  const chartData = data.map(sub => ({
+    name: shortName(sub.name),
+    Revenue: getMetric(sub.report, 'Total Income'),
+    Expenses: getMetric(sub.report, 'Total Expenses'),
+    'Net Income': getMetric(sub.report, 'Net Income'),
+  }))
 
   const companies = ['all', 'nectera', 'xtract', 'bcs', 'lush']
   const companyLabels = { all: 'All Companies', nectera: 'Nectera Holdings', xtract: 'Xtract', bcs: 'Bug Control', lush: 'Lush Green' }
@@ -150,8 +184,9 @@ export default function Home() {
             <h1 style={{ fontSize: "1.8rem", marginBottom: "0.25rem" }}>Portfolio Overview</h1>
             <p style={{ color: "#8a8070", marginBottom: "2rem" }}>Year to date · Live from QuickBooks</p>
 
+            {/* Consolidated metrics */}
             <h2 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Consolidated</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
               {[
                 { label: "Total Revenue", value: totalIncome, color: "#4a6741" },
                 { label: "Total Expenses", value: totalExpenses, color: "#b85c38" },
@@ -164,6 +199,51 @@ export default function Home() {
               ))}
             </div>
 
+            {/* Charts */}
+            {!loadingFinancials && chartData.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+                {/* Revenue vs Expenses */}
+                <div style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1.25rem" }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Revenue vs Expenses</div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={chartData} barGap={4}>
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8a8070' }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={fmtK} tick={{ fontSize: 11, fill: '#8a8070' }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="Revenue" fill="#4a6741" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Expenses" fill="#b85c38" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "0.5rem" }}>
+                    <div style={{ fontSize: "0.7rem", color: "#4a6741", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                      <div style={{ width: 10, height: 10, background: "#4a6741", borderRadius: 2 }} /> Revenue
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "#b85c38", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                      <div style={{ width: 10, height: 10, background: "#b85c38", borderRadius: 2 }} /> Expenses
+                    </div>
+                  </div>
+                </div>
+
+                {/* Net Income */}
+                <div style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1.25rem" }}>
+                  <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Net Income by Subsidiary</div>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={chartData}>
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8a8070' }} axisLine={false} tickLine={false} />
+                      <YAxis tickFormatter={fmtK} tick={{ fontSize: 11, fill: '#8a8070' }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="Net Income" radius={[3, 3, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={index} fill={entry['Net Income'] >= 0 ? '#3d5a6e' : '#b85c38'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {/* Subsidiary cards */}
             <h2 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#8a8070", marginBottom: "1rem" }}>Subsidiaries</h2>
             {loadingFinancials ? <p style={{ color: "#8a8070" }}>Loading...</p> : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -173,6 +253,7 @@ export default function Home() {
                   const gross = getMetric(sub.report, 'Gross Profit')
                   const net = getMetric(sub.report, 'Net Income')
                   const margin = income > 0 ? ((net / income) * 100).toFixed(1) : '0.0'
+                  const marginPct = Math.min(Math.max(parseFloat(margin), 0), 100)
                   return (
                     <div key={sub.name} style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1.5rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
@@ -189,8 +270,14 @@ export default function Home() {
                           </div>
                         ))}
                       </div>
-                      <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #f0ece0", fontSize: "0.75rem", color: "#8a8070" }}>
-                        Net margin: <strong style={{ color: parseFloat(margin) < 0 ? "#b85c38" : "#4a6741" }}>{margin}%</strong>
+                      <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid #f0ece0" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#8a8070", marginBottom: "0.4rem" }}>
+                          <span>Net margin</span>
+                          <strong style={{ color: parseFloat(margin) < 0 ? "#b85c38" : "#4a6741" }}>{margin}%</strong>
+                        </div>
+                        <div style={{ background: "#f0ece0", borderRadius: "4px", height: "6px", overflow: "hidden" }}>
+                          <div style={{ width: `${marginPct}%`, height: "100%", background: parseFloat(margin) < 0 ? "#b85c38" : "#4a6741", borderRadius: "4px", transition: "width 0.5s ease" }} />
+                        </div>
                       </div>
                     </div>
                   )
@@ -222,7 +309,6 @@ export default function Home() {
                 {filteredTasks.map((task, i) => {
                   const sc = statusColor(task.status)
                   const pc = priorityColor(task.priority)
-                  const globalIndex = tasks.indexOf(task)
                   return (
                     <div key={i} style={{ background: "white", border: "1px solid #e0d8cc", borderRadius: "6px", padding: "1rem 1.25rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
