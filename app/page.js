@@ -46,6 +46,8 @@ const updateTask = async (companyKey, rowIndex, field, value) => {
   return res.json()
 }
 
+const priorityOrder = { 'urgent': 0, 'high': 1, 'medium': 2, 'low': 3, '': 4 }
+
 export default function Home() {
   const [page, setPage] = useState('financials')
   const [data, setData] = useState([])
@@ -68,16 +70,12 @@ export default function Home() {
       .catch(() => setLoadingTasks(false))
   }, [])
 
-  const handleEdit = async (taskIndex, field, value) => {
-    const task = filteredTasks[taskIndex]
+  const handleEdit = async (task, field, value) => {
     const globalIndex = tasks.indexOf(task)
-    
-    setSaving({ ...saving, [`${globalIndex}-${field}`]: true })
-    
+    setSaving(s => ({ ...s, [`${globalIndex}-${field}`]: true }))
     const newTasks = [...tasks]
     newTasks[globalIndex] = { ...task, [field]: value }
     setTasks(newTasks)
-
     await updateTask(task.companyKey, globalIndex, field, value)
     setSaving(s => ({ ...s, [`${globalIndex}-${field}`]: false }))
   }
@@ -90,11 +88,22 @@ export default function Home() {
   const companyLabels = { all: 'All Companies', nectera: 'Nectera Holdings', xtract: 'Xtract', bcs: 'Bug Control', lush: 'Lush Green' }
   const statuses = ['all', 'In Progress', 'Planning', 'Not started', 'Complete', 'Urgent']
 
-  const filteredTasks = tasks.filter(t => {
-    const companyMatch = filterCompany === 'all' || t.companyKey === filterCompany
-    const statusMatch = filterStatus === 'all' || (t.status || '').toLowerCase() === filterStatus.toLowerCase()
-    return companyMatch && statusMatch
-  })
+  const filteredTasks = tasks
+    .filter(t => {
+      const companyMatch = filterCompany === 'all' || t.companyKey === filterCompany
+      const statusMatch = filterStatus === 'all' || (t.status || '').toLowerCase() === filterStatus.toLowerCase()
+      return companyMatch && statusMatch
+    })
+    .sort((a, b) => {
+      const aDate = a.dueDate ? new Date(a.dueDate) : null
+      const bDate = b.dueDate ? new Date(b.dueDate) : null
+      if (aDate && bDate) return aDate - bDate
+      if (aDate) return -1
+      if (bDate) return 1
+      const ap = priorityOrder[(a.priority || '').toLowerCase()] ?? 4
+      const bp = priorityOrder[(b.priority || '').toLowerCase()] ?? 4
+      return ap - bp
+    })
 
   const activeTasks = tasks.filter(t => {
     const s = (t.status || '').toLowerCase()
@@ -114,7 +123,6 @@ export default function Home() {
 
   return (
     <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif" }}>
-      {/* Sidebar */}
       <div style={{ width: "220px", background: "#0f0e0d", color: "#f5f1ea", padding: "2rem 1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem", flexShrink: 0 }}>
         <h2 style={{ fontSize: "1.1rem", borderBottom: "1px solid #333", paddingBottom: "1rem", margin: 0 }}>Nectera Holdings</h2>
         <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.9rem" }}>
@@ -135,7 +143,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Main */}
       <div style={{ flex: 1, padding: "2rem", background: "#f5f1ea", overflowY: "auto" }}>
 
         {page === 'financials' && (
@@ -225,13 +232,13 @@ export default function Home() {
                             {task.lead && <span>Lead: {task.lead}</span>}
                             <input
                               defaultValue={task.teamMembers}
-                              onBlur={e => e.target.value !== task.teamMembers && handleEdit(i, 'teamMembers', e.target.value)}
+                              onBlur={e => e.target.value !== task.teamMembers && handleEdit(task, 'teamMembers', e.target.value)}
                               placeholder="Team members..."
                               style={{ fontSize: "0.75rem", color: "#8a8070", border: "none", background: "transparent", borderBottom: "1px dashed #ccc", outline: "none", minWidth: "120px" }}
                             />
                             <input
                               defaultValue={task.dueDate}
-                              onBlur={e => e.target.value !== task.dueDate && handleEdit(i, 'dueDate', e.target.value)}
+                              onBlur={e => e.target.value !== task.dueDate && handleEdit(task, 'dueDate', e.target.value)}
                               placeholder="Due date..."
                               style={{ fontSize: "0.75rem", color: "#8a8070", border: "none", background: "transparent", borderBottom: "1px dashed #ccc", outline: "none", width: "80px" }}
                             />
@@ -240,7 +247,7 @@ export default function Home() {
                         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexShrink: 0 }}>
                           <select
                             value={task.priority}
-                            onChange={e => handleEdit(i, 'priority', e.target.value)}
+                            onChange={e => handleEdit(task, 'priority', e.target.value)}
                             style={selectStyle(pc)}
                           >
                             <option value="">No priority</option>
@@ -250,7 +257,7 @@ export default function Home() {
                           </select>
                           <select
                             value={task.status}
-                            onChange={e => handleEdit(i, 'status', e.target.value)}
+                            onChange={e => handleEdit(task, 'status', e.target.value)}
                             style={selectStyle(sc)}
                           >
                             <option value="">No status</option>
