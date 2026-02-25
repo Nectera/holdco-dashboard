@@ -367,6 +367,174 @@ export default function Home() {
     fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employees: updated }) }).catch(() => {})
   }
 
+  const exportReportPDF = async () => {
+    if (!reportData) return
+    const { jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const isLandscape = reportData.columns && reportData.columns.length > 2
+    const doc = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait' })
+    const pageWidth = doc.internal.pageSize.width
+
+    // Header
+    doc.setFillColor(15, 14, 13)
+    doc.rect(0, 0, pageWidth, 28, 'F')
+    doc.setTextColor(201, 168, 76)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Nectera Holdings', 14, 13)
+    doc.setTextColor(180, 170, 150)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.text(reportData.title + ' · ' + reportData.company + ' · ' + selectedYear, 14, 21)
+    doc.setTextColor(120, 110, 100)
+    doc.setFontSize(8)
+    doc.text('Generated ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), pageWidth - 14, 21, { align: 'right' })
+
+    const isAging = reportData.rows.some(r => r.isAging)
+    let tableHead, tableBody
+    const fmt = (v) => v ? '$' + parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'
+    if (isAging) {
+      tableHead = [['Name', 'Current', '1-30', '31-60', '61-90', '91+', 'Total']]
+      tableBody = reportData.rows.filter(r => !r.colHeaders).map(row => [
+        row.label || '',
+        fmt(row.current), fmt(row.over30), fmt(row.over60), fmt(row.over90), fmt(row.over91), fmt(row.value)
+      ])
+    } else {
+      tableHead = [['Description', 'Amount']]
+      tableBody = reportData.rows.map(row => {
+        const indent = '  '.repeat(row.depth || 0)
+        const val = row.value ? '$' + parseFloat(row.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
+        return [indent + (row.label || ''), val]
+      })
+    }
+
+    autoTable(doc, {
+      startY: 35,
+      head: tableHead,
+      body: tableBody,
+      headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 8 },
+      bodyStyles: { fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [250, 247, 240] },
+      margin: { left: 14, right: 14 },
+      didParseCell: (data) => {
+        if (data.section === 'body') {
+          const row = reportData.rows[data.row.index]
+          if (row && (row.isHeader || row.isTotal)) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.fillColor = row.isTotal ? [240, 236, 224] : [245, 241, 234]
+          }
+        }
+      }
+    })
+
+    const pageHeight = doc.internal.pageSize.height
+    doc.setFillColor(245, 241, 234)
+    doc.rect(0, pageHeight - 12, pageWidth, 12, 'F')
+    doc.setTextColor(138, 128, 112)
+    doc.setFontSize(7)
+    doc.text('Nectera Holdings · Confidential · necteraholdings.com', pageWidth / 2, pageHeight - 4, { align: 'center' })
+
+    doc.save('Nectera-' + reportData.title.replace(/\s+/g, '-') + '-' + reportData.company.split(' ')[0] + '-' + selectedYear + '.pdf')
+  }
+
+  const exportFinancialsPDF = async () => {
+    const { jsPDF } = await import('jspdf')
+    const { default: autoTable } = await import('jspdf-autotable')
+    const doc = new jsPDF()
+
+    // Header
+    doc.setFillColor(15, 14, 13)
+    doc.rect(0, 0, 210, 28, 'F')
+    doc.setTextColor(201, 168, 76)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Nectera Holdings', 14, 13)
+    doc.setTextColor(180, 170, 150)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Portfolio Financial Summary · ' + selectedYear, 14, 21)
+
+    // Date
+    doc.setTextColor(120, 110, 100)
+    doc.setFontSize(8)
+    doc.text('Generated ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 196, 21, { align: 'right' })
+
+    // Consolidated section
+    doc.setTextColor(15, 14, 13)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Consolidated', 14, 40)
+
+    const getM = (report, name) => {
+      if (!report?.Rows?.Row) return 0
+      const find = (rows) => {
+        for (const row of rows) {
+          if (row.Summary?.ColData?.[0]?.value === name) return parseFloat(row.Summary.ColData[1]?.value || 0)
+          if (row.Rows?.Row) { const r = find(row.Rows.Row); if (r !== null) return r }
+        }
+        return null
+      }
+      return find(report.Rows.Row) || 0
+    }
+    const totalRevenue = data.reduce((s, f) => s + getM(f.report, 'Total Income'), 0)
+    const totalExpenses = data.reduce((s, f) => s + getM(f.report, 'Total Expenses') + getM(f.report, 'Cost of Goods Sold'), 0)
+    const totalNet = totalRevenue - totalExpenses
+    const totalMargin = totalRevenue ? ((totalNet / totalRevenue) * 100).toFixed(1) : '0.0'
+
+    autoTable(doc, {
+      startY: 44,
+      head: [['Metric', 'Amount']],
+      body: [
+        ['Total Revenue', '$' + totalRevenue.toLocaleString()],
+        ['Total Expenses', '$' + totalExpenses.toLocaleString()],
+        ['Net Income', '$' + totalNet.toLocaleString()],
+        ['Net Margin', totalMargin + '%'],
+      ],
+      headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 9 },
+      bodyStyles: { fontSize: 9 },
+      alternateRowStyles: { fillColor: [250, 247, 240] },
+      margin: { left: 14, right: 14 },
+    })
+
+    // Per-company section
+    const afterConsolidated = doc.lastAutoTable.finalY + 12
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(15, 14, 13)
+    doc.text('By Subsidiary', 14, afterConsolidated)
+
+    const companyRows = data.map(f => {
+      const rev = getM(f.report, 'Total Income')
+      const exp = getM(f.report, 'Total Expenses') + getM(f.report, 'Cost of Goods Sold')
+      const net = rev - exp
+      const margin = rev ? ((net / rev) * 100).toFixed(1) + '%' : '0.0%'
+      return [f.company, '$' + Math.round(rev).toLocaleString(), '$' + Math.round(getM(f.report, 'Gross Profit')).toLocaleString(), '$' + Math.round(exp).toLocaleString(), '$' + Math.round(net).toLocaleString(), margin]
+    })
+    const _unused = data.map(f => [
+    ])
+
+    autoTable(doc, {
+      startY: afterConsolidated + 4,
+      head: [['Company', 'Revenue', 'Gross Profit', 'Expenses', 'Net Income', 'Margin']],
+      body: companyRows,
+      headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 8 },
+      bodyStyles: { fontSize: 8 },
+      alternateRowStyles: { fillColor: [250, 247, 240] },
+      margin: { left: 14, right: 14 },
+    })
+
+    // Footer
+    const pageHeight = doc.internal.pageSize.height
+    doc.setFillColor(245, 241, 234)
+    doc.rect(0, pageHeight - 12, 210, 12, 'F')
+    doc.setTextColor(138, 128, 112)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Nectera Holdings · Confidential · necteraholdings.com', 105, pageHeight - 4, { align: 'center' })
+
+    doc.save('Nectera-Financials-' + selectedYear + '.pdf')
+  }
+
   const openDrilldown = async (companyKey) => {
     setDrilldown(companyKey)
     setDrilldownData(null)
@@ -1003,7 +1171,10 @@ export default function Home() {
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
-              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530' }}>📤 Export PDF</button>}
+                <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              </div>
             </div>
             <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
               {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
@@ -1121,12 +1292,15 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Portfolio Overview</h1>
-              <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-              </select>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500' }}>📤 Export PDF</button>
+                <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                </select>
+              </div>
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>{selectedYear} · Live from QuickBooks</p>
 
@@ -1327,7 +1501,10 @@ export default function Home() {
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
-              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530' }}>📤 Export PDF</button>}
+                <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              </div>
             </div>
             <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
               {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
@@ -1786,7 +1963,10 @@ export default function Home() {
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
-              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530' }}>📤 Export PDF</button>}
+                <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              </div>
             </div>
             <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
               {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
