@@ -85,6 +85,30 @@ export async function POST(request) {
 
   if (!admin) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
 
+  if (action === 'update') {
+    const updated = users.map(u => u.id === body.userId ? { ...u, name: body.name, email: body.email, role: body.role } : u)
+    await redis.set('nectera:users', updated)
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+  }
+
+  if (action === 'reset_password_admin') {
+    const updated = users.map(u => u.id === body.userId ? { ...u, passwordHash: hashPassword(body.newPassword) } : u)
+    await redis.set('nectera:users', updated)
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+  }
+
+  if (action === 'update') {
+    const updated = users.map(u => u.id === body.userId ? { ...u, name: body.name, email: body.email, role: body.role } : u)
+    await redis.set('nectera:users', updated)
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+  }
+
+  if (action === 'reset_password_admin') {
+    const updated = users.map(u => u.id === body.userId ? { ...u, passwordHash: hashPassword(body.newPassword) } : u)
+    await redis.set('nectera:users', updated)
+    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+  }
+
   if (action === 'delete') {
     const updated = users.filter(u => u.id !== body.userId)
     await redis.set('nectera:users', updated)

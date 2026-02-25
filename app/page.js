@@ -237,6 +237,10 @@ export default function Home() {
   const [calendarSelected, setCalendarSelected] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
+  const [editingUser, setEditingUser] = useState(null)
+  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
+  const [resetPasswordUser, setResetPasswordUser] = useState(null)
+  const [newPassword, setNewPassword] = useState('')
   const [userMgmtError, setUserMgmtError] = useState('')
   const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
   const [notes, setNotes] = useState({})
@@ -2248,20 +2252,77 @@ export default function Home() {
                         <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>{u.name}</div>
                         <div style={{ fontSize: '0.72rem', color: '#8a8070' }}>@{u.username} · {u.role}</div>
                       </div>
-                      {u.id !== currentUser?.id && (
-                        <button onClick={async () => {
-                          if (!confirm('Delete ' + u.name + '?')) return
-                          await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', userId: u.id, adminPassword: 'Nectera2026!' }) })
-                          const r = await fetch('/api/users?action=list')
-                          setUserList(await r.json())
-                        }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>Remove</button>
-                      )}
+                      <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                        <button onClick={() => { setEditingUser(u); setEditUserForm({ name: u.name, email: u.email || '', role: u.role }) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
+                        <button onClick={() => { setResetPasswordUser(u); setNewPassword('') }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Reset PW</button>
+                        {u.id !== currentUser?.id && (
+                          <button onClick={async () => {
+                            if (!confirm('Delete ' + u.name + '?')) return
+                            await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', userId: u.id, adminPassword: 'Nectera2026!' }) })
+                            const r = await fetch('/api/users?action=list')
+                            setUserList(await r.json())
+                          }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>Remove</button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </>
+        )}
+
+        {editingUser && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Edit User</h2>
+                <button onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Full Name</label>
+                  <input value={editUserForm.name} onChange={e => setEditUserForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Email</label>
+                  <input value={editUserForm.email} onChange={e => setEditUserForm(f => ({ ...f, email: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Role</label>
+                  <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }}>
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <button onClick={async () => {
+                  await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', userId: editingUser.id, ...editUserForm, adminPassword: 'Nectera2026!' }) })
+                  const r = await fetch('/api/users?action=list')
+                  setUserList(await r.json())
+                  setEditingUser(null)
+                }} style={{ padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontWeight: '500' }}>Save Changes</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {resetPasswordUser && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Reset Password</h2>
+                <button onClick={() => setResetPasswordUser(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
+              </div>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: '#8a8070' }}>Set a new password for <strong>{resetPasswordUser.name}</strong></p>
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box', marginBottom: '0.75rem' }} />
+              <button onClick={async () => {
+                if (!newPassword) return
+                await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reset_password_admin', userId: resetPasswordUser.id, newPassword, adminPassword: 'Nectera2026!' }) })
+                setResetPasswordUser(null)
+                setNewPassword('')
+              }} style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontWeight: '500' }}>Reset Password</button>
+            </div>
+          </div>
         )}
 
         {!drilldown && page === 'team' && (
