@@ -1399,15 +1399,7 @@ export default function Home() {
         </div>
       )}
 
-      {isMobile && (
-        <div style={{ background: '#0f0e0d', color: '#f5f1ea', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <h2 style={{ fontSize: '1rem', margin: 0 }}>Nectera Holdings</h2>
-          <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.2rem', padding: 0, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            🔔
-            {notifications.length > 0 && <span style={{ background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length}</span>}
-          </button>
-        </div>
-      )}
+
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f4f0e8', overflow: 'hidden' }}>
         {!isMobile && (
@@ -2473,12 +2465,12 @@ export default function Home() {
             </button>
             <span style={{ color: 'white', fontSize: '1rem', fontWeight: '600', letterSpacing: '0.02em' }}>Nectera Holdings</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.5rem' }}>
-                💬
+              <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="2" width="16" height="11" rx="2.5" fill="#f5f1ea" opacity="0.8"/><path d="M4 14 L3 17 L8 14" fill="#f5f1ea" opacity="0.5"/><rect x="4" y="6" width="5" height="1.5" rx="0.75" fill="#0f0e0d" opacity="0.5"/><rect x="4" y="9" width="8" height="1.5" rx="0.75" fill="#0f0e0d" opacity="0.3"/></svg>
                 {unreadMessages > 0 && <span style={{ position: 'absolute', top: '2px', right: '2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
               </button>
-              <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.5rem' }}>
-                🔔
+              <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1.5 C6 1.5 4 3.5 4 6.5 L4 10 L2.5 12 L15.5 12 L14 10 L14 6.5 C14 3.5 12 1.5 9 1.5Z" fill="#f5f1ea" opacity="0.8"/><path d="M4 10 L2.5 12 L15.5 12 L14 10Z" fill="#f5f1ea" opacity="0.5"/><rect x="7" y="12" width="4" height="2.5" rx="1.25" fill="#f5f1ea" opacity="0.6"/><circle cx="13.5" cy="4.5" r="2.5" fill="#c9a84c"/></svg>
                 {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '2px', right: '2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
               </button>
             </div>
@@ -2495,7 +2487,7 @@ export default function Home() {
                 <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
                   {navItems.map(item => (
                     <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null); setMobileMenuOpen(false) }} style={{ background: page === item.id && !drilldown ? 'rgba(201,168,76,0.15)' : 'none', color: page === item.id && !drilldown ? '#c9a84c' : '#f5f1ea', border: 'none', borderRadius: '8px', padding: '0.75rem 1rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+                      <NavIcon id={item.id} active={page === item.id && !drilldown} />
                       {item.label}
                     </button>
                   ))}
