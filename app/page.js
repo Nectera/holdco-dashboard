@@ -1408,12 +1408,12 @@ export default function Home() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f4f0e8', overflow: 'hidden' }}>
         {!isMobile && (
           <div style={{ padding: '0.75rem 2rem', borderBottom: '1px solid #e8e2d9', background: '#f4f0e8', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-            <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
-              💬
+            <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.3rem', display: 'flex', alignItems: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="2" width="16" height="11" rx="2.5" fill="#6b6560" opacity="0.8"/><path d="M4 14 L3 17 L8 14" fill="#3a3530"/><rect x="4" y="6" width="5" height="1.5" rx="0.75" fill="#3a3530" opacity="0.9"/><rect x="4" y="9" width="8" height="1.5" rx="0.75" fill="#3a3530" opacity="0.6"/></svg>
               {unreadMessages > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
             </button>
-            <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
-              🔔
+            <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.3rem', display: 'flex', alignItems: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1.5 C6 1.5 4 3.5 4 6.5 L4 10 L2.5 12 L15.5 12 L14 10 L14 6.5 C14 3.5 12 1.5 9 1.5Z" fill="#6b6560" opacity="0.7"/><path d="M4 10 L2.5 12 L15.5 12 L14 10Z" fill="#3a3530" opacity="0.9"/><rect x="7" y="12" width="4" height="2.5" rx="1.25" fill="#6b6560" opacity="0.6"/><circle cx="13.5" cy="4.5" r="2.5" fill="#c9a84c"/></svg>
               {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
             </button>
             {currentUser && (
