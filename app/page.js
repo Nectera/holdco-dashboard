@@ -183,6 +183,11 @@ export default function Home() {
 
   useEffect(() => {
     if (!authed) return
+    fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
+  }, [authed])
+
+  useEffect(() => {
+    if (!authed) return
     setLoadingFinancials(true)
     fetch(`/api/qb/financials?year=${selectedYear}`)
       .then(res => res.json())
@@ -246,7 +251,7 @@ export default function Home() {
     updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, comments: [...(n.comments || []), comment] } : n)
     setNotes(updated)
     setCommentText('')
-    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+    fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
   }
 
   const deleteComment = (company, noteId, commentId) => {
@@ -267,7 +272,7 @@ export default function Home() {
     const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     updated[company] = updated[company].map(n => n.id === id ? { ...n, title: title || 'Untitled', content: content_text, date: dateStr } : n)
     setNotes(updated)
-    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+    fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
   }
 
   const deleteNote = (company, id) => {
@@ -276,13 +281,13 @@ export default function Home() {
     setSelectedNoteId(null)
     setNoteEditContent('')
     setNoteEditTitle('')
-    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+    fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
   }
 
   const togglePinNote = (company, id) => {
     const updated = { ...notes, [company]: (notes[company] || []).map(n => n.id === id ? { ...n, pinned: !n.pinned } : n) }
     setNotes(updated)
-    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+    fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
   }
 
   const currentNotes = (notes[selectedNoteCompany] || []).slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
@@ -1512,7 +1517,7 @@ export default function Home() {
                 setSelectedNoteId(newNote.id)
                 setNoteEditTitle('')
                 setNoteEditContent('')
-                try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+                fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: selectedNoteCompany, notes: updated[selectedNoteCompany] }) }).catch(() => {})
               }} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>+ New Note</button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
@@ -1587,6 +1592,7 @@ export default function Home() {
                         </div>
                         {notifySending && <span style={{ fontSize: '0.7rem', color: '#8a8070' }}>Sending...</span>}
                         {notifySuccess && <span style={{ fontSize: '0.7rem', color: notifySuccess === 'Failed' ? '#b85c38' : '#4a6741', fontWeight: '500' }}>{notifySuccess === 'Failed' ? 'Failed to send' : 'Notified ' + notifySuccess}</span>}
+                        <button onClick={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#4a6741', padding: '0.2rem 0.5rem' }}>Save</button>
                         <button onClick={() => deleteNote(selectedNoteCompany, selectedNote.id)} style={{ background: 'none', border: '1px solid #fde8e8', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#b85c38', padding: '0.2rem 0.5rem' }}>Delete</button>
                       </div>
                     </div>
@@ -1612,7 +1618,7 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />
+                          {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
                           <textarea value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
                         </div>
                         <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
