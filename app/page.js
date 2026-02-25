@@ -155,6 +155,7 @@ export default function Home() {
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarSelected, setCalendarSelected] = useState(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const [userMgmtError, setUserMgmtError] = useState('')
   const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
@@ -2305,14 +2306,55 @@ export default function Home() {
       )}
 
       {isMobile && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0f0e0d', display: 'flex', borderTop: '1px solid #222', zIndex: 50 }}>
-          {navItems.map(item => (
-            <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null) }} style={{ flex: 1, padding: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', color: page === item.id && !drilldown ? '#c9a84c' : '#8a8070', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', fontSize: '0.65rem' }}>
-              <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-              {item.label}
+        <>
+          {/* Mobile top bar */}
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 60, background: '#0f0e0d', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>
+            <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', padding: '0.5rem' }}>
+              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
             </button>
-          ))}
-        </div>
+            <span style={{ color: 'white', fontSize: '1rem', fontWeight: '600', letterSpacing: '0.02em' }}>Nectera Holdings</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.5rem' }}>
+                💬
+                {unreadMessages > 0 && <span style={{ position: 'absolute', top: '2px', right: '2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
+              </button>
+              <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.5rem' }}>
+                🔔
+                {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '2px', right: '2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '14px', height: '14px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Menu overlay */}
+          {mobileMenuOpen && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 70, display: 'flex' }}>
+              <div style={{ width: '75vw', maxWidth: '300px', background: '#0f0e0d', height: '100%', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                  <h2 style={{ color: 'white', fontSize: '1.1rem', margin: 0 }}>Nectera Holdings</h2>
+                  <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', fontSize: '1.3rem', cursor: 'pointer', padding: 0 }}>✕</button>
+                </div>
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                  {navItems.map(item => (
+                    <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null); setMobileMenuOpen(false) }} style={{ background: page === item.id && !drilldown ? 'rgba(201,168,76,0.15)' : 'none', color: page === item.id && !drilldown ? '#c9a84c' : '#f5f1ea', border: 'none', borderRadius: '8px', padding: '0.75rem 1rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </nav>
+                {currentUser && (
+                  <div style={{ borderTop: '1px solid #2a2825', paddingTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+                    <span style={{ color: '#c9c5be', fontSize: '0.8rem', flex: 1 }}>{currentUser.name}</span>
+                    <button onClick={() => { handleLogout(); setMobileMenuOpen(false) }} style={{ background: 'none', border: '1px solid #3a3530', borderRadius: '4px', color: '#8a8070', fontSize: '0.65rem', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>Sign out</button>
+                  </div>
+                )}
+              </div>
+              <div onClick={() => setMobileMenuOpen(false)} style={{ flex: 1, background: 'rgba(0,0,0,0.5)' }} />
+            </div>
+          )}
+        </>
       )}
     </div>
   )
