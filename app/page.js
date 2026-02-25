@@ -153,6 +153,8 @@ export default function Home() {
   const [newConvoMembers, setNewConvoMembers] = useState([])
   const [newConvoType, setNewConvoType] = useState('dm')
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const [calendarDate, setCalendarDate] = useState(new Date())
+  const [calendarSelected, setCalendarSelected] = useState(null)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const [userMgmtError, setUserMgmtError] = useState('')
   const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
@@ -801,6 +803,7 @@ export default function Home() {
   const navItems = [
     { id: 'financials', label: 'Financials', icon: '📊' },
     { id: 'messages', label: 'Messages', icon: '💬' },
+    { id: 'calendar', label: 'Calendar', icon: '📅' },
     { id: 'notes', label: 'Notes', icon: '📝' },
     { id: 'tasks', label: 'Tasks', icon: '✅' },
     { id: 'projects', label: 'Projects', icon: '📋' },
@@ -1885,6 +1888,107 @@ export default function Home() {
             </div>
           </>
         )}
+
+        {!drilldown && page === 'calendar' && (() => {
+          const year = calendarDate.getFullYear()
+          const month = calendarDate.getMonth()
+          const monthName = calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+          const firstDay = new Date(year, month, 1).getDay()
+          const daysInMonth = new Date(year, month + 1, 0).getDate()
+          const today = new Date()
+
+          // Gather all events from tasks and projects
+          const events = {}
+          const addEvent = (dateStr, label, color) => {
+            if (!dateStr) return
+            const d = dateStr.split('T')[0]
+            if (!events[d]) events[d] = []
+            events[d].push({ label, color })
+          }
+
+          // Lightweight tasks
+          lightTasks.forEach(t => {
+            if (t.dueDate) addEvent(t.dueDate, t.name, '#3d5a6e')
+          })
+
+          // Google Sheets projects
+          tasks.forEach(t => {
+            if (t.dueDate) addEvent(t.dueDate, t.name, '#4a6741')
+          })
+
+          const selectedDateStr = calendarSelected ? calendarSelected.toISOString().split('T')[0] : null
+          const selectedEvents = selectedDateStr ? (events[selectedDateStr] || []) : []
+
+          const cells = []
+          for (let i = 0; i < firstDay; i++) cells.push(null)
+          for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+          return (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Calendar</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: '140px', textAlign: 'center' }}>{monthName}</span>
+                  <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
+                  <button onClick={() => setCalendarDate(new Date())} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.78rem', color: '#8a8070' }}>Today</button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.25rem' }}>
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '0.5rem' }}>
+                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                      <div key={d} style={{ textAlign: 'center', fontSize: '0.7rem', fontWeight: '600', color: '#8a8070', padding: '0.4rem 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d}</div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+                    {cells.map((day, i) => {
+                      if (!day) return <div key={'empty-' + i} />
+                      const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0')
+                      const dayEvents = events[dateStr] || []
+                      const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
+                      const isSelected = calendarSelected && calendarSelected.getDate() === day && calendarSelected.getMonth() === month && calendarSelected.getFullYear() === year
+                      return (
+                        <div key={day} onClick={() => setCalendarSelected(new Date(year, month, day))} style={{ minHeight: '80px', padding: '0.4rem', borderRadius: '10px', background: isSelected ? '#0f0e0d' : isToday ? '#fef9f0' : 'white', border: isToday ? '1.5px solid #c9a84c' : '1px solid #f0ece4', cursor: 'pointer', transition: 'all 0.15s' }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: isToday ? '700' : '500', color: isSelected ? '#c9a84c' : isToday ? '#c9a84c' : '#3a3530', marginBottom: '0.25rem' }}>{day}</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {dayEvents.slice(0, 3).map((ev, j) => (
+                              <div key={j} style={{ fontSize: '0.6rem', background: ev.color, color: 'white', borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.label}</div>
+                            ))}
+                            {dayEvents.length > 3 && <div style={{ fontSize: '0.58rem', color: '#8a8070' }}>+{dayEvents.length - 3} more</div>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', alignSelf: 'start' }}>
+                  {!calendarSelected ? (
+                    <div style={{ textAlign: 'center', color: '#8a8070', fontSize: '0.85rem', padding: '2rem 0' }}>Click a day to see events</div>
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '1rem', color: '#0f0e0d' }}>{calendarSelected.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                      {selectedEvents.length === 0 ? (
+                        <div style={{ color: '#8a8070', fontSize: '0.82rem' }}>No events this day</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {selectedEvents.map((ev, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: '#f7f3ed' }}>
+                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
+                              <div style={{ fontSize: '0.82rem', color: '#3a3530' }}>{ev.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )
+        })()}
 
         {!drilldown && page === 'messages' && (
           <>
