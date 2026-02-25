@@ -236,6 +236,9 @@ export default function Home() {
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [calendarSelected, setCalendarSelected] = useState(null)
+  const [calendarEvents, setCalendarEvents] = useState([])
+  const [showCalendarModal, setShowCalendarModal] = useState(false)
+  const [calendarForm, setCalendarForm] = useState({ title: '', date: '', time: '', company: '', notes: '', assignedTo: '' })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const [editingUser, setEditingUser] = useState(null)
@@ -290,6 +293,7 @@ export default function Home() {
     fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
     fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
     fetch('/api/lighttasks').then(r => r.json()).then(data => setLightTasks(data)).catch(() => {})
+    fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents).catch(() => {})
     fetch('/api/users?action=list').then(r => r.json()).then(data => setUserList(data)).catch(() => {})
     if (currentUser) {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
@@ -1993,12 +1997,17 @@ export default function Home() {
 
           // Gather all events from tasks and projects
           const events = {}
-          const addEvent = (dateStr, label, color) => {
+          const addEvent = (dateStr, label, color, id) => {
             if (!dateStr) return
             const d = dateStr.split('T')[0]
             if (!events[d]) events[d] = []
-            events[d].push({ label, color })
+            events[d].push({ label, color, id })
           }
+
+          // Calendar events
+          calendarEvents.forEach(e => {
+            if (e.date) addEvent(e.date, e.title, '#7a5c3e', e.id)
+          })
 
           // Lightweight tasks
           lightTasks.forEach(t => {
@@ -2007,7 +2016,15 @@ export default function Home() {
 
           // Google Sheets projects
           tasks.forEach(t => {
-            if (t.dueDate) addEvent(t.dueDate, t.name, '#4a6741')
+            if (t.dueDate) {
+              // Convert MM/DD/YYYY to YYYY-MM-DD if needed
+              let d = t.dueDate
+              if (d.includes('/')) {
+                const parts = d.split('/')
+                if (parts.length === 3) d = parts[2] + '-' + parts[0].padStart(2,'0') + '-' + parts[1].padStart(2,'0')
+              }
+              addEvent(d, t.name, '#4a6741')
+            }
           })
 
           const selectedDateStr = calendarSelected ? calendarSelected.toISOString().split('T')[0] : null
@@ -2022,6 +2039,7 @@ export default function Home() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Calendar</h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.4rem 0.9rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>+ New Event</button>
                   <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
                   <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: '140px', textAlign: 'center' }}>{monthName}</span>
                   <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
@@ -2044,11 +2062,11 @@ export default function Home() {
                       const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
                       const isSelected = calendarSelected && calendarSelected.getDate() === day && calendarSelected.getMonth() === month && calendarSelected.getFullYear() === year
                       return (
-                        <div key={day} onClick={() => setCalendarSelected(new Date(year, month, day))} style={{ minHeight: '80px', padding: '0.4rem', borderRadius: '10px', background: isSelected ? '#0f0e0d' : isToday ? '#fef9f0' : 'white', border: isToday ? '1.5px solid #c9a84c' : '1px solid #f0ece4', cursor: 'pointer', transition: 'all 0.15s' }}>
+                        <div key={day} onClick={() => setCalendarSelected(new Date(year, month, day))} style={{ height: '80px', overflow: 'hidden', padding: '0.4rem', borderRadius: '10px', background: isSelected ? '#0f0e0d' : isToday ? '#fef9f0' : 'white', border: isToday ? '1.5px solid #c9a84c' : '1px solid #f0ece4', cursor: 'pointer', transition: 'all 0.15s' }}>
                           <div style={{ fontSize: '0.8rem', fontWeight: isToday ? '700' : '500', color: isSelected ? '#c9a84c' : isToday ? '#c9a84c' : '#3a3530', marginBottom: '0.25rem' }}>{day}</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {dayEvents.slice(0, 3).map((ev, j) => (
-                              <div key={j} style={{ fontSize: '0.6rem', background: ev.color, color: 'white', borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ev.label}</div>
+                              <div key={j} title={ev.label} style={{ fontSize: '0.6rem', background: ev.color, color: 'white', borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%', cursor: 'default' }}>{ev.label}</div>
                             ))}
                             {dayEvents.length > 3 && <div style={{ fontSize: '0.58rem', color: '#8a8070' }}>+{dayEvents.length - 3} more</div>}
                           </div>
@@ -2071,7 +2089,11 @@ export default function Home() {
                           {selectedEvents.map((ev, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: '#f4f0e8' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
-                              <div style={{ fontSize: '0.82rem', color: '#3a3530' }}>{ev.label}</div>
+                              <div style={{ fontSize: '0.82rem', color: '#3a3530', flex: 1 }}>{ev.label}</div>
+                              {ev.id && <button onClick={async () => {
+                                await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: ev.id }) })
+                                setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))
+                              }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0 0.2rem', flexShrink: 0 }}>✕</button>}
                             </div>
                           ))}
                         </div>
@@ -2083,6 +2105,61 @@ export default function Home() {
             </>
           )
         })()}
+
+        {showCalendarModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '440px', maxWidth: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New Event</h2>
+                <button onClick={() => setShowCalendarModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div>
+                  <label style={labelStyle}>Title *</label>
+                  <input value={calendarForm.title} onChange={e => setCalendarForm(f => ({ ...f, title: e.target.value }))} placeholder="Event title" style={inputStyle} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Date *</label>
+                    <input type="date" value={calendarForm.date} onChange={e => setCalendarForm(f => ({ ...f, date: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Time</label>
+                    <input type="time" value={calendarForm.time} onChange={e => setCalendarForm(f => ({ ...f, time: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Company</label>
+                  <select value={calendarForm.company} onChange={e => setCalendarForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                    <option value="">All Companies</option>
+                    <option value="Nectera Holdings">Nectera Holdings</option>
+                    <option value="Xtract Environmental Services">Xtract Environmental Services</option>
+                    <option value="Bug Control Specialist">Bug Control Specialist</option>
+                    <option value="Lush Green Landscapes">Lush Green Landscapes</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={calendarForm.assignedTo} onChange={e => setCalendarForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Notes</label>
+                  <textarea value={calendarForm.notes} onChange={e => setCalendarForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional notes" style={{ ...inputStyle, height: '70px', resize: 'vertical' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button onClick={() => setShowCalendarModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                  <button onClick={async () => {
+                    if (!calendarForm.title || !calendarForm.date) return
+                    const res = await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...calendarForm, createdBy: currentUser?.name || '' }) })
+                    const saved = await res.json()
+                    if (saved.event) setCalendarEvents(prev => [...prev, saved.event])
+                    setShowCalendarModal(false)
+                  }} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Save Event</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!drilldown && page === 'messages' && (
           <>
