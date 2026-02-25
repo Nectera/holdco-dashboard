@@ -1244,7 +1244,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
               <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
-                + New Task
+                + New Project
               </button>
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.25rem', fontSize: '0.8rem' }}>
@@ -1419,60 +1419,7 @@ export default function Home() {
           </>
         )}
 
-        {!drilldown && page === 'projects' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
-              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
-                + Add Task
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-              {['all', 'Not Started', 'In Progress', 'Blocked', 'Complete'].map(f => (
-                <button key={f} onClick={() => setLightTaskFilter(f)} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: lightTaskFilter === f ? '#0f0e0d' : 'white', color: lightTaskFilter === f ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer' }}>
-                  {f === 'all' ? 'All' : f}
-                </button>
-              ))}
-            </div>
-            {lightTasks.length === 0 && (
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
-                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
-                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Task" to get started</div>
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {lightTasks.filter(t => lightTaskFilter === 'all' || t.status === lightTaskFilter).map((task, idx) => {
-                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete'
-                const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
-                return (
-                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1rem 1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                          <span style={{ fontWeight: '600', fontSize: '0.9rem', color: task.status === 'Complete' ? '#8a8070' : '#0f0e0d', textDecoration: task.status === 'Complete' ? 'line-through' : 'none' }}>{task.name}</span>
-                          <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: priorityColor, fontWeight: '600' }}>{task.priority}</span>
-                          {isOverdue && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#fde8e8', color: '#b85c38', fontWeight: '600' }}>Overdue</span>}
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#8a8070', flexWrap: 'wrap' }}>
-                          {task.assignedTo && <span>👤 {task.assignedTo}</span>}
-                          {task.dueDate && <span style={{ color: isOverdue ? '#b85c38' : '#8a8070' }}>📅 {task.dueDate}</span>}
-                          {task.company && <span>🏢 {task.company.split(' ')[0]}</span>}
-                          <span style={{ padding: '0.05rem 0.4rem', borderRadius: '20px', background: task.status === 'Complete' ? '#e8f0e8' : task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : '#f0ece0', color: task.status === 'Complete' ? '#4a6741' : task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070' }}>{task.status}</span>
-                        </div>
-                        {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                        <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => deleteLightTask(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
+        
 
         {!drilldown && page === 'tasks' && (
           <>
