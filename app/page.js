@@ -184,6 +184,8 @@ export default function Home() {
   useEffect(() => {
     if (!authed) return
     fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
+    fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
+    fetch('/api/lighttasks').then(r => r.json()).then(data => setLightTasks(data)).catch(() => {})
   }, [authed])
 
   useEffect(() => {
@@ -301,7 +303,7 @@ export default function Home() {
       updated = [...lightTasks, { ...task, createdDate: new Date().toISOString().split('T')[0] }]
     }
     setLightTasks(updated)
-    try { localStorage.setItem('lightTasks', JSON.stringify(updated)) } catch {}
+    fetch('/api/lighttasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks: updated }) }).catch(() => {})
     setShowLightTaskModal(false)
     setEditingLightTask(null)
     setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
@@ -323,7 +325,7 @@ export default function Home() {
       updated = [...employees, emp]
     }
     setEmployees(updated)
-    try { localStorage.setItem('employees', JSON.stringify(updated)) } catch {}
+    fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employees: updated }) }).catch(() => {})
     setShowEmployeeModal(false)
     setEditingEmployee(null)
     setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
@@ -332,7 +334,7 @@ export default function Home() {
   const deleteEmployee = (idx) => {
     const updated = employees.filter((_, i) => i !== idx)
     setEmployees(updated)
-    try { localStorage.setItem('employees', JSON.stringify(updated)) } catch {}
+    fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employees: updated }) }).catch(() => {})
   }
 
   const openDrilldown = async (companyKey) => {
@@ -400,18 +402,9 @@ export default function Home() {
       const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]')
       setDismissedNotifications(dismissed)
     } catch {}
-    try {
-      const saved = JSON.parse(localStorage.getItem('employees') || '[]')
-      setEmployees(saved)
-    } catch {}
-    try {
-      const savedTasks = JSON.parse(localStorage.getItem('lightTasks') || '[]')
-      setLightTasks(savedTasks)
-    } catch {}
-    try {
-      const savedTasks = JSON.parse(localStorage.getItem('lightTasks') || '[]')
-      setLightTasks(savedTasks)
-    } catch {}
+    // Employees loaded after auth
+    // lightTasks loaded after auth
+    // lightTasks loaded after auth
   }, [])
 
   const dismissNotification = (id) => {
