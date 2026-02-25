@@ -794,11 +794,11 @@ export default function Home() {
 
   const navItems = [
     { id: 'financials', label: 'Financials', icon: '📊' },
+    { id: 'messages', label: 'Messages', icon: '💬' },
+    { id: 'notes', label: 'Notes', icon: '📝' },
     { id: 'tasks', label: 'Tasks', icon: '✅' },
     { id: 'projects', label: 'Projects', icon: '📋' },
     { id: 'team', label: 'Team', icon: '👥' },
-    { id: 'notes', label: 'Notes', icon: '📝' },
-    { id: 'messages', label: 'Messages', icon: '💬' },
     ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings', icon: '⚙️' }] : []),
   ]
 
