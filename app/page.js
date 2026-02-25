@@ -140,6 +140,10 @@ export default function Home() {
   const [editingLightTask, setEditingLightTask] = useState(null)
   const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
+  const [userList, setUserList] = useState([])
+  const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', role: 'member' })
+  const [userMgmtError, setUserMgmtError] = useState('')
+  const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
   const [notes, setNotes] = useState({})
   const [selectedNoteCompany, setSelectedNoteCompany] = useState('Nectera Holdings')
   const [selectedNoteId, setSelectedNoteId] = useState(null)
@@ -521,6 +525,7 @@ export default function Home() {
     { id: 'projects', label: 'Projects', icon: '📋' },
     { id: 'team', label: 'Team', icon: '👥' },
     { id: 'notes', label: 'Notes', icon: '📝' },
+    ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings', icon: '⚙️' }] : []),
   ]
 
   const effectiveCommenterName = currentUser ? currentUser.name : commenterName
@@ -668,7 +673,16 @@ export default function Home() {
               </button>
             ))}
           </nav>
-          <div style={{ marginTop: 'auto', fontSize: '0.7rem', color: '#555' }}>Live · QuickBooks + Sheets</div>
+          <div style={{ marginTop: 'auto' }}>
+            {currentUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: '#1a1918', borderRadius: '6px' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '700', flexShrink: 0 }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+                <span style={{ fontSize: '0.72rem', color: '#c9c5be', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</span>
+                <button onClick={handleLogout} style={{ background: 'none', border: '1px solid #3a3530', borderRadius: '4px', color: '#8a8070', fontSize: '0.62rem', cursor: 'pointer', padding: '0.15rem 0.4rem', flexShrink: 0 }}>Sign out</button>
+              </div>
+            )}
+            <div style={{ fontSize: '0.7rem', color: '#555' }}>Live · QuickBooks + Sheets</div>
+          </div>
         </div>
       )}
 
@@ -1590,6 +1604,86 @@ export default function Home() {
                     </div>
                   </>
                 )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!drilldown && page === 'settings' && currentUser?.role === 'admin' && (
+          <>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: '0 0 0.25rem 0' }}>Settings</h1>
+              <p style={{ color: '#8a8070', fontSize: '0.8rem', margin: 0 }}>Manage user accounts</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                <h2 style={{ fontSize: '0.95rem', margin: '0 0 1rem 0' }}>Create User Account</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div>
+                    <label style={labelStyle}>Full Name</label>
+                    <input value={newUserForm.name} onChange={e => setNewUserForm(f => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Username</label>
+                    <input value={newUserForm.username} onChange={e => setNewUserForm(f => ({ ...f, username: e.target.value }))} placeholder="janesmith" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Password</label>
+                    <input type="password" value={newUserForm.password} onChange={e => setNewUserForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Role</label>
+                    <select value={newUserForm.role} onChange={e => setNewUserForm(f => ({ ...f, role: e.target.value }))} style={inputStyle}>
+                      <option value="member">Member</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  {userMgmtError && <p style={{ color: '#b85c38', fontSize: '0.8rem', margin: 0 }}>{userMgmtError}</p>}
+                  {userMgmtSuccess && <p style={{ color: '#4a6741', fontSize: '0.8rem', margin: 0 }}>{userMgmtSuccess}</p>}
+                  <button onClick={async () => {
+                    setUserMgmtError('')
+                    setUserMgmtSuccess('')
+                    if (!newUserForm.name || !newUserForm.username || !newUserForm.password) { setUserMgmtError('All fields required'); return }
+                    const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...newUserForm, adminPassword: 'Nectera2026!' }) })
+                    const data = await res.json()
+                    if (data.success) {
+                      setUserMgmtSuccess('User created!')
+                      setNewUserForm({ name: '', username: '', password: '', role: 'member' })
+                      const r2 = await fetch('/api/users?action=list')
+                      setUserList(await r2.json())
+                    } else {
+                      setUserMgmtError(data.error || 'Failed')
+                    }
+                  }} style={{ padding: '0.5rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Create Account</button>
+                </div>
+              </div>
+
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h2 style={{ fontSize: '0.95rem', margin: 0 }}>User Accounts</h2>
+                  <button onClick={async () => { const r = await fetch('/api/users?action=list'); setUserList(await r.json()) }} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer' }}>Refresh</button>
+                </div>
+                {userList.length === 0 && <p style={{ color: '#8a8070', fontSize: '0.8rem' }}>Click Refresh to load users</p>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {userList.map(u => (
+                    <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem 0.75rem', border: '1px solid #f0ece0', borderRadius: '6px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: '700', flexShrink: 0 }}>{u.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>{u.name}</div>
+                        <div style={{ fontSize: '0.72rem', color: '#8a8070' }}>@{u.username} · {u.role}</div>
+                      </div>
+                      {u.id !== currentUser?.id && (
+                        <button onClick={async () => {
+                          if (!confirm('Delete ' + u.name + '?')) return
+                          await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', userId: u.id, adminPassword: 'Nectera2026!' }) })
+                          const r = await fetch('/api/users?action=list')
+                          setUserList(await r.json())
+                        }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>Remove</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>
