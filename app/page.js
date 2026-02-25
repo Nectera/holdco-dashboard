@@ -127,6 +127,10 @@ export default function Home() {
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [employees, setEmployees] = useState([])
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState(null)
+  const [employeeForm, setEmployeeForm] = useState({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
   const [drilldown, setDrilldown] = useState(null)
   const [reportModal, setReportModal] = useState(null)
   const [reportData, setReportData] = useState(null)
@@ -199,6 +203,26 @@ export default function Home() {
     }
   }
 
+  const saveEmployee = (emp) => {
+    let updated
+    if (editingEmployee !== null) {
+      updated = employees.map((e, i) => i === editingEmployee ? emp : e)
+    } else {
+      updated = [...employees, emp]
+    }
+    setEmployees(updated)
+    try { localStorage.setItem('employees', JSON.stringify(updated)) } catch {}
+    setShowEmployeeModal(false)
+    setEditingEmployee(null)
+    setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
+  }
+
+  const deleteEmployee = (idx) => {
+    const updated = employees.filter((_, i) => i !== idx)
+    setEmployees(updated)
+    try { localStorage.setItem('employees', JSON.stringify(updated)) } catch {}
+  }
+
   const openDrilldown = async (companyKey) => {
     setDrilldown(companyKey)
     setDrilldownData(null)
@@ -262,6 +286,10 @@ export default function Home() {
     try {
       const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]')
       setDismissedNotifications(dismissed)
+    } catch {}
+    try {
+      const saved = JSON.parse(localStorage.getItem('employees') || '[]')
+      setEmployees(saved)
     } catch {}
   }, [])
 
@@ -349,6 +377,7 @@ export default function Home() {
   const navItems = [
     { id: 'financials', label: 'Financials', icon: '📊' },
     { id: 'tasks', label: 'Tasks', icon: '✅' },
+    { id: 'team', label: 'Team', icon: '👥' },
   ]
 
   if (!authed) {
@@ -496,6 +525,59 @@ export default function Home() {
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {showEmployeeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingEmployee !== null ? 'Edit Employee' : 'Add Employee'}</h2>
+              <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Full Name *</label>
+                <input value={employeeForm.name} onChange={e => setEmployeeForm(f => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Role / Title</label>
+                  <input value={employeeForm.role} onChange={e => setEmployeeForm(f => ({ ...f, role: e.target.value }))} placeholder="Operations Manager" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Company</label>
+                  <select value={employeeForm.company} onChange={e => setEmployeeForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                    <option value="">Select company...</option>
+                    <option value="Nectera Holdings">Nectera Holdings</option>
+                    <option value="Xtract Environmental Services">Xtract Environmental Services</option>
+                    <option value="Bug Control Specialist">Bug Control Specialist</option>
+                    <option value="Lush Green Landscapes">Lush Green Landscapes</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Phone</label>
+                  <input value={employeeForm.phone} onChange={e => setEmployeeForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 555-5555" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email</label>
+                  <input value={employeeForm.email} onChange={e => setEmployeeForm(f => ({ ...f, email: e.target.value }))} placeholder="jane@company.com" style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Photo URL (optional)</label>
+                <input value={employeeForm.photo} onChange={e => setEmployeeForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
+                  {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -852,6 +934,7 @@ export default function Home() {
         </div>
       )}
 
+      
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
@@ -966,6 +1049,55 @@ export default function Home() {
             )}
           </>
         )}
+
+        {!drilldown && page === 'team' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Team Directory</h1>
+              <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+                + Add Employee
+              </button>
+            </div>
+            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.8rem' }}>{employees.length} team member{employees.length !== 1 ? 's' : ''}</p>
+            {employees.length === 0 && (
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>👥</div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No team members yet</div>
+                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Employee" to get started</div>
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+              {employees.map((emp, idx) => {
+                const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                const companyShort = emp.company ? emp.company.split(' ')[0] : ''
+                return (
+                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                      {emp.photo ? (
+                        <img src={emp.photo} alt={emp.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
+                      )}
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.name}</div>
+                        {emp.role && <div style={{ fontSize: '0.78rem', color: '#8a8070' }}>{emp.role}</div>}
+                        {emp.company && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: '#8a8070' }}>{companyShort}</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.78rem', borderTop: '1px solid #f0ece0', paddingTop: '0.75rem' }}>
+                      {emp.email && <a href={'mailto:' + emp.email} style={{ color: '#3d5a6e', textDecoration: 'none' }}>✉ {emp.email}</a>}
+                      {emp.phone && <a href={'tel:' + emp.phone} style={{ color: '#3a3530', textDecoration: 'none' }}>📞 {emp.phone}</a>}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
+                      <button onClick={() => { setEmployeeForm(emp); setEditingEmployee(idx); setShowEmployeeModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
+                      <button onClick={() => deleteEmployee(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>Remove</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {showNotifications && (
@@ -995,6 +1127,59 @@ export default function Home() {
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {showEmployeeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingEmployee !== null ? 'Edit Employee' : 'Add Employee'}</h2>
+              <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Full Name *</label>
+                <input value={employeeForm.name} onChange={e => setEmployeeForm(f => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Role / Title</label>
+                  <input value={employeeForm.role} onChange={e => setEmployeeForm(f => ({ ...f, role: e.target.value }))} placeholder="Operations Manager" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Company</label>
+                  <select value={employeeForm.company} onChange={e => setEmployeeForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                    <option value="">Select company...</option>
+                    <option value="Nectera Holdings">Nectera Holdings</option>
+                    <option value="Xtract Environmental Services">Xtract Environmental Services</option>
+                    <option value="Bug Control Specialist">Bug Control Specialist</option>
+                    <option value="Lush Green Landscapes">Lush Green Landscapes</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Phone</label>
+                  <input value={employeeForm.phone} onChange={e => setEmployeeForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 555-5555" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email</label>
+                  <input value={employeeForm.email} onChange={e => setEmployeeForm(f => ({ ...f, email: e.target.value }))} placeholder="jane@company.com" style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Photo URL (optional)</label>
+                <input value={employeeForm.photo} onChange={e => setEmployeeForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
+                  {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
