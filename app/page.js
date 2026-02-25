@@ -157,6 +157,7 @@ export default function Home() {
   const [commenterName, setCommenterName] = useState(() => { try { return localStorage.getItem('commenterName') || '' } catch { return '' } })
 
   const [notifySending, setNotifySending] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
   const [notifySuccess, setNotifySuccess] = useState(null)
 
 
@@ -186,6 +187,7 @@ export default function Home() {
     fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
     fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
     fetch('/api/lighttasks').then(r => r.json()).then(data => setLightTasks(data)).catch(() => {})
+    fetch('/api/users?action=list').then(r => r.json()).then(data => setUserList(data)).catch(() => {})
   }, [authed])
 
   useEffect(() => {
@@ -266,6 +268,34 @@ export default function Home() {
   
 
   
+
+  const uploadFile = async (company, noteId, file) => {
+    setUploadingFile(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) {
+        const attachment = { url: data.url, name: data.name, size: data.size, type: data.type, uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) }
+        const updated = { ...notes }
+        updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, attachments: [...(n.attachments || []), attachment] } : n)
+        setNotes(updated)
+        fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
+      }
+    } catch (err) {
+      console.error('Upload failed', err)
+    }
+    setUploadingFile(false)
+  }
+
+  const removeAttachment = async (company, noteId, url) => {
+    await fetch('/api/upload', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
+    const updated = { ...notes }
+    updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, attachments: (n.attachments || []).filter(a => a.url !== url) } : n)
+    setNotes(updated)
+    fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
+  }
 
   const saveNote = (company, id, title, content_text) => {
     const updated = { ...notes }
@@ -1591,6 +1621,33 @@ export default function Home() {
                     </div>
                     <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
                     <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
+                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fafaf8' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({(selectedNote.attachments || []).length})</div>
+                        <label style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', color: '#3a3530' }}>
+                          {uploadingFile ? 'Uploading...' : '+ Attach File'}
+                          <input type="file" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) uploadFile(selectedNoteCompany, selectedNote.id, e.target.files[0]); e.target.value = '' }} />
+                        </label>
+                      </div>
+                      {(selectedNote.attachments || []).length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.75rem' }}>
+                          {(selectedNote.attachments || []).map((att, i) => {
+                            const isImage = att.type?.startsWith('image/')
+                            const isPDF = att.type === 'application/pdf'
+                            const icon = isImage ? '🖼️' : isPDF ? '📄' : '📎'
+                            const sizeKB = att.size ? (att.size / 1024).toFixed(0) + ' KB' : ''
+                            return (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem', background: 'white', border: '1px solid #e0d8cc', borderRadius: '4px' }}>
+                                <span style={{ fontSize: '0.85rem' }}>{icon}</span>
+                                <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontSize: '0.78rem', color: '#3d5a6e', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name}</a>
+                                <span style={{ fontSize: '0.65rem', color: '#8a8070', flexShrink: 0 }}>{sizeKB}</span>
+                                <button onClick={() => removeAttachment(selectedNoteCompany, selectedNote.id, att.url)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.7rem', padding: 0, flexShrink: 0 }}>✕</button>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                     <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fdfaf5' }}>
                       <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Comments ({(selectedNote.comments || []).length})</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem', maxHeight: '180px', overflowY: 'auto' }}>
