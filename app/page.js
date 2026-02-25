@@ -861,7 +861,7 @@ export default function Home() {
               <button onClick={handleUserLogin} disabled={loginLoading} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500', opacity: loginLoading ? 0.6 : 1 }}>{loginLoading ? 'Signing in...' : 'Sign In'}</button>
               <button onClick={() => setShowForgotPassword(!showForgotPassword)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>
               {showForgotPassword && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f7f3ed', borderRadius: '6px' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f4f0e8', borderRadius: '6px' }}>
                   <p style={{ fontSize: '0.78rem', color: '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
                   <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
                   {forgotStatus && <p style={{ fontSize: '0.75rem', color: '#4a6741', margin: '0 0 0.5rem 0' }}>{forgotStatus}</p>}
@@ -956,12 +956,8 @@ export default function Home() {
 
       {!isMobile && (
         <div style={{ width: '220px', background: '#0f0e0d', color: '#f5f1ea', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Nectera Holdings</h2>
-            <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.1rem', padding: '0.1rem', display: 'flex', alignItems: 'center' }}>
-              🔔
-              {(notifications.length + taskNotifications.length + notesNotifications.length + unreadMessages) > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length + unreadMessages}</span>}
-            </button>
+          <div style={{ borderBottom: '1px solid #2a2825', paddingBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.1rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400', letterSpacing: '0.02em' }}>Nectera Holdings</h2>
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {navItems.map(item => (
@@ -971,14 +967,7 @@ export default function Home() {
             ))}
           </nav>
           <div style={{ marginTop: 'auto' }}>
-            {currentUser && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: 'rgba(255,255,255,0.07)', borderRadius: '8px' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '700', flexShrink: 0 }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
-                <span style={{ fontSize: '0.72rem', color: '#c9c5be', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</span>
-                <button onClick={handleLogout} style={{ background: 'none', border: '1px solid #3a3530', borderRadius: '4px', color: '#8a8070', fontSize: '0.62rem', cursor: 'pointer', padding: '0.15rem 0.4rem', flexShrink: 0 }}>Sign out</button>
-              </div>
-            )}
-            <div style={{ fontSize: '0.7rem', color: '#555' }}>Live · QuickBooks + Sheets</div>
+            <div style={{ fontSize: '0.68rem', color: '#444', paddingTop: '1rem', borderTop: '1px solid #2a2825' }}>Live · QuickBooks + Sheets</div>
           </div>
         </div>
       )}
@@ -1329,7 +1318,27 @@ export default function Home() {
         </div>
       )}
 
-      <div style={{ flex: 1, padding: isMobile ? '1rem' : '2rem', background: '#f7f3ed', overflowY: 'auto', paddingBottom: isMobile ? '5rem' : '2rem' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f4f0e8', overflow: 'hidden' }}>
+        {!isMobile && (
+          <div style={{ padding: '0.75rem 2rem', borderBottom: '1px solid #e8e2d9', background: '#f4f0e8', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
+              💬
+              {unreadMessages > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
+            </button>
+            <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', padding: '0.25rem', display: 'flex', alignItems: 'center' }}>
+              🔔
+              {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
+            </button>
+            {currentUser && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.75rem', borderLeft: '1px solid #e8e2d9' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+                <span style={{ fontSize: '0.82rem', color: '#3a3530' }}>{currentUser.name}</span>
+                <button onClick={handleLogout} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '6px', color: '#8a8070', fontSize: '0.72rem', cursor: 'pointer', padding: '0.2rem 0.5rem', marginLeft: '0.25rem' }}>Sign out</button>
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ flex: 1, padding: isMobile ? '4.5rem 1rem 1rem 1rem' : '2rem', overflowY: 'auto', paddingBottom: isMobile ? '1rem' : '2rem' }}>
 
         {drilldown && (
           <>
@@ -1376,7 +1385,7 @@ export default function Home() {
         {!drilldown && page === 'financials' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Portfolio Overview</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Portfolio Overview</h1>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500' }}>📤 Export PDF</button>
                 <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -1976,7 +1985,7 @@ export default function Home() {
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           {selectedEvents.map((ev, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: '#f7f3ed' }}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: '#f4f0e8' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
                               <div style={{ fontSize: '0.82rem', color: '#3a3530' }}>{ev.label}</div>
                             </div>
@@ -2310,9 +2319,9 @@ export default function Home() {
           {/* Mobile top bar */}
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 60, background: '#0f0e0d', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>
             <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', padding: '0.5rem' }}>
-              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
-              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
-              <span style={{ width: '18px', height: '2px', background: '#f5f1ea', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
             </button>
             <span style={{ color: 'white', fontSize: '1rem', fontWeight: '600', letterSpacing: '0.02em' }}>Nectera Holdings</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -2356,7 +2365,8 @@ export default function Home() {
           )}
         </>
       )}
-    </div>
+        </div>
+      </div>
   )
 }
 

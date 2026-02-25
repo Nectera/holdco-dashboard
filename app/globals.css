@@ -1,3 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --color-bg: #f4f0e8;
+  --color-card: #ffffff;
+  --color-border: #e8e2d9;
+  --color-gold: #c9a84c;
+  --color-text: #1a1814;
+  --color-muted: #8a8070;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+h1, h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
 @import "tailwindcss";
 
 :root {
