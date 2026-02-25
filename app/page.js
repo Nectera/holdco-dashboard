@@ -86,6 +86,7 @@ const inputStyle = {
   border: '1px solid #e0d8cc',
   fontSize: '0.85rem',
   background: 'white',
+  color: '#1a1814',
   boxSizing: 'border-box',
 }
 
