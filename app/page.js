@@ -144,6 +144,15 @@ export default function Home() {
   const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
   const [userList, setUserList] = useState([])
+  const [conversations, setConversations] = useState([])
+  const [activeConvo, setActiveConvo] = useState(null)
+  const [convoMessages, setConvoMessages] = useState([])
+  const [messageText, setMessageText] = useState('')
+  const [showNewConvo, setShowNewConvo] = useState(false)
+  const [newConvoName, setNewConvoName] = useState('')
+  const [newConvoMembers, setNewConvoMembers] = useState([])
+  const [newConvoType, setNewConvoType] = useState('dm')
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const [userMgmtError, setUserMgmtError] = useState('')
   const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
@@ -188,7 +197,24 @@ export default function Home() {
     fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
     fetch('/api/lighttasks').then(r => r.json()).then(data => setLightTasks(data)).catch(() => {})
     fetch('/api/users?action=list').then(r => r.json()).then(data => setUserList(data)).catch(() => {})
+    if (currentUser) {
+      fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
+      fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
+    }
   }, [authed])
+
+  // Auto-refresh messages every 5 seconds
+  useEffect(() => {
+    if (!authed || !currentUser) return
+    const interval = setInterval(() => {
+      fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
+      fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
+      if (activeConvo) {
+        fetch('/api/messages?action=messages&convoId=' + activeConvo.id).then(r => r.json()).then(setConvoMessages).catch(() => {})
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [authed, currentUser, activeConvo])
 
   useEffect(() => {
     if (!authed) return
@@ -365,6 +391,54 @@ export default function Home() {
     const updated = employees.filter((_, i) => i !== idx)
     setEmployees(updated)
     fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employees: updated }) }).catch(() => {})
+  }
+
+  const loadConversations = async () => {
+    if (!currentUser) return
+    const res = await fetch('/api/messages?action=conversations&userId=' + currentUser.id)
+    const data = await res.json()
+    setConversations(data)
+  }
+
+  const loadMessages = async (convoId) => {
+    const res = await fetch('/api/messages?action=messages&convoId=' + convoId)
+    const data = await res.json()
+    setConvoMessages(data)
+    // Mark as read
+    if (currentUser) {
+      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark_read', convoId, userId: currentUser.id }) })
+      loadUnread()
+    }
+  }
+
+  const loadUnread = async () => {
+    if (!currentUser) return
+    const res = await fetch('/api/messages?action=unread&userId=' + currentUser.id)
+    const data = await res.json()
+    setUnreadMessages(data.unread || 0)
+  }
+
+  const sendMessage = async () => {
+    if (!messageText.trim() || !activeConvo || !currentUser) return
+    const text = messageText.trim()
+    setMessageText('')
+    await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: activeConvo.id, senderId: currentUser.id, senderName: currentUser.name, text }) })
+    loadMessages(activeConvo.id)
+    loadConversations()
+  }
+
+  const createConversation = async () => {
+    if (!currentUser) return
+    const members = newConvoType === 'dm' ? [currentUser.id, ...newConvoMembers] : [currentUser.id, ...newConvoMembers]
+    const name = newConvoType === 'dm' ? null : newConvoName
+    const res = await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create_conversation', name, members, type: newConvoType, createdBy: currentUser.id }) })
+    const convo = await res.json()
+    await loadConversations()
+    setActiveConvo(convo)
+    loadMessages(convo.id)
+    setShowNewConvo(false)
+    setNewConvoName('')
+    setNewConvoMembers([])
   }
 
   const exportReportPDF = async () => {
@@ -724,6 +798,7 @@ export default function Home() {
     { id: 'projects', label: 'Projects', icon: '📋' },
     { id: 'team', label: 'Team', icon: '👥' },
     { id: 'notes', label: 'Notes', icon: '📝' },
+    { id: 'messages', label: 'Messages', icon: '💬' },
     ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings', icon: '⚙️' }] : []),
   ]
 
@@ -875,7 +950,7 @@ export default function Home() {
             <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Nectera Holdings</h2>
             <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.1rem', padding: '0.1rem', display: 'flex', alignItems: 'center' }}>
               🔔
-              {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
+              {(notifications.length + taskNotifications.length + notesNotifications.length + unreadMessages) > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length + unreadMessages}</span>}
             </button>
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1797,6 +1872,99 @@ export default function Home() {
                         </div>
                         <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
                       </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {!drilldown && page === 'messages' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Messages</h1>
+              <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>
+            </div>
+
+            {showNewConvo && (
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', padding: '1.25rem', marginBottom: '1rem' }}>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem' }}>New Conversation</h3>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <button onClick={() => setNewConvoType('dm')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoType === 'dm' ? '#0f0e0d' : 'white', color: newConvoType === 'dm' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Direct Message</button>
+                  <button onClick={() => setNewConvoType('group')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoType === 'group' ? '#0f0e0d' : 'white', color: newConvoType === 'group' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Group</button>
+                </div>
+                {newConvoType === 'group' && (
+                  <input value={newConvoName} onChange={e => setNewConvoName(e.target.value)} placeholder="Group name..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
+                )}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#8a8070', margin: '0 0 0.4rem 0' }}>Select members:</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {userList.filter(u => u.id !== currentUser?.id).map(u => (
+                      <button key={u.id} onClick={() => setNewConvoMembers(m => m.includes(u.id) ? m.filter(x => x !== u.id) : [...m, u.id])} style={{ padding: '0.25rem 0.6rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoMembers.includes(u.id) ? '#0f0e0d' : 'white', color: newConvoMembers.includes(u.id) ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.78rem' }}>{u.name}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={createConversation} disabled={newConvoMembers.length === 0} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', opacity: newConvoMembers.length === 0 ? 0.4 : 1 }}>Start</button>
+                  <button onClick={() => { setShowNewConvo(false); setNewConvoMembers([]); setNewConvoName('') }} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: '1rem', height: 'calc(100vh - 200px)' }}>
+              {/* Conversation list */}
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', overflowY: 'auto' }}>
+                {conversations.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No conversations yet.<br/>Click "+ New" to start one.</div>}
+                {conversations.map(convo => {
+                  const otherMembers = convo.members.filter(id => id !== currentUser?.id)
+                  const otherNames = otherMembers.map(id => userList.find(u => u.id === id)?.name || 'Unknown')
+                  const displayName = convo.type === 'group' ? convo.name : otherNames[0] || 'Unknown'
+                  const lastRead = convo.lastRead?.[currentUser?.id] || 0
+                  const isActive = activeConvo?.id === convo.id
+                  return (
+                    <div key={convo.id} onClick={() => { setActiveConvo(convo); loadMessages(convo.id) }} style={{ padding: '0.85rem 1rem', borderBottom: '1px solid #f5f1ea', cursor: 'pointer', background: isActive ? '#f5f1ea' : 'white', transition: 'background 0.1s' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: convo.type === 'group' ? '#3d5a6e' : '#0f0e0d', color: convo.type === 'group' ? 'white' : '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: '700', flexShrink: 0 }}>{convo.type === 'group' ? '👥' : displayName.slice(0,2).toUpperCase()}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#0f0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                          {convo.lastMessage && <div style={{ fontSize: '0.72rem', color: '#8a8070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{convo.lastMessage.senderName}: {convo.lastMessage.text}</div>}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Message view */}
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+                {!activeConvo ? (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.85rem' }}>Select a conversation to start messaging</div>
+                ) : (
+                  <>
+                    <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #f0ece0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{activeConvo.type === 'group' ? activeConvo.name : userList.find(u => u.id === activeConvo.members.find(m => m !== currentUser?.id))?.name || 'Unknown'}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>{activeConvo.type === 'group' ? activeConvo.members.length + ' members' : 'Direct message'}</div>
+                      </div>
+                      <button onClick={async () => { await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_conversation', convoId: activeConvo.id, userId: currentUser?.id }) }); setActiveConvo(null); setConvoMessages([]); loadConversations() }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.75rem' }}>Delete</button>
+                    </div>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {convoMessages.length === 0 && <div style={{ textAlign: 'center', color: '#8a8070', fontSize: '0.82rem', marginTop: '2rem' }}>No messages yet. Say hello! 👋</div>}
+                      {convoMessages.map(msg => {
+                        const isMe = msg.senderId === currentUser?.id
+                        return (
+                          <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                            {!isMe && <div style={{ fontSize: '0.65rem', color: '#8a8070', marginBottom: '0.15rem', marginLeft: '0.5rem' }}>{msg.senderName}</div>}
+                            <div style={{ maxWidth: '70%', padding: '0.5rem 0.85rem', borderRadius: isMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: isMe ? '#0f0e0d' : '#f5f1ea', color: isMe ? 'white' : '#0f0e0d', fontSize: '0.85rem', lineHeight: '1.4' }}>{msg.text}</div>
+                            <div style={{ fontSize: '0.6rem', color: '#ccc', marginTop: '0.15rem', marginLeft: isMe ? 0 : '0.5rem', marginRight: isMe ? '0.5rem' : 0 }}>{new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #f0ece0', display: 'flex', gap: '0.5rem' }}>
+                      <input value={messageText} onChange={e => setMessageText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message... (Enter to send)" style={{ flex: 1, padding: '0.5rem 0.85rem', borderRadius: '20px', border: '1px solid #e0d8cc', fontSize: '0.85rem', outline: 'none' }} />
+                      <button onClick={sendMessage} disabled={!messageText.trim()} style={{ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', opacity: !messageText.trim() ? 0.4 : 1 }}>Send</button>
                     </div>
                   </>
                 )}
