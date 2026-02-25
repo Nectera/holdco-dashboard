@@ -18,6 +18,7 @@
     "jspdf-autotable": "^5.0.7",
     "next": "16.1.6",
     "node-quickbooks": "^2.0.48",
+    "nodemailer": "^8.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0"

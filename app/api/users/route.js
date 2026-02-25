@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis'
 import { createHash, randomBytes } from 'crypto'
+import { sendWelcomeEmail } from '../../lib/email.js'
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -76,6 +77,9 @@ export async function POST(request) {
     if (users.find(u => u.username === body.username)) return new Response(JSON.stringify({ error: 'Username already exists' }), { status: 400 })
     const newUser = { id: Date.now(), name: body.name, username: body.username, email: body.email || '', passwordHash: hashPassword(body.password), role: body.role || 'member' }
     await redis.set('nectera:users', [...users, newUser])
+    if (body.email) {
+      try { await sendWelcomeEmail({ name: body.name, username: body.username, password: body.password, email: body.email }) } catch(e) { console.error('email failed',e) }
+    }
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
