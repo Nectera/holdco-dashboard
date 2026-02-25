@@ -138,6 +138,9 @@ export default function Home() {
   const [selectedNoteId, setSelectedNoteId] = useState(null)
   const [noteEditContent, setNoteEditContent] = useState('')
   const [noteEditTitle, setNoteEditTitle] = useState('')
+  const [showTagMenu, setShowTagMenu] = useState(false)
+  const [notifySending, setNotifySending] = useState(false)
+  const [notifySuccess, setNotifySuccess] = useState(null)
 
 
   const [showEmployeeModal, setShowEmployeeModal] = useState(false)
@@ -1539,6 +1542,49 @@ export default function Home() {
                       <input value={noteEditTitle} onChange={e => setNoteEditTitle(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Note title...' style={{ border: 'none', outline: 'none', fontSize: '1rem', fontWeight: '600', flex: 1, background: 'transparent' }} />
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={() => togglePinNote(selectedNoteCompany, selectedNote.id)} title={selectedNote.pinned ? 'Unpin' : 'Pin'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', opacity: selectedNote.pinned ? 1 : 0.4 }}>📌</button>
+                        <div style={{ position: 'relative' }}>
+                          <button onClick={() => setShowTagMenu(!showTagMenu)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#3a3530', padding: '0.2rem 0.5rem' }}>@ Notify</button>
+                          {showTagMenu && (
+                            <div style={{ position: 'absolute', top: '100%', right: 0, background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
+                              <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f0ece0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notify team member</div>
+                              {employees.length === 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No team members added yet</div>}
+                              {employees.filter(e => e.email).map((emp, idx) => (
+                                <div key={idx} onClick={async () => {
+                                  setShowTagMenu(false)
+                                  setNotifySending(true)
+                                  setNotifySuccess(null)
+                                  const res = await fetch('/api/notify', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      toEmail: emp.email,
+                                      toName: emp.name,
+                                      fromName: 'A team member',
+                                      noteTitle: noteEditTitle || selectedNote.title,
+                                      noteContent: noteEditContent || selectedNote.content,
+                                      company: selectedNoteCompany,
+                                    })
+                                  })
+                                  const d = await res.json()
+                                  setNotifySending(false)
+                                  setNotifySuccess(d.success ? emp.name : 'Failed')
+                                  setTimeout(() => setNotifySuccess(null), 3000)
+                                }} style={{ padding: '0.6rem 0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f5f1ea'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '600', flexShrink: 0 }}>{emp.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</div>
+                                  <div>
+                                    <div style={{ fontWeight: '500' }}>{emp.name}</div>
+                                    <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{emp.email}</div>
+                                  </div>
+                                </div>
+                              ))}
+                              {employees.filter(e => e.email).length === 0 && employees.length > 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No team members have emails</div>}
+                            </div>
+                          )}
+                        </div>
+                        {notifySending && <span style={{ fontSize: '0.7rem', color: '#8a8070' }}>Sending...</span>}
+                        {notifySuccess && <span style={{ fontSize: '0.7rem', color: notifySuccess === 'Failed' ? '#b85c38' : '#4a6741', fontWeight: '500' }}>{notifySuccess === 'Failed' ? 'Failed to send' : 'Notified ' + notifySuccess}</span>}
                         <button onClick={() => deleteNote(selectedNoteCompany, selectedNote.id)} style={{ background: 'none', border: '1px solid #fde8e8', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#b85c38', padding: '0.2rem 0.5rem' }}>Delete</button>
                       </div>
                     </div>
