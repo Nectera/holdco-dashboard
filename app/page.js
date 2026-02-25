@@ -118,6 +118,8 @@ export default function Home() {
   const [loadingFinancials, setLoadingFinancials] = useState(true)
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [filterCompany, setFilterCompany] = useState('all')
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [dismissedNotifications, setDismissedNotifications] = useState([])
   const [filterStatus, setFilterStatus] = useState('all')
   const [saving, setSaving] = useState({})
   const [showModal, setShowModal] = useState(false)
@@ -240,6 +242,47 @@ export default function Home() {
       const bp = priorityOrder[(b.priority || '').toLowerCase()] ?? 4
       return ap - bp
     })
+
+  // Load dismissed notifications from localStorage
+  useEffect(() => {
+    try {
+      const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]')
+      setDismissedNotifications(dismissed)
+    } catch {}
+  }, [])
+
+  const dismissNotification = (id) => {
+    const updated = [...dismissedNotifications, id]
+    setDismissedNotifications(updated)
+    try { localStorage.setItem('dismissedNotifications', JSON.stringify(updated)) } catch {}
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const in3Days = new Date(today)
+  in3Days.setDate(in3Days.getDate() + 3)
+
+  const notifications = tasks.flatMap(task => {
+    const notifs = []
+    if (!task.name) return []
+    const dueDate = task.dueDate ? new Date(task.dueDate) : null
+    const status = (task.status || '').toLowerCase()
+    const isComplete = status.includes('complete')
+    const id_overdue = 'overdue-' + task.companyKey + '-' + task.rowIndex
+    const id_soon = 'soon-' + task.companyKey + '-' + task.rowIndex
+    const id_new = 'new-' + task.companyKey + '-' + task.rowIndex
+
+    if (!isComplete && dueDate && dueDate < today) {
+      notifs.push({ id: id_overdue, type: 'overdue', task: task.name, company: task.company, dueDate: task.dueDate, companyKey: task.companyKey })
+    } else if (!isComplete && dueDate && dueDate <= in3Days) {
+      notifs.push({ id: id_soon, type: 'soon', task: task.name, company: task.company, dueDate: task.dueDate, companyKey: task.companyKey })
+    }
+    const created = task.createdDate ? new Date(task.createdDate) : null
+    if (created && created >= today) {
+      notifs.push({ id: id_new, type: 'new', task: task.name, company: task.company, companyKey: task.companyKey })
+    }
+    return notifs
+  }).filter(n => !dismissedNotifications.includes(n.id))
 
   const activeTasks = tasks.filter(t => {
     const s = (t.status || '').toLowerCase()
@@ -394,7 +437,13 @@ export default function Home() {
 
       {!isMobile && (
         <div style={{ width: '220px', background: '#0f0e0d', color: '#f5f1ea', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
-          <h2 style={{ fontSize: '1.1rem', borderBottom: '1px solid #333', paddingBottom: '1rem', margin: 0 }}>Nectera Holdings</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Nectera Holdings</h2>
+            <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.1rem', padding: '0.1rem', display: 'flex', alignItems: 'center' }}>
+              🔔
+              {notifications.length > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length}</span>}
+            </button>
+          </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {navItems.map(item => (
               <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null) }} style={{ background: page === item.id && !drilldown ? '#1a1918' : 'transparent', color: page === item.id && !drilldown ? '#c9a84c' : '#f5f1ea', border: 'none', borderRadius: '4px', padding: '0.5rem 0.75rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}>
@@ -403,6 +452,36 @@ export default function Home() {
             ))}
           </nav>
           <div style={{ marginTop: 'auto', fontSize: '0.7rem', color: '#555' }}>Live · QuickBooks + Sheets</div>
+        </div>
+      )}
+
+      {showNotifications && (
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
+            <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
+            <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
+          </div>
+          {notifications.length === 0 && (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
+          )}
+          {notifications.map(n => (
+            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
+                    background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
+                    color: n.type === 'overdue' ? '#b85c38' : n.type === 'soon' ? '#9a6a20' : '#4a6741',
+                    fontWeight: '600' }}>
+                    {n.type === 'overdue' ? 'Overdue' : n.type === 'soon' ? 'Due Soon' : 'New Task'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
+              </div>
+              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -477,7 +556,10 @@ export default function Home() {
       {isMobile && (
         <div style={{ background: '#0f0e0d', color: '#f5f1ea', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <h2 style={{ fontSize: '1rem', margin: 0 }}>Nectera Holdings</h2>
-          <span style={{ fontSize: '0.7rem', color: '#555' }}>Live</span>
+          <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.2rem', padding: 0, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            🔔
+            {notifications.length > 0 && <span style={{ background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length}</span>}
+          </button>
         </div>
       )}
 
@@ -711,7 +793,37 @@ export default function Home() {
                         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
                           <div style={{ fontSize: '0.75rem', color: '#8a8070', marginBottom: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {task.lead && <span>Lead: {task.lead}</span>}
-                            {reportModal && (
+                            {showNotifications && (
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
+            <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
+            <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
+          </div>
+          {notifications.length === 0 && (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
+          )}
+          {notifications.map(n => (
+            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
+                    background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
+                    color: n.type === 'overdue' ? '#b85c38' : n.type === 'soon' ? '#9a6a20' : '#4a6741',
+                    fontWeight: '600' }}>
+                    {n.type === 'overdue' ? 'Overdue' : n.type === 'soon' ? 'Due Soon' : 'New Task'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
+              </div>
+              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
@@ -806,6 +918,36 @@ export default function Home() {
           </>
         )}
       </div>
+
+      {showNotifications && (
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
+            <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
+            <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
+          </div>
+          {notifications.length === 0 && (
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
+          )}
+          {notifications.map(n => (
+            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
+                    background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
+                    color: n.type === 'overdue' ? '#b85c38' : n.type === 'soon' ? '#9a6a20' : '#4a6741',
+                    fontWeight: '600' }}>
+                    {n.type === 'overdue' ? 'Overdue' : n.type === 'soon' ? 'Due Soon' : 'New Task'}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
+              </div>
+              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
