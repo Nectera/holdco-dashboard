@@ -128,6 +128,12 @@ export default function Home() {
   const [creating, setCreating] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [employees, setEmployees] = useState([])
+  const [lightTasks, setLightTasks] = useState([])
+  const [showLightTaskModal, setShowLightTaskModal] = useState(false)
+  const [editingLightTask, setEditingLightTask] = useState(null)
+  const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
+  const [lightTaskFilter, setLightTaskFilter] = useState('all')
+
   const [showEmployeeModal, setShowEmployeeModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
   const [employeeForm, setEmployeeForm] = useState({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
@@ -203,7 +209,29 @@ export default function Home() {
     }
   }
 
-  const saveEmployee = (emp) => {
+  const saveLightTask = (task) => {
+    let updated
+    if (editingLightTask !== null) {
+      updated = lightTasks.map((t, i) => i === editingLightTask ? task : t)
+    } else {
+      updated = [...lightTasks, { ...task, createdDate: new Date().toISOString().split('T')[0] }]
+    }
+    setLightTasks(updated)
+    try { localStorage.setItem('lightTasks', JSON.stringify(updated)) } catch {}
+    setShowLightTaskModal(false)
+    setEditingLightTask(null)
+    setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
+  }
+
+  const deleteLightTask = (idx) => {
+    const updated = lightTasks.filter((_, i) => i !== idx)
+    setLightTasks(updated)
+    try { localStorage.setItem('lightTasks', JSON.stringify(updated)) } catch {}
+  }
+
+  
+
+    const saveEmployee = (emp) => {
     let updated
     if (editingEmployee !== null) {
       updated = employees.map((e, i) => i === editingEmployee ? emp : e)
@@ -291,6 +319,14 @@ export default function Home() {
       const saved = JSON.parse(localStorage.getItem('employees') || '[]')
       setEmployees(saved)
     } catch {}
+    try {
+      const savedTasks = JSON.parse(localStorage.getItem('lightTasks') || '[]')
+      setLightTasks(savedTasks)
+    } catch {}
+    try {
+      const savedTasks = JSON.parse(localStorage.getItem('lightTasks') || '[]')
+      setLightTasks(savedTasks)
+    } catch {}
   }, [])
 
   const dismissNotification = (id) => {
@@ -377,6 +413,7 @@ export default function Home() {
   const navItems = [
     { id: 'financials', label: 'Financials', icon: '📊' },
     { id: 'tasks', label: 'Tasks', icon: '✅' },
+    { id: 'projects', label: 'Projects', icon: '📋' },
     { id: 'team', label: 'Team', icon: '👥' },
   ]
 
@@ -574,6 +611,138 @@ export default function Home() {
                 <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
                   {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
               </div>
             </div>
@@ -840,7 +1009,7 @@ export default function Home() {
           </>
         )}
 
-        {!drilldown && page === 'tasks' && (
+        {!drilldown && page === 'projects' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Dev Tasks</h1>
@@ -935,6 +1104,138 @@ export default function Home() {
       )}
 
       
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
@@ -1047,6 +1348,116 @@ export default function Home() {
                 })}
               </div>
             )}
+          </>
+        )}
+
+        {!drilldown && page === 'projects' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
+              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+                + Add Task
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              {['all', 'Not Started', 'In Progress', 'Blocked', 'Complete'].map(f => (
+                <button key={f} onClick={() => setLightTaskFilter(f)} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: lightTaskFilter === f ? '#0f0e0d' : 'white', color: lightTaskFilter === f ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer' }}>
+                  {f === 'all' ? 'All' : f}
+                </button>
+              ))}
+            </div>
+            {lightTasks.length === 0 && (
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
+                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Task" to get started</div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {lightTasks.filter(t => lightTaskFilter === 'all' || t.status === lightTaskFilter).map((task, idx) => {
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete'
+                const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
+                return (
+                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1rem 1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                          <span style={{ fontWeight: '600', fontSize: '0.9rem', color: task.status === 'Complete' ? '#8a8070' : '#0f0e0d', textDecoration: task.status === 'Complete' ? 'line-through' : 'none' }}>{task.name}</span>
+                          <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: priorityColor, fontWeight: '600' }}>{task.priority}</span>
+                          {isOverdue && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#fde8e8', color: '#b85c38', fontWeight: '600' }}>Overdue</span>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#8a8070', flexWrap: 'wrap' }}>
+                          {task.assignedTo && <span>👤 {task.assignedTo}</span>}
+                          {task.dueDate && <span style={{ color: isOverdue ? '#b85c38' : '#8a8070' }}>📅 {task.dueDate}</span>}
+                          {task.company && <span>🏢 {task.company.split(' ')[0]}</span>}
+                          <span style={{ padding: '0.05rem 0.4rem', borderRadius: '20px', background: task.status === 'Complete' ? '#e8f0e8' : task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : '#f0ece0', color: task.status === 'Complete' ? '#4a6741' : task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070' }}>{task.status}</span>
+                        </div>
+                        {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => deleteLightTask(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+
+        {!drilldown && page === 'tasks' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
+              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+                + Add Task
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              {['all', 'Not Started', 'In Progress', 'Blocked', 'Complete'].map(f => (
+                <button key={f} onClick={() => setLightTaskFilter(f)} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: lightTaskFilter === f ? '#0f0e0d' : 'white', color: lightTaskFilter === f ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer' }}>
+                  {f === 'all' ? 'All' : f}
+                </button>
+              ))}
+            </div>
+            {lightTasks.length === 0 && (
+              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
+                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
+                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Task" to get started</div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {lightTasks.filter(t => lightTaskFilter === 'all' || t.status === lightTaskFilter).map((task, idx) => {
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete'
+                const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
+                return (
+                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1rem 1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                          <span style={{ fontWeight: '600', fontSize: '0.9rem', color: task.status === 'Complete' ? '#8a8070' : '#0f0e0d', textDecoration: task.status === 'Complete' ? 'line-through' : 'none' }}>{task.name}</span>
+                          <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: priorityColor, fontWeight: '600' }}>{task.priority}</span>
+                          {isOverdue && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#fde8e8', color: '#b85c38', fontWeight: '600' }}>Overdue</span>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#8a8070', flexWrap: 'wrap' }}>
+                          {task.assignedTo && <span>👤 {task.assignedTo}</span>}
+                          {task.dueDate && <span style={{ color: isOverdue ? '#b85c38' : '#8a8070' }}>📅 {task.dueDate}</span>}
+                          {task.company && <span>🏢 {task.company.split(' ')[0]}</span>}
+                          <span style={{ padding: '0.05rem 0.4rem', borderRadius: '20px', background: task.status === 'Complete' ? '#e8f0e8' : task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : '#f0ece0', color: task.status === 'Complete' ? '#4a6741' : task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070' }}>{task.status}</span>
+                        </div>
+                        {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => deleteLightTask(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </>
         )}
 
@@ -1176,6 +1587,138 @@ export default function Home() {
                 <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
                   {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLightTaskModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Task Name *</label>
+                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Assigned To</label>
+                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Due Date</label>
+                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Priority</label>
+                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Status</label>
+                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Blocked</option>
+                    <option>Complete</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Company</label>
+                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
+                  <option value="">All Companies</option>
+                  <option>Nectera Holdings</option>
+                  <option>Xtract Environmental Services</option>
+                  <option>Bug Control Specialist</option>
+                  <option>Lush Green Landscapes</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
               </div>
             </div>
