@@ -133,6 +133,12 @@ export default function Home() {
   const [editingLightTask, setEditingLightTask] = useState(null)
   const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
+  const [notes, setNotes] = useState({})
+  const [selectedNoteCompany, setSelectedNoteCompany] = useState('Nectera Holdings')
+  const [selectedNoteId, setSelectedNoteId] = useState(null)
+  const [noteEditContent, setNoteEditContent] = useState('')
+  const [noteEditTitle, setNoteEditTitle] = useState('')
+
 
   const [showEmployeeModal, setShowEmployeeModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
@@ -208,6 +214,34 @@ export default function Home() {
       setConfirmDelete(null)
     }
   }
+
+  const saveNote = (company, id, title, content_text) => {
+    const updated = { ...notes }
+    if (!updated[company]) updated[company] = []
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    updated[company] = updated[company].map(n => n.id === id ? { ...n, title: title || 'Untitled', content: content_text, date: dateStr } : n)
+    setNotes(updated)
+    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+  }
+
+  const deleteNote = (company, id) => {
+    const updated = { ...notes, [company]: (notes[company] || []).filter(n => n.id !== id) }
+    setNotes(updated)
+    setSelectedNoteId(null)
+    setNoteEditContent('')
+    setNoteEditTitle('')
+    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+  }
+
+  const togglePinNote = (company, id) => {
+    const updated = { ...notes, [company]: (notes[company] || []).map(n => n.id === id ? { ...n, pinned: !n.pinned } : n) }
+    setNotes(updated)
+    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+  }
+
+  const currentNotes = (notes[selectedNoteCompany] || []).slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+  const selectedNote = currentNotes.find(n => n.id === selectedNoteId) || null
 
   const saveLightTask = (task) => {
     let updated
@@ -415,6 +449,7 @@ export default function Home() {
     { id: 'tasks', label: 'Tasks', icon: '✅' },
     { id: 'projects', label: 'Projects', icon: '📋' },
     { id: 'team', label: 'Team', icon: '👥' },
+    { id: 'notes', label: 'Notes', icon: '📝' },
   ]
 
   if (!authed) {
@@ -1457,6 +1492,61 @@ export default function Home() {
                   </div>
                 )
               })}
+            </div>
+          </>
+        )}
+
+        {!drilldown && page === 'notes' && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Notes</h1>
+              <button onClick={() => {
+                const newNote = { id: Date.now(), title: 'Untitled', content: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), pinned: false }
+                const updated = { ...notes, [selectedNoteCompany]: [newNote, ...(notes[selectedNoteCompany] || [])] }
+                setNotes(updated)
+                setSelectedNoteId(newNote.id)
+                setNoteEditTitle('')
+                setNoteEditContent('')
+                try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>+ New Note</button>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+              {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
+                <button key={co} onClick={() => { setSelectedNoteCompany(co); setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: selectedNoteCompany === co ? '#0f0e0d' : 'white', color: selectedNoteCompany === co ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {co.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 220px)' }}>
+              <div style={{ width: '240px', flexShrink: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {currentNotes.length === 0 && <div style={{ color: '#8a8070', fontSize: '0.8rem', padding: '1rem 0', textAlign: 'center' }}>No notes yet.<br/>Click '+ New Note'</div>}
+                {currentNotes.map(note => (
+                  <div key={note.id} onClick={() => { setSelectedNoteId(note.id); setNoteEditTitle(note.title); setNoteEditContent(note.content) }} style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid', borderColor: selectedNoteId === note.id ? '#c9a84c' : '#e0d8cc', background: selectedNoteId === note.id ? '#fdfaf5' : 'white', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
+                      {note.pinned && <span style={{ fontSize: '0.65rem' }}>📌</span>}
+                      <span style={{ fontWeight: '600', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{note.title || 'Untitled'}</span>
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{note.date}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#8a8070', marginTop: '0.2rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(note.content || '').slice(0, 60) || 'Empty note'}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {!selectedNote && <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.9rem' }}>Select or create a note</div>}
+                {selectedNote && (
+                  <>
+                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0ece0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <input value={noteEditTitle} onChange={e => setNoteEditTitle(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Note title...' style={{ border: 'none', outline: 'none', fontSize: '1rem', fontWeight: '600', flex: 1, background: 'transparent' }} />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => togglePinNote(selectedNoteCompany, selectedNote.id)} title={selectedNote.pinned ? 'Unpin' : 'Pin'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', opacity: selectedNote.pinned ? 1 : 0.4 }}>📌</button>
+                        <button onClick={() => deleteNote(selectedNoteCompany, selectedNote.id)} style={{ background: 'none', border: '1px solid #fde8e8', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#b85c38', padding: '0.2rem 0.5rem' }}>Delete</button>
+                      </div>
+                    </div>
+                    <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
+                    <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit' }} />
+                  </>
+                )}
+              </div>
             </div>
           </>
         )}
