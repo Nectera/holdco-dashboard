@@ -21,6 +21,8 @@ const getMetric = (report, label) => {
 const fmt = (val) => {
   const abs = Math.abs(val)
   const str = abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
+
   return (val < 0 ? '-$' : '$') + str
 }
 
@@ -108,6 +110,84 @@ const useIsMobile = () => {
 }
 
 export default function Home() {
+
+  const NavIcon = ({ id, active }) => {
+    const base = active ? '#c9a84c' : '#6b6560'
+    const accent = active ? '#ffffff' : '#3a3530'
+    const s = { display: 'block' }
+    if (id === 'financials') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="1" y="9" width="4" height="8" rx="1" fill={base} opacity="0.7"/>
+        <rect x="7" y="5" width="4" height="12" rx="1" fill={base}/>
+        <rect x="13" y="1" width="4" height="16" rx="1" fill={accent} opacity="0.9"/>
+        <path d="M2 7 L9 3 L16 1" stroke={accent} strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    )
+    if (id === 'messages') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="1" y="2" width="16" height="11" rx="2.5" fill={base} opacity="0.8"/>
+        <path d="M4 14 L3 17 L8 14" fill={accent}/>
+        <rect x="4" y="6" width="5" height="1.5" rx="0.75" fill={accent} opacity="0.9"/>
+        <rect x="4" y="9" width="8" height="1.5" rx="0.75" fill={accent} opacity="0.6"/>
+      </svg>
+    )
+    if (id === 'calendar') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="1" y="3" width="16" height="14" rx="2" fill={base} opacity="0.7"/>
+        <rect x="1" y="3" width="16" height="5" rx="2" fill={base}/>
+        <rect x="5" y="1" width="2" height="4" rx="1" fill={accent}/>
+        <rect x="11" y="1" width="2" height="4" rx="1" fill={accent}/>
+        <rect x="4" y="11" width="2.5" height="2.5" rx="0.5" fill={accent} opacity="0.8"/>
+        <rect x="7.75" y="11" width="2.5" height="2.5" rx="0.5" fill={accent} opacity="0.5"/>
+        <rect x="11.5" y="11" width="2.5" height="2.5" rx="0.5" fill={accent} opacity="0.3"/>
+      </svg>
+    )
+    if (id === 'notes') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="2" y="1" width="12" height="16" rx="2" fill={base} opacity="0.7"/>
+        <rect x="5" y="1" width="12" height="16" rx="2" fill={base}/>
+        <rect x="7.5" y="5" width="7" height="1.5" rx="0.75" fill={accent} opacity="0.9"/>
+        <rect x="7.5" y="8.5" width="5" height="1.5" rx="0.75" fill={accent} opacity="0.6"/>
+        <rect x="7.5" y="12" width="6" height="1.5" rx="0.75" fill={accent} opacity="0.4"/>
+        <rect x="3" y="5" width="2.5" height="9" rx="1" fill={accent} opacity="0.3"/>
+      </svg>
+    )
+    if (id === 'tasks') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="1" y="1" width="16" height="16" rx="3" fill={base} opacity="0.6"/>
+        <rect x="1" y="1" width="16" height="6" rx="3" fill={base}/>
+        <path d="M5 5 L7.5 7.5 L12 3" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect x="4" y="11" width="10" height="1.5" rx="0.75" fill={accent} opacity="0.7"/>
+        <rect x="4" y="14" width="7" height="1.5" rx="0.75" fill={accent} opacity="0.4"/>
+      </svg>
+    )
+    if (id === 'projects') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <rect x="1" y="1" width="7.5" height="7.5" rx="2" fill={base}/>
+        <rect x="9.5" y="1" width="7.5" height="7.5" rx="2" fill={base} opacity="0.5"/>
+        <rect x="1" y="9.5" width="7.5" height="7.5" rx="2" fill={base} opacity="0.5"/>
+        <rect x="9.5" y="9.5" width="7.5" height="7.5" rx="2" fill={accent} opacity="0.8"/>
+        <path d="M11.5 13.5 L13 15 L16 11.5" stroke={base} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    )
+    if (id === 'team') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <circle cx="6.5" cy="5.5" r="3.5" fill={base}/>
+        <path d="M1 16 C1 12.5 3.5 10 6.5 10 C9.5 10 12 12.5 12 16" fill={base} opacity="0.7"/>
+        <circle cx="13" cy="6" r="2.5" fill={accent} opacity="0.8"/>
+        <path d="M11 16 C11 13.5 12 11.5 13 11.5 C15 11.5 17 13.5 17 16" fill={accent} opacity="0.6"/>
+      </svg>
+    )
+    if (id === 'settings') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <circle cx="9" cy="9" r="3" fill={accent} opacity="0.9"/>
+        <path d="M9 1.5 L9 4M9 14 L9 16.5M1.5 9 L4 9M14 9 L16.5 9M3.7 3.7 L5.5 5.5M12.5 12.5 L14.3 14.3M14.3 3.7 L12.5 5.5M5.5 12.5 L3.7 14.3" stroke={base} strokeWidth="1.8" strokeLinecap="round"/>
+        <circle cx="9" cy="9" r="5.5" stroke={base} strokeWidth="1.5" fill="none" opacity="0.5"/>
+      </svg>
+    )
+    return null
+  }
+
   const [authed, setAuthed] = useState(false)
   const [currentUser, setCurrentUser] = useState(() => { try { return JSON.parse(localStorage.getItem('currentUser') || 'null') } catch { return null } })
   const [loginUsername, setLoginUsername] = useState('')
@@ -802,14 +882,14 @@ export default function Home() {
   })
 
   const navItems = [
-    { id: 'financials', label: 'Financials', icon: '📊' },
-    { id: 'messages', label: 'Messages', icon: '💬' },
-    { id: 'calendar', label: 'Calendar', icon: '📅' },
-    { id: 'notes', label: 'Notes', icon: '📝' },
-    { id: 'tasks', label: 'Tasks', icon: '✅' },
-    { id: 'projects', label: 'Projects', icon: '📋' },
-    { id: 'team', label: 'Team', icon: '👥' },
-    ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings', icon: '⚙️' }] : []),
+    { id: 'financials', label: 'Financials' },
+    { id: 'messages', label: 'Messages' },
+    { id: 'calendar', label: 'Calendar' },
+    { id: 'notes', label: 'Notes' },
+    { id: 'tasks', label: 'Tasks' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'team', label: 'Team' },
+    ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings' }] : []),
   ]
 
   const effectiveCommenterName = currentUser ? currentUser.name : commenterName
@@ -841,9 +921,12 @@ export default function Home() {
 
   if (!authed) {
     return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0f0e0d', fontFamily: 'sans-serif' }}>
-        <div style={{ background: 'white', borderRadius: '8px', padding: '2.5rem', width: '360px', maxWidth: '90vw', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
-          <h1 style={{ fontSize: '1.3rem', marginBottom: '0.25rem', color: '#0f0e0d' }}>Nectera Holdings</h1>
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0f0e0d', fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ background: '#f4f0e8', borderRadius: '16px', padding: '2.5rem', width: '380px', maxWidth: '90vw', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '700', margin: '0 auto 0.85rem auto', fontFamily: "'DM Serif Display', serif" }}>N</div>
+            <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem', color: '#0f0e0d', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Nectera Holdings</h1>
+          </div>
           {!useUserLogin ? (
             <>
               <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Enter your password to continue</p>
@@ -957,11 +1040,15 @@ export default function Home() {
       {!isMobile && (
         <div style={{ width: '220px', background: '#0f0e0d', color: '#f5f1ea', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
           <div style={{ borderBottom: '1px solid #2a2825', paddingBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.1rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400', letterSpacing: '0.02em' }}>Nectera Holdings</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '700', flexShrink: 0, fontFamily: "'DM Serif Display', serif" }}>N</div>
+              <h2 style={{ fontSize: '1.1rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400', letterSpacing: '0.02em' }}>Nectera Holdings</h2>
+            </div>
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {navItems.map(item => (
-              <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null) }} style={{ background: page === item.id && !drilldown ? '#1a1918' : 'transparent', color: page === item.id && !drilldown ? '#c9a84c' : '#f5f1ea', border: 'none', borderRadius: '4px', padding: '0.5rem 0.75rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null) }} style={{ background: page === item.id && !drilldown ? 'rgba(201,168,76,0.08)' : 'transparent', color: page === item.id && !drilldown ? '#c9a84c' : '#d4cfc8', border: 'none', borderLeft: page === item.id && !drilldown ? '2px solid #c9a84c' : '2px solid transparent', borderRadius: '0 6px 6px 0', padding: '0.5rem 0.75rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <NavIcon id={item.id} active={page === item.id && !drilldown} />
                 {item.label}
               </button>
             ))}
@@ -1407,7 +1494,7 @@ export default function Home() {
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + color }}>
                   <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-                  <div style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: '600', color: value < 0 ? '#b85c38' : '#0f0e0d' }}>{loadingFinancials ? '-' : fmt(value)}</div>
+                  <div style={{ fontSize: isMobile ? '1.4rem' : '2rem', fontWeight: '600', color: value < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.01em' }}>{loadingFinancials ? '-' : fmt(value)}</div>
                 </div>
               ))}
             </div>
