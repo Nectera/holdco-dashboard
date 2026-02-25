@@ -192,6 +192,12 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
     if (!authed) return
     fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
     fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
