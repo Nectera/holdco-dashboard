@@ -120,7 +120,7 @@ export default function Home() {
   const [filterCompany, setFilterCompany] = useState('all')
   const [showNotifications, setShowNotifications] = useState(false)
   const [dismissedNotifications, setDismissedNotifications] = useState([])
-  const [filterStatus, setFilterStatus] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('In Progress')
   const [saving, setSaving] = useState({})
   const [showModal, setShowModal] = useState(false)
   const [expandedTask, setExpandedTask] = useState(null)
@@ -1012,7 +1012,7 @@ export default function Home() {
         {!drilldown && page === 'projects' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Dev Tasks</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
               <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + New Task
               </button>
