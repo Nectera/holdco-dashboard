@@ -126,6 +126,7 @@ export default function Home() {
   const [expandedTask, setExpandedTask] = useState(null)
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const [drilldown, setDrilldown] = useState(null)
   const [reportModal, setReportModal] = useState(null)
   const [reportData, setReportData] = useState(null)
@@ -183,6 +184,19 @@ export default function Home() {
       setShowModal(false)
     }
     setCreating(false)
+  }
+
+  const handleDelete = async (task) => {
+    const res = await fetch('/api/tasks/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyKey: task.companyKey, rowIndex: task.rowIndex }),
+    })
+    const result = await res.json()
+    if (result.success) {
+      setTasks(t => t.filter(t2 => t2 !== task))
+      setConfirmDelete(null)
+    }
   }
 
   const openDrilldown = async (companyKey) => {
@@ -482,6 +496,21 @@ export default function Home() {
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
+            <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -823,6 +852,21 @@ export default function Home() {
         </div>
       )}
 
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
+            <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
@@ -906,6 +950,11 @@ export default function Home() {
                               </>
                             )}
                           </div>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+                            <button onClick={() => setConfirmDelete(task)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', color: '#b85c38', fontSize: '0.7rem', cursor: 'pointer', fontWeight: '500' }}>
+                              Delete Task
+                            </button>
+                          </div>
                           <div style={{ fontSize: '0.65rem', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Notes</div>
                           <textarea defaultValue={task.notes} onBlur={e => e.target.value !== task.notes && handleEdit(task, 'notes', e.target.value)} placeholder="Add notes..." style={{ width: '100%', minHeight: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', color: '#3a3530', background: '#fdfaf5', resize: 'vertical', boxSizing: 'border-box', outline: 'none' }} />
                         </div>
@@ -946,6 +995,21 @@ export default function Home() {
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
+            <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
+            </div>
+          </div>
         </div>
       )}
 
