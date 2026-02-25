@@ -120,6 +120,7 @@ export default function Home() {
   const [filterCompany, setFilterCompany] = useState('all')
   const [showNotifications, setShowNotifications] = useState(false)
   const [dismissedNotifications, setDismissedNotifications] = useState([])
+  const [notifTab, setNotifTab] = useState('projects')
   const [filterStatus, setFilterStatus] = useState('In Progress')
   const [saving, setSaving] = useState({})
   const [showModal, setShowModal] = useState(false)
@@ -377,6 +378,38 @@ export default function Home() {
   const in3Days = new Date(today)
   in3Days.setDate(in3Days.getDate() + 3)
 
+  const today2 = new Date()
+  today2.setHours(0, 0, 0, 0)
+  const in3Days2 = new Date(today2)
+  in3Days2.setDate(in3Days2.getDate() + 3)
+
+  const taskNotifications = lightTasks.flatMap(task => {
+    const notifs = []
+    if (!task.name) return []
+    const dueDate = task.dueDate ? new Date(task.dueDate + 'T12:00:00') : null
+    const isComplete = (task.status || '').toLowerCase().includes('complete')
+    const id_overdue = 'lt-overdue-' + task.name
+    const id_soon = 'lt-soon-' + task.name
+    if (!isComplete && dueDate && dueDate < today2) {
+      notifs.push({ id: id_overdue, type: 'overdue', task: task.name, company: task.company, dueDate: task.dueDate })
+    } else if (!isComplete && dueDate && dueDate <= in3Days2) {
+      notifs.push({ id: id_soon, type: 'soon', task: task.name, company: task.company, dueDate: task.dueDate })
+    }
+    return notifs
+  }).filter(n => !dismissedNotifications.includes(n.id))
+
+  // Notes notifications - track who was notified
+  const notesNotifications = Object.entries(notes).flatMap(([company, notesList]) =>
+    (notesList || []).filter(n => n.notified).map(n => ({
+      id: 'note-' + n.id,
+      type: 'note',
+      task: n.title,
+      company,
+      notifiedTo: n.notified,
+      date: n.date,
+    }))
+  ).filter(n => !dismissedNotifications.includes(n.id))
+
   const notifications = tasks.flatMap(task => {
     const notifs = []
     if (!task.name) return []
@@ -559,7 +592,7 @@ export default function Home() {
             <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Nectera Holdings</h2>
             <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#f5f1ea', fontSize: '1.1rem', padding: '0.1rem', display: 'flex', alignItems: 'center' }}>
               🔔
-              {notifications.length > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length}</span>}
+              {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
             </button>
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -574,15 +607,50 @@ export default function Home() {
       )}
 
       {showNotifications && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', minHeight: '300px', overflowY: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
             <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
             <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
           </div>
-          {notifications.length === 0 && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
-          )}
-          {notifications.map(n => (
+          <div style={{ display: 'flex', borderBottom: '1px solid #f0ece0' }}>
+            {[['projects', 'Projects', notifications.length], ['tasks', 'Tasks', taskNotifications.length], ['notes', 'Notes', notesNotifications.length]].map(([id, label, count]) => (
+              <button key={id} onClick={() => setNotifTab(id)} style={{ flex: 1, padding: '0.6rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: notifTab === id ? '600' : '400', color: notifTab === id ? '#0f0e0d' : '#8a8070', borderBottom: notifTab === id ? '2px solid #c9a84c' : '2px solid transparent' }}>
+                {label}{count > 0 ? ' (' + count + ')' : ''}
+              </button>
+            ))}
+          </div>
+          {notifTab === 'projects' && notifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No project alerts</div>}
+          {notifTab === 'tasks' && taskNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No task alerts</div>}
+          {notifTab === 'tasks' && taskNotifications.map(n => (
+            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: n.type === 'overdue' ? '#fde8e8' : '#fdf3e0', color: n.type === 'overdue' ? '#b85c38' : '#9a6a20', fontWeight: '600' }}>
+                    {n.type === 'overdue' ? 'Overdue' : 'Due Soon'}
+                  </span>
+                  {n.company && <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company.split(' ')[0]}</span>}
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
+              </div>
+              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+            </div>
+          ))}
+          {notifTab === 'notes' && notesNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No note notifications</div>}
+          {notifTab === 'notes' && notesNotifications.map(n => (
+            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#e8f0e8', color: '#4a6741', fontWeight: '600' }}>Note</span>
+                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
+                </div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                {n.notifiedTo && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Notified: {n.notifiedTo}</div>}
+              </div>
+              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+            </div>
+          ))}
+          {notifTab === 'projects' && notifications.map(n => (
             <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
@@ -1111,169 +1179,7 @@ export default function Home() {
                         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
                           <div style={{ fontSize: '0.75rem', color: '#8a8070', marginBottom: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {task.lead && <span>Lead: {task.lead}</span>}
-                            {showNotifications && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
-            <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
-            <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
-          </div>
-          {notifications.length === 0 && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
-          )}
-          {notifications.map(n => (
-            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
-                    background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
-                    color: n.type === 'overdue' ? '#b85c38' : n.type === 'soon' ? '#9a6a20' : '#4a6741',
-                    fontWeight: '600' }}>
-                    {n.type === 'overdue' ? 'Overdue' : n.type === 'soon' ? 'Due Soon' : 'New Task'}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
-                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
-              </div>
-              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      
-      {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>Task Name *</label>
-                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Due Date</label>
-                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Priority</label>
-                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Status</label>
-                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
-                    <option>Not Started</option>
-                    <option>In Progress</option>
-                    <option>Blocked</option>
-                    <option>Complete</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Company</label>
-                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
-                  <option value="">All Companies</option>
-                  <option>Nectera Holdings</option>
-                  <option>Xtract Environmental Services</option>
-                  <option>Bug Control Specialist</option>
-                  <option>Lush Green Landscapes</option>
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Notes</label>
-                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
-                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>Task Name *</label>
-                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Due Date</label>
-                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Priority</label>
-                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Status</label>
-                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
-                    <option>Not Started</option>
-                    <option>In Progress</option>
-                    <option>Blocked</option>
-                    <option>Complete</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Company</label>
-                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
-                  <option value="">All Companies</option>
-                  <option>Nectera Holdings</option>
-                  <option>Xtract Environmental Services</option>
-                  <option>Bug Control Specialist</option>
-                  <option>Lush Green Landscapes</option>
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Notes</label>
-                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
-                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+                      
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
@@ -1647,220 +1553,6 @@ export default function Home() {
         )}
       </div>
 
-      {showNotifications && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: isMobile ? '0 0 8px 8px' : '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
-            <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
-            <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
-          </div>
-          {notifications.length === 0 && (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>All caught up!</div>
-          )}
-          {notifications.map(n => (
-            <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
-                    background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
-                    color: n.type === 'overdue' ? '#b85c38' : n.type === 'soon' ? '#9a6a20' : '#4a6741',
-                    fontWeight: '600' }}>
-                    {n.type === 'overdue' ? 'Overdue' : n.type === 'soon' ? 'Due Soon' : 'New Task'}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
-                {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
-              </div>
-              <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showEmployeeModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingEmployee !== null ? 'Edit Employee' : 'Add Employee'}</h2>
-              <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>Full Name *</label>
-                <input value={employeeForm.name} onChange={e => setEmployeeForm(f => ({ ...f, name: e.target.value }))} placeholder="Jane Smith" style={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Role / Title</label>
-                  <input value={employeeForm.role} onChange={e => setEmployeeForm(f => ({ ...f, role: e.target.value }))} placeholder="Operations Manager" style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Company</label>
-                  <select value={employeeForm.company} onChange={e => setEmployeeForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
-                    <option value="">Select company...</option>
-                    <option value="Nectera Holdings">Nectera Holdings</option>
-                    <option value="Xtract Environmental Services">Xtract Environmental Services</option>
-                    <option value="Bug Control Specialist">Bug Control Specialist</option>
-                    <option value="Lush Green Landscapes">Lush Green Landscapes</option>
-                  </select>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Phone</label>
-                  <input value={employeeForm.phone} onChange={e => setEmployeeForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 555-5555" style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Email</label>
-                  <input value={employeeForm.email} onChange={e => setEmployeeForm(f => ({ ...f, email: e.target.value }))} placeholder="jane@company.com" style={inputStyle} />
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Photo URL (optional)</label>
-                <input value={employeeForm.photo} onChange={e => setEmployeeForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
-                  {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>Task Name *</label>
-                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Due Date</label>
-                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Priority</label>
-                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Status</label>
-                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
-                    <option>Not Started</option>
-                    <option>In Progress</option>
-                    <option>Blocked</option>
-                    <option>Complete</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Company</label>
-                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
-                  <option value="">All Companies</option>
-                  <option>Nectera Holdings</option>
-                  <option>Xtract Environmental Services</option>
-                  <option>Bug Control Specialist</option>
-                  <option>Lush Green Landscapes</option>
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Notes</label>
-                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
-                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>Task Name *</label>
-                <input value={lightTaskForm.name} onChange={e => setLightTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="What needs to be done?" style={inputStyle} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Due Date</label>
-                  <input type="date" value={lightTaskForm.dueDate} onChange={e => setLightTaskForm(f => ({ ...f, dueDate: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={labelStyle}>Priority</label>
-                  <select value={lightTaskForm.priority} onChange={e => setLightTaskForm(f => ({ ...f, priority: e.target.value }))} style={inputStyle}>
-                    <option>High</option>
-                    <option>Medium</option>
-                    <option>Low</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={labelStyle}>Status</label>
-                  <select value={lightTaskForm.status} onChange={e => setLightTaskForm(f => ({ ...f, status: e.target.value }))} style={inputStyle}>
-                    <option>Not Started</option>
-                    <option>In Progress</option>
-                    <option>Blocked</option>
-                    <option>Complete</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Company</label>
-                <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
-                  <option value="">All Companies</option>
-                  <option>Nectera Holdings</option>
-                  <option>Xtract Environmental Services</option>
-                  <option>Bug Control Specialist</option>
-                  <option>Lush Green Landscapes</option>
-                </select>
-              </div>
-              <div>
-                <label style={labelStyle}>Notes</label>
-                <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
-                  {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
