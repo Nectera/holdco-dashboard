@@ -115,6 +115,9 @@ export default function Home() {
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
   const [useUserLogin, setUseUserLogin] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotStatus, setForgotStatus] = useState('')
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const isMobile = useIsMobile()
@@ -141,7 +144,7 @@ export default function Home() {
   const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
   const [userList, setUserList] = useState([])
-  const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', role: 'member' })
+  const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const [userMgmtError, setUserMgmtError] = useState('')
   const [userMgmtSuccess, setUserMgmtSuccess] = useState('')
   const [notes, setNotes] = useState({})
@@ -575,7 +578,20 @@ export default function Home() {
               <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUserLogin()} placeholder="Password" style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
               {loginError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>{loginError}</p>}
               <button onClick={handleUserLogin} disabled={loginLoading} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500', opacity: loginLoading ? 0.6 : 1 }}>{loginLoading ? 'Signing in...' : 'Sign In'}</button>
-              <button onClick={() => setUseUserLogin(false)} style={{ marginTop: '1rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Use master password instead</button>
+              <button onClick={() => setShowForgotPassword(!showForgotPassword)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>
+              {showForgotPassword && (
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f5f1ea', borderRadius: '6px' }}>
+                  <p style={{ fontSize: '0.78rem', color: '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
+                  <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
+                  {forgotStatus && <p style={{ fontSize: '0.75rem', color: '#4a6741', margin: '0 0 0.5rem 0' }}>{forgotStatus}</p>}
+                  <button onClick={async () => {
+                    const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'forgot_password', email: forgotEmail }) })
+                    setForgotStatus('If that email exists, a reset link has been sent!')
+                    setForgotEmail('')
+                  }} style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem' }}>Send Reset Link</button>
+                </div>
+              )}
+              <button onClick={() => setUseUserLogin(false)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Use master password instead</button>
             </>
           )}
         </div>
@@ -1633,6 +1649,10 @@ export default function Home() {
                     <input type="password" value={newUserForm.password} onChange={e => setNewUserForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" style={inputStyle} />
                   </div>
                   <div>
+                    <label style={labelStyle}>Email</label>
+                    <input value={newUserForm.email || ''} onChange={e => setNewUserForm(f => ({ ...f, email: e.target.value }))} placeholder="jane@company.com" style={inputStyle} />
+                  </div>
+                  <div>
                     <label style={labelStyle}>Role</label>
                     <select value={newUserForm.role} onChange={e => setNewUserForm(f => ({ ...f, role: e.target.value }))} style={inputStyle}>
                       <option value="member">Member</option>
@@ -1649,7 +1669,7 @@ export default function Home() {
                     const data = await res.json()
                     if (data.success) {
                       setUserMgmtSuccess('User created!')
-                      setNewUserForm({ name: '', username: '', password: '', role: 'member' })
+                      setNewUserForm({ name: '', username: '', password: '', email: '', role: 'member' })
                       const r2 = await fetch('/api/users?action=list')
                       setUserList(await r2.json())
                     } else {
