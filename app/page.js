@@ -66,7 +66,7 @@ const shortName = (name) => {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
+      <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
         <div style={{ fontWeight: '600', marginBottom: '0.4rem' }}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} style={{ color: p.color }}>{p.name}: {fmtK(p.value)}</div>
@@ -857,7 +857,7 @@ export default function Home() {
               <button onClick={handleUserLogin} disabled={loginLoading} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500', opacity: loginLoading ? 0.6 : 1 }}>{loginLoading ? 'Signing in...' : 'Sign In'}</button>
               <button onClick={() => setShowForgotPassword(!showForgotPassword)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>
               {showForgotPassword && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f5f1ea', borderRadius: '6px' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f7f3ed', borderRadius: '6px' }}>
                   <p style={{ fontSize: '0.78rem', color: '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
                   <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
                   {forgotStatus && <p style={{ fontSize: '0.75rem', color: '#4a6741', margin: '0 0 0.5rem 0' }}>{forgotStatus}</p>}
@@ -865,7 +865,7 @@ export default function Home() {
                     const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'forgot_password', email: forgotEmail }) })
                     setForgotStatus('If that email exists, a reset link has been sent!')
                     setForgotEmail('')
-                  }} style={{ width: '100%', padding: '0.4rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem' }}>Send Reset Link</button>
+                  }} style={{ width: '100%', padding: '0.4rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem' }}>Send Reset Link</button>
                 </div>
               )}
               <button onClick={() => setUseUserLogin(false)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Use master password instead</button>
@@ -941,7 +941,7 @@ export default function Home() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={handleCreate} disabled={creating || !newTask.name || !newTask.companyKey} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', opacity: (creating || !newTask.name || !newTask.companyKey) ? 0.5 : 1 }}>
+                <button onClick={handleCreate} disabled={creating || !newTask.name || !newTask.companyKey} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', opacity: (creating || !newTask.name || !newTask.companyKey) ? 0.5 : 1 }}>
                   {creating ? 'Creating...' : 'Create Task'}
                 </button>
               </div>
@@ -968,7 +968,7 @@ export default function Home() {
           </nav>
           <div style={{ marginTop: 'auto' }}>
             {currentUser && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: '#1a1918', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', padding: '0.4rem 0.5rem', background: 'rgba(255,255,255,0.07)', borderRadius: '8px' }}>
                 <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '700', flexShrink: 0 }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
                 <span style={{ fontSize: '0.72rem', color: '#c9c5be', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.name}</span>
                 <button onClick={handleLogout} style={{ background: 'none', border: '1px solid #3a3530', borderRadius: '4px', color: '#8a8070', fontSize: '0.62rem', cursor: 'pointer', padding: '0.15rem 0.4rem', flexShrink: 0 }}>Sign out</button>
@@ -980,7 +980,7 @@ export default function Home() {
       )}
 
       {showNotifications && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', minHeight: '300px', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', minHeight: '300px', overflowY: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
             <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
             <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
@@ -1088,7 +1088,7 @@ export default function Home() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
+                <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
                   {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
                 </button>
               </div>
@@ -1154,7 +1154,7 @@ export default function Home() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
               </div>
@@ -1220,7 +1220,7 @@ export default function Home() {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                 <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
-                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
+                <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
               </div>
@@ -1325,7 +1325,7 @@ export default function Home() {
         </div>
       )}
 
-      <div style={{ flex: 1, padding: isMobile ? '1rem' : '2rem', background: '#f5f1ea', overflowY: 'auto', paddingBottom: isMobile ? '5rem' : '2rem' }}>
+      <div style={{ flex: 1, padding: isMobile ? '1rem' : '2rem', background: '#f7f3ed', overflowY: 'auto', paddingBottom: isMobile ? '5rem' : '2rem' }}>
 
         {drilldown && (
           <>
@@ -1338,7 +1338,7 @@ export default function Home() {
             </div>
             {loadingDrilldown ? <p style={{ color: '#8a8070' }}>Loading details...</p> : drilldownData && (
               <>
-                <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070' }}>Trend</div>
                     {periodToggle}
@@ -1353,7 +1353,7 @@ export default function Home() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>P&L Breakdown (YTD)</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                     {drilldownData.rows.map((row, i) => (
@@ -1374,7 +1374,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Portfolio Overview</h1>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500' }}>📤 Export PDF</button>
+                <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500' }}>📤 Export PDF</button>
                 <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
                   <option value="2026">2026</option>
                   <option value="2025">2025</option>
@@ -1392,7 +1392,7 @@ export default function Home() {
                 { label: 'Total Expenses', value: totalExpenses, color: '#b85c38' },
                 { label: 'Net Income', value: totalNet, color: totalNet >= 0 ? '#3d5a6e' : '#b85c38' },
               ].map(({ label, value, color }) => (
-                <div key={label} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1rem', borderTop: '3px solid ' + color }}>
+                <div key={label} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + color }}>
                   <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
                   <div style={{ fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: '600', color: value < 0 ? '#b85c38' : '#0f0e0d' }}>{loadingFinancials ? '-' : fmt(value)}</div>
                 </div>
@@ -1401,7 +1401,7 @@ export default function Home() {
 
             {!loadingFinancials && chartData.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Revenue vs Expenses</div>
                   <ResponsiveContainer width="100%" height={180}>
                     <BarChart data={chartData} barGap={4}>
@@ -1421,7 +1421,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Net Income by Subsidiary</div>
                   <ResponsiveContainer width="100%" height={180}>
                     <BarChart data={chartData}>
@@ -1450,7 +1450,7 @@ export default function Home() {
                   const margin = income > 0 ? ((net / income) * 100).toFixed(1) : '0.0'
                   const marginPct = Math.min(Math.max(parseFloat(margin), 0), 30) / 30 * 100
                   return (
-                    <div key={sub.name} onClick={() => companyKeys[sub.name] && openDrilldown(companyKeys[sub.name])} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem', cursor: companyKeys[sub.name] ? 'pointer' : 'default' }} onMouseEnter={e => companyKeys[sub.name] && (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)')} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                    <div key={sub.name} onClick={() => companyKeys[sub.name] && openDrilldown(companyKeys[sub.name])} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', cursor: companyKeys[sub.name] ? 'pointer' : 'default' }} onMouseEnter={e => companyKeys[sub.name] && (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)')} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, fontSize: '0.95rem' }}>{sub.name}</h3>
                         <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: net >= 0 ? '#e8f0e8' : '#fdf3e0', color: net >= 0 ? '#4a6741' : '#9a6a20' }}>
@@ -1498,7 +1498,7 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
-              <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + New Project
               </button>
             </div>
@@ -1507,10 +1507,10 @@ export default function Home() {
             </p>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {companies.map(c => <option key={c} value={c}>{isMobile ? (c === 'all' ? 'All' : companyLabels[c].split(' ')[0]) : companyLabels[c]}</option>)}
               </select>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s}</option>)}
               </select>
               <span style={{ fontSize: '0.8rem', color: '#8a8070', alignSelf: 'center' }}>{filteredTasks.length} tasks</span>
@@ -1523,7 +1523,7 @@ export default function Home() {
                   const pc = priorityColor(task.priority)
                   const isExpanded = expandedTask === i
                   return (
-                    <div key={i} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem' }}>
+                    <div key={i} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div onClick={() => setExpandedTask(isExpanded ? null : i)} style={{ fontWeight: '500', marginBottom: '0.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
@@ -1666,7 +1666,7 @@ export default function Home() {
                             </button>
                           </div>
                           <div style={{ fontSize: '0.65rem', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Notes</div>
-                          <textarea defaultValue={task.notes} onBlur={e => e.target.value !== task.notes && handleEdit(task, 'notes', e.target.value)} placeholder="Add notes..." style={{ width: '100%', minHeight: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', color: '#3a3530', background: '#fdfaf5', resize: 'vertical', boxSizing: 'border-box', outline: 'none' }} />
+                          <textarea defaultValue={task.notes} onBlur={e => e.target.value !== task.notes && handleEdit(task, 'notes', e.target.value)} placeholder="Add notes..." style={{ width: '100%', minHeight: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', color: '#3a3530', background: '#fefcf8', resize: 'vertical', boxSizing: 'border-box', outline: 'none' }} />
                         </div>
                       )}
                     </div>
@@ -1683,7 +1683,7 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
-              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Add Task
               </button>
             </div>
@@ -1695,7 +1695,7 @@ export default function Home() {
               ))}
             </div>
             {lightTasks.length === 0 && (
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
                 <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
                 <div style={{ fontSize: '0.8rem' }}>Click "+ Add Task" to get started</div>
@@ -1706,7 +1706,7 @@ export default function Home() {
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete'
                 const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
                 return (
-                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1rem 1.25rem' }}>
+                  <div key={idx} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem 1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
@@ -1746,7 +1746,7 @@ export default function Home() {
                 setNoteEditTitle('')
                 setNoteEditContent('')
                 fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: selectedNoteCompany, notes: updated[selectedNoteCompany] }) }).catch(() => {})
-              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>+ New Note</button>
+              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New Note</button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
@@ -1769,7 +1769,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ flex: 1, background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {!selectedNote && <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.9rem' }}>Select or create a note</div>}
                 {selectedNote && (
                   <>
@@ -1780,7 +1780,7 @@ export default function Home() {
                         <div style={{ position: 'relative' }}>
                           <button onClick={() => setShowTagMenu(!showTagMenu)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#3a3530', padding: '0.2rem 0.5rem' }}>@ Notify</button>
                           {showTagMenu && (
-                            <div style={{ position: 'absolute', top: '100%', right: 0, background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
+                            <div style={{ position: 'absolute', top: '100%', right: 0, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
                               <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f0ece0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notify team member</div>
                               {employees.length === 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No team members added yet</div>}
                               {employees.filter(e => e.email).map((emp, idx) => (
@@ -1826,7 +1826,7 @@ export default function Home() {
                     </div>
                     <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
                     <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
-                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fafaf8' }}>
+                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fefcf8' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({(selectedNote.attachments || []).length})</div>
                         <label style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', color: '#3a3530' }}>
@@ -1853,12 +1853,12 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fdfaf5' }}>
+                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fefcf8' }}>
                       <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Comments ({(selectedNote.comments || []).length})</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem', maxHeight: '180px', overflowY: 'auto' }}>
                         {(selectedNote.comments || []).length === 0 && <div style={{ fontSize: '0.78rem', color: '#ccc', fontStyle: 'italic' }}>No comments yet</div>}
                         {(selectedNote.comments || []).map(c => (
-                          <div key={c.id} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '0.5rem 0.75rem' }}>
+                          <div key={c.id} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.5rem 0.75rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '600' }}>{c.author.slice(0,2).toUpperCase()}</div>
@@ -1876,7 +1876,7 @@ export default function Home() {
                           {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
                           <textarea value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
                         </div>
-                        <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
+                        <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
                       </div>
                     </div>
                   </>
@@ -1890,11 +1890,11 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Messages</h1>
-              <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>
+              <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>
             </div>
 
             {showNewConvo && (
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', padding: '1.25rem', marginBottom: '1rem' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', marginBottom: '1rem' }}>
                 <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem' }}>New Conversation</h3>
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <button onClick={() => setNewConvoType('dm')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoType === 'dm' ? '#0f0e0d' : 'white', color: newConvoType === 'dm' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Direct Message</button>
@@ -1912,7 +1912,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={createConversation} disabled={newConvoMembers.length === 0} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', opacity: newConvoMembers.length === 0 ? 0.4 : 1 }}>Start</button>
+                  <button onClick={createConversation} disabled={newConvoMembers.length === 0} style={{ padding: '0.4rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.82rem', opacity: newConvoMembers.length === 0 ? 0.4 : 1 }}>Start</button>
                   <button onClick={() => { setShowNewConvo(false); setNewConvoMembers([]); setNewConvoName('') }} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
                 </div>
               </div>
@@ -1920,7 +1920,7 @@ export default function Home() {
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: '1rem', height: 'calc(100vh - 200px)' }}>
               {/* Conversation list */}
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', overflowY: 'auto' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflowY: 'auto' }}>
                 {conversations.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No conversations yet.<br/>Click "+ New" to start one.</div>}
                 {conversations.map(convo => {
                   const otherMembers = convo.members.filter(id => id !== currentUser?.id)
@@ -1943,7 +1943,7 @@ export default function Home() {
               </div>
 
               {/* Message view */}
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '8px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column' }}>
                 {!activeConvo ? (
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.85rem' }}>Select a conversation to start messaging</div>
                 ) : (
@@ -1987,7 +1987,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                 <h2 style={{ fontSize: '0.95rem', margin: '0 0 1rem 0' }}>Create User Account</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div>
@@ -2029,11 +2029,11 @@ export default function Home() {
                     } else {
                       setUserMgmtError(data.error || 'Failed')
                     }
-                  }} style={{ padding: '0.5rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Create Account</button>
+                  }} style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>Create Account</button>
                 </div>
               </div>
 
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h2 style={{ fontSize: '0.95rem', margin: 0 }}>User Accounts</h2>
                   <button onClick={async () => { const r = await fetch('/api/users?action=list'); setUserList(await r.json()) }} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer' }}>Refresh</button>
@@ -2067,13 +2067,13 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Team Directory</h1>
-              <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Add Employee
               </button>
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.8rem' }}>{employees.length} team member{employees.length !== 1 ? 's' : ''}</p>
             {employees.length === 0 && (
-              <div style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>👥</div>
                 <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No team members yet</div>
                 <div style={{ fontSize: '0.8rem' }}>Click "+ Add Employee" to get started</div>
@@ -2084,7 +2084,7 @@ export default function Home() {
                 const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 const companyShort = emp.company ? emp.company.split(' ')[0] : ''
                 return (
-                  <div key={idx} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '1.25rem' }}>
+                  <div key={idx} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                       {emp.photo ? (
                         <img src={emp.photo} alt={emp.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />

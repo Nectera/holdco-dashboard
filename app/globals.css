@@ -24,3 +24,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0px);
+}
+
+input, textarea, select {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+  border-color: #c9a84c !important;
+  outline: none;
+}
+
+a {
+  transition: opacity 0.15s ease;
+}
+
+a:hover {
+  opacity: 0.75;
+}
