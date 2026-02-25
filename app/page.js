@@ -125,6 +125,9 @@ export default function Home() {
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [drilldown, setDrilldown] = useState(null)
+  const [reportModal, setReportModal] = useState(null)
+  const [reportData, setReportData] = useState(null)
+  const [loadingReport, setLoadingReport] = useState(false)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [period, setPeriod] = useState('monthly')
   const [drilldownData, setDrilldownData] = useState(null)
@@ -188,6 +191,16 @@ export default function Home() {
     const d = await res.json()
     setDrilldownData(d)
     setLoadingDrilldown(false)
+  }
+
+  const openReport = async (companyKey, type) => {
+    setReportModal({ companyKey, type })
+    setReportData(null)
+    setLoadingReport(true)
+    const res = await fetch('/api/qb/report?company=' + companyKey + '&type=' + type + '&year=' + selectedYear)
+    const d = await res.json()
+    setReportData(d)
+    setLoadingReport(false)
   }
 
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
@@ -393,6 +406,74 @@ export default function Home() {
         </div>
       )}
 
+      {reportModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
+              </div>
+              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
+              {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
+              {reportData && reportData.rows && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                  {reportData.rows.map((row, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0.5rem',
+                      paddingLeft: (0.5 + (row.depth || 0) * 1.25) + 'rem',
+                      borderRadius: '3px',
+                      background: row.isHeader ? '#f5f1ea' : row.isTotal ? '#f0ece0' : 'transparent',
+                      fontWeight: row.isTotal || row.isHeader ? '600' : '400',
+                      fontSize: row.isHeader ? '0.7rem' : '0.82rem',
+                      textTransform: row.isHeader ? 'uppercase' : 'none',
+                      letterSpacing: row.isHeader ? '0.06em' : 'normal',
+                      borderTop: row.isTotal ? '1px solid #e0d8cc' : 'none',
+                      gap: '1rem',
+                    }}>
+                      <span style={{ color: row.isHeader ? '#8a8070' : '#0f0e0d', flex: 1 }}>{row.label}</span>
+                      {row.isAging && row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', fontWeight: '600', borderTop: '2px solid #0f0e0d', paddingTop: '0.3rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>${row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#9a6a20', minWidth: '70px', textAlign: 'right' }}>${row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && !row.colHeaders && !row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>{row.current > 0 ? '$' + row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over30 > 0 ? '#9a6a20' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over30 > 0 ? '$' + row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && row.colHeaders && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.68rem', color: '#8a8070', fontWeight: '600' }}>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Current</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>1-30</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>31-60</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>61-90</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>91+</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Total</span>
+                        </div>
+                      )}
+                      {!row.isAging && row.value !== null && <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d', fontVariantNumeric: 'tabular-nums' }}>{row.value < 0 ? '-$' : '$'}{Math.abs(row.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isMobile && (
         <div style={{ background: '#0f0e0d', color: '#f5f1ea', padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <h2 style={{ fontSize: '1rem', margin: 0 }}>Nectera Holdings</h2>
@@ -551,6 +632,13 @@ export default function Home() {
                           <span>Goal: 15%</span>
                         </div>
                       </div>
+                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                        {[['pl', 'P&L'], ['balance', 'Balance Sheet'], ['ar', 'A/R Aging'], ['ap', 'A/P Aging']].map(([type, label]) => (
+                          <button key={type} onClick={e => { e.stopPropagation(); openReport(companyKeys[sub.name], type) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )
                 })}
@@ -623,7 +711,75 @@ export default function Home() {
                         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
                           <div style={{ fontSize: '0.75rem', color: '#8a8070', marginBottom: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {task.lead && <span>Lead: {task.lead}</span>}
-                            {isMobile && (
+                            {reportModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
+              </div>
+              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
+              {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
+              {reportData && reportData.rows && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                  {reportData.rows.map((row, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0.5rem',
+                      paddingLeft: (0.5 + (row.depth || 0) * 1.25) + 'rem',
+                      borderRadius: '3px',
+                      background: row.isHeader ? '#f5f1ea' : row.isTotal ? '#f0ece0' : 'transparent',
+                      fontWeight: row.isTotal || row.isHeader ? '600' : '400',
+                      fontSize: row.isHeader ? '0.7rem' : '0.82rem',
+                      textTransform: row.isHeader ? 'uppercase' : 'none',
+                      letterSpacing: row.isHeader ? '0.06em' : 'normal',
+                      borderTop: row.isTotal ? '1px solid #e0d8cc' : 'none',
+                      gap: '1rem',
+                    }}>
+                      <span style={{ color: row.isHeader ? '#8a8070' : '#0f0e0d', flex: 1 }}>{row.label}</span>
+                      {row.isAging && row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', fontWeight: '600', borderTop: '2px solid #0f0e0d', paddingTop: '0.3rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>${row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#9a6a20', minWidth: '70px', textAlign: 'right' }}>${row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && !row.colHeaders && !row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>{row.current > 0 ? '$' + row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over30 > 0 ? '#9a6a20' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over30 > 0 ? '$' + row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && row.colHeaders && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.68rem', color: '#8a8070', fontWeight: '600' }}>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Current</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>1-30</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>31-60</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>61-90</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>91+</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Total</span>
+                        </div>
+                      )}
+                      {!row.isAging && row.value !== null && <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d', fontVariantNumeric: 'tabular-nums' }}>{row.value < 0 ? '-$' : '$'}{Math.abs(row.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isMobile && (
                               <select value={task.priority} onChange={e => handleEdit(task, 'priority', e.target.value)} style={selectStyle(pc)}>
                                 <option value="">No priority</option>
                                 <option value="High">High</option>
@@ -650,6 +806,74 @@ export default function Home() {
           </>
         )}
       </div>
+
+      {reportModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+              <div>
+                <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
+                <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
+              </div>
+              <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '1rem 1.5rem' }}>
+              {loadingReport && <p style={{ color: '#8a8070', textAlign: 'center', padding: '2rem' }}>Loading report...</p>}
+              {reportData && reportData.rows && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                  {reportData.rows.map((row, i) => (
+                    <div key={i} style={{
+                      display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0.5rem',
+                      paddingLeft: (0.5 + (row.depth || 0) * 1.25) + 'rem',
+                      borderRadius: '3px',
+                      background: row.isHeader ? '#f5f1ea' : row.isTotal ? '#f0ece0' : 'transparent',
+                      fontWeight: row.isTotal || row.isHeader ? '600' : '400',
+                      fontSize: row.isHeader ? '0.7rem' : '0.82rem',
+                      textTransform: row.isHeader ? 'uppercase' : 'none',
+                      letterSpacing: row.isHeader ? '0.06em' : 'normal',
+                      borderTop: row.isTotal ? '1px solid #e0d8cc' : 'none',
+                      gap: '1rem',
+                    }}>
+                      <span style={{ color: row.isHeader ? '#8a8070' : '#0f0e0d', flex: 1 }}>{row.label}</span>
+                      {row.isAging && row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem', fontWeight: '600', borderTop: '2px solid #0f0e0d', paddingTop: '0.3rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>${row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#9a6a20', minWidth: '70px', textAlign: 'right' }}>${row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && !row.colHeaders && !row.isTotal && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem' }}>
+                          <span style={{ color: '#4a6741', minWidth: '70px', textAlign: 'right' }}>{row.current > 0 ? '$' + row.current.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over30 > 0 ? '#9a6a20' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over30 > 0 ? '$' + row.over30.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
+                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
+                      {row.isAging && row.colHeaders && (
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.68rem', color: '#8a8070', fontWeight: '600' }}>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Current</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>1-30</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>31-60</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>61-90</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>91+</span>
+                          <span style={{ minWidth: '70px', textAlign: 'right' }}>Total</span>
+                        </div>
+                      )}
+                      {!row.isAging && row.value !== null && <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d', fontVariantNumeric: 'tabular-nums' }}>{row.value < 0 ? '-$' : '$'}{Math.abs(row.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {isMobile && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0f0e0d', display: 'flex', borderTop: '1px solid #222', zIndex: 50 }}>
