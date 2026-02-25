@@ -109,6 +109,12 @@ const useIsMobile = () => {
 
 export default function Home() {
   const [authed, setAuthed] = useState(false)
+  const [currentUser, setCurrentUser] = useState(() => { try { return JSON.parse(localStorage.getItem('currentUser') || 'null') } catch { return null } })
+  const [loginUsername, setLoginUsername] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [useUserLogin, setUseUserLogin] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const isMobile = useIsMobile()
@@ -140,6 +146,9 @@ export default function Home() {
   const [noteEditContent, setNoteEditContent] = useState('')
   const [noteEditTitle, setNoteEditTitle] = useState('')
   const [showTagMenu, setShowTagMenu] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [commenterName, setCommenterName] = useState(() => { try { return localStorage.getItem('commenterName') || '' } catch { return '' } })
+
   const [notifySending, setNotifySending] = useState(false)
   const [notifySuccess, setNotifySuccess] = useState(null)
 
@@ -218,6 +227,31 @@ export default function Home() {
       setConfirmDelete(null)
     }
   }
+
+  const addComment = (company, noteId) => {
+    if (!commentText.trim()) return
+    const updated = { ...notes }
+    const name = (currentUser ? currentUser.name : commenterName.trim()) || 'Anonymous'
+    try { localStorage.setItem('commenterName', name) } catch {}
+    const now = new Date()
+    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const comment = { id: Date.now(), author: name, text: commentText.trim(), date: dateStr }
+    updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, comments: [...(n.comments || []), comment] } : n)
+    setNotes(updated)
+    setCommentText('')
+    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+  }
+
+  const deleteComment = (company, noteId, commentId) => {
+    const updated = { ...notes }
+    updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, comments: (n.comments || []).filter(c => c.id !== commentId) } : n)
+    setNotes(updated)
+    try { localStorage.setItem('companyNotes', JSON.stringify(updated)) } catch {}
+  }
+
+  
+
+  
 
   const saveNote = (company, id, title, content_text) => {
     const updated = { ...notes }
@@ -348,6 +382,7 @@ export default function Home() {
     })
 
   // Load dismissed notifications from localStorage
+
   useEffect(() => {
     try {
       const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]')
@@ -488,25 +523,56 @@ export default function Home() {
     { id: 'notes', label: 'Notes', icon: '📝' },
   ]
 
+  const effectiveCommenterName = currentUser ? currentUser.name : commenterName
+
+  const handleUserLogin = async () => {
+    setLoginLoading(true)
+    setLoginError('')
+    try {
+      const res = await fetch('/api/users?action=login&username=' + encodeURIComponent(loginUsername) + '&password=' + encodeURIComponent(loginPassword))
+      const data = await res.json()
+      if (data.success) {
+        setCurrentUser(data.user)
+        setAuthed(true)
+        try { localStorage.setItem('currentUser', JSON.stringify(data.user)) } catch {}
+      } else {
+        setLoginError(data.error || 'Invalid credentials')
+      }
+    } catch {
+      setLoginError('Connection error')
+    }
+    setLoginLoading(false)
+  }
+
+  const handleLogout = () => {
+    setCurrentUser(null)
+    setAuthed(false)
+    try { localStorage.removeItem('currentUser') } catch {}
+  }
+
   if (!authed) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0f0e0d', fontFamily: 'sans-serif' }}>
         <div style={{ background: 'white', borderRadius: '8px', padding: '2.5rem', width: '360px', maxWidth: '90vw', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
           <h1 style={{ fontSize: '1.3rem', marginBottom: '0.25rem', color: '#0f0e0d' }}>Nectera Holdings</h1>
-          <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Enter your password to continue</p>
-          <input
-            type="password"
-            value={passwordInput}
-            onChange={e => { setPasswordInput(e.target.value); setPasswordError(false) }}
-            onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            placeholder="Password"
-            autoFocus
-            style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: passwordError ? '1px solid #b85c38' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }}
-          />
-          {passwordError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>Incorrect password</p>}
-          <button onClick={handleLogin} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500' }}>
-            Sign In
-          </button>
+          {!useUserLogin ? (
+            <>
+              <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Enter your password to continue</p>
+              <input type="password" value={passwordInput} onChange={e => { setPasswordInput(e.target.value); setPasswordError(false) }} onKeyDown={e => e.key === 'Enter' && handleLogin()} placeholder="Password" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: passwordError ? '1px solid #b85c38' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
+              {passwordError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>Incorrect password</p>}
+              <button onClick={handleLogin} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500' }}>Sign In</button>
+              <button onClick={() => setUseUserLogin(true)} style={{ marginTop: '1rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Sign in with user account</button>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Sign in to your account</p>
+              <input value={loginUsername} onChange={e => setLoginUsername(e.target.value)} placeholder="Username" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUserLogin()} placeholder="Password" style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
+              {loginError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>{loginError}</p>}
+              <button onClick={handleUserLogin} disabled={loginLoading} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500', opacity: loginLoading ? 0.6 : 1 }}>{loginLoading ? 'Signing in...' : 'Sign In'}</button>
+              <button onClick={() => setUseUserLogin(false)} style={{ marginTop: '1rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Use master password instead</button>
+            </>
+          )}
         </div>
       </div>
     )
@@ -1495,7 +1561,33 @@ export default function Home() {
                       </div>
                     </div>
                     <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
-                    <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit' }} />
+                    <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
+                    <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fdfaf5' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Comments ({(selectedNote.comments || []).length})</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem', maxHeight: '180px', overflowY: 'auto' }}>
+                        {(selectedNote.comments || []).length === 0 && <div style={{ fontSize: '0.78rem', color: '#ccc', fontStyle: 'italic' }}>No comments yet</div>}
+                        {(selectedNote.comments || []).map(c => (
+                          <div key={c.id} style={{ background: 'white', border: '1px solid #e0d8cc', borderRadius: '6px', padding: '0.5rem 0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '600' }}>{c.author.slice(0,2).toUpperCase()}</div>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#0f0e0d' }}>{c.author}</span>
+                                <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{c.date}</span>
+                              </div>
+                              <button onClick={() => deleteComment(selectedNoteCompany, selectedNote.id, c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.7rem', padding: 0 }}>x</button>
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: '#3a3530', lineHeight: '1.5' }}>{c.text}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />
+                          <textarea value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
+                        </div>
+                        <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
