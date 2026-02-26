@@ -215,6 +215,12 @@ export default function Home() {
   const [saving, setSaving] = useState({})
   const [showModal, setShowModal] = useState(false)
   const [expandedTask, setExpandedTask] = useState(null)
+  const [commentPanel, setCommentPanel] = useState(false)
+  const [activeCommentProject, setActiveCommentProject] = useState(null)
+  const [comments, setComments] = useState([])
+  const [projectCommentText, setProjectCommentText] = useState('')
+  const [commentLoading, setCommentLoading] = useState(false)
+  const [showEmojiFor, setShowEmojiFor] = useState(null)
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -253,7 +259,6 @@ export default function Home() {
   const [noteEditContent, setNoteEditContent] = useState('')
   const [noteEditTitle, setNoteEditTitle] = useState('')
   const [showTagMenu, setShowTagMenu] = useState(false)
-  const [commentText, setCommentText] = useState('')
   const [commenterName, setCommenterName] = useState(() => { try { return localStorage.getItem('commenterName') || '' } catch { return '' } })
 
   const [notifySending, setNotifySending] = useState(false)
@@ -369,7 +374,7 @@ export default function Home() {
   }
 
   const addComment = (company, noteId) => {
-    if (!commentText.trim()) return
+    if (!projectCommentText.trim()) return
     const updated = { ...notes }
     const name = (currentUser ? currentUser.name : commenterName.trim()) || 'Anonymous'
     try { localStorage.setItem('commenterName', name) } catch {}
@@ -378,7 +383,7 @@ export default function Home() {
     const comment = { id: Date.now(), author: name, text: commentText.trim(), date: dateStr }
     updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, comments: [...(n.comments || []), comment] } : n)
     setNotes(updated)
-    setCommentText('')
+    setProjectCommentText('')
     fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
   }
 
@@ -725,6 +730,47 @@ export default function Home() {
     const d = await res.json()
     setReportData(d)
     setLoadingReport(false)
+  }
+
+  const loadComments = async (task) => {
+    const projectId = task.rowIndex || (task.companyKey + '-' + task.name.replace(/\s+/g, '-'))
+    const res = await fetch('/api/comments?projectId=' + encodeURIComponent(projectId))
+    setComments(await res.json())
+  }
+
+  const addProjectComment = async () => {
+    if (!projectCommentText.trim() || !activeCommentProject) return
+    const projectId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-'))
+    const res = await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'add', projectId, text: projectCommentText, author: currentUser?.name || 'Unknown', authorId: currentUser?.id || '' })
+    })
+    const d = await res.json()
+    if (d.comment) setComments(prev => [...prev, d.comment])
+    setProjectCommentText('')
+  }
+
+  const reactToComment = async (commentId, emoji) => {
+    const projectId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-'))
+    await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'react', projectId, commentId, emoji, userId: currentUser?.id || 'anon' })
+    })
+    const updated = await fetch('/api/comments?projectId=' + encodeURIComponent(projectId)).then(r => r.json())
+    setComments(updated)
+    setShowEmojiFor(null)
+  }
+
+  const deleteProjectComment = async (commentId) => {
+    const projectId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-'))
+    await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', projectId, commentId })
+    })
+    setComments(prev => prev.filter(c => c.id !== commentId))
   }
 
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
@@ -1671,9 +1717,29 @@ export default function Home() {
                       </div>
                       {isExpanded && (
                         <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
-                          <div style={{ fontSize: '0.75rem', color: '#8a8070', marginBottom: '0.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <div style={{ fontSize: '0.75rem', color: '#8a8070', marginBottom: '0.75rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             {task.lead && <span>Lead: {task.lead}</span>}
-                      
+                            {task.teamMembers && <span>Team: {task.teamMembers}</span>}
+                            {task.dueDate && <span>Due: {task.dueDate}</span>}
+                            {task.notes && <span style={{ color: '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="9" rx="2" fill="#6b6560" opacity="0.7"/><path d="M3 13 L3 10 L7 10" fill="#6b6560" opacity="0.5"/><rect x="3" y="4" width="4" height="1.2" rx="0.6" fill="#f4f0e8"/><rect x="3" y="6.5" width="7" height="1.2" rx="0.6" fill="#f4f0e8" opacity="0.7"/></svg>
+                              Discussion
+                            </button>
+                            <button onClick={() => setConfirmDelete(task)} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.75rem', cursor: 'pointer', color: '#b85c38' }}>Delete</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
@@ -1760,37 +1826,6 @@ export default function Home() {
         </div>
       )}
 
-      {isMobile && (
-                              <select value={task.priority} onChange={e => handleEdit(task, 'priority', e.target.value)} style={selectStyle(pc)}>
-                                <option value="">No priority</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
-                              </select>
-                            )}
-                            {!isMobile && (
-                              <>
-                                <input defaultValue={task.teamMembers} onBlur={e => e.target.value !== task.teamMembers && handleEdit(task, 'teamMembers', e.target.value)} placeholder="Team members..." style={{ fontSize: '0.75rem', color: '#8a8070', border: 'none', background: 'transparent', borderBottom: '1px dashed #ccc', outline: 'none', minWidth: '120px' }} />
-                                <input defaultValue={task.dueDate} onBlur={e => e.target.value !== task.dueDate && handleEdit(task, 'dueDate', e.target.value)} placeholder="Due date..." style={{ fontSize: '0.75rem', color: '#8a8070', border: 'none', background: 'transparent', borderBottom: '1px dashed #ccc', outline: 'none', width: '80px' }} />
-                              </>
-                            )}
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-                            <button onClick={() => setConfirmDelete(task)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', color: '#b85c38', fontSize: '0.7rem', cursor: 'pointer', fontWeight: '500' }}>
-                              Delete Task
-                            </button>
-                          </div>
-                          <div style={{ fontSize: '0.65rem', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.3rem' }}>Notes</div>
-                          <textarea defaultValue={task.notes} onBlur={e => e.target.value !== task.notes && handleEdit(task, 'notes', e.target.value)} placeholder="Add notes..." style={{ width: '100%', minHeight: '80px', padding: '0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', color: '#3a3530', background: '#fefcf8', resize: 'vertical', boxSizing: 'border-box', outline: 'none' }} />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
 
         
 
@@ -1989,9 +2024,9 @@ export default function Home() {
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
-                          <textarea value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
+                          <textarea value={projectCommentText} onChange={e => setProjectCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
                         </div>
-                        <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!commentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem', fontWeight: '500', opacity: !commentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
+                        <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!projectCommentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem', fontWeight: '500', opacity: !projectCommentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
                       </div>
                     </div>
                   </>
@@ -2119,6 +2154,74 @@ export default function Home() {
             </div>
           )
         })()}
+
+        {commentPanel && activeCommentProject && (
+          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: isMobile ? '100%' : '420px', background: 'white', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e8e2d9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#0f0e0d', color: '#f5f1ea' }}>
+              <div>
+                <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '0.25rem' }}>{activeCommentProject.company}</div>
+                <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{activeCommentProject.name}</div>
+              </div>
+              <button onClick={() => { setCommentPanel(false); setActiveCommentProject(null); setComments([]) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1 }}>✕</button>
+            </div>
+            {/* Comments list */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {comments.length === 0 && (
+                <div style={{ textAlign: 'center', color: '#a09880', fontSize: '0.82rem', marginTop: '2rem' }}>No comments yet — start the discussion!</div>
+              )}
+              {comments.map((c, i) => {
+                const isMe = c.authorId === currentUser?.id
+                const initials = c.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                const time = new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                return (
+                  <div key={c.id} style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1a1814' }}>{c.author}</span>
+                        <span style={{ fontSize: '0.65rem', color: '#a09880' }}>{time}</span>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{c.text}</div>
+                      {/* Reactions */}
+                      <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {Object.entries(c.reactions || {}).map(([emoji, users]) => (
+                          <button key={emoji} onClick={() => reactToProjectComment(c.id, emoji)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: users.includes(currentUser?.id) ? '#f0ece0' : 'white', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                            {emoji} <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{users.length}</span>
+                          </button>
+                        ))}
+                        <div style={{ position: 'relative' }}>
+                          <button onClick={() => setShowEmojiFor(showEmojiFor === c.id ? null : c.id)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#8a8070' }}>+😊</button>
+                          {showEmojiFor === c.id && (
+                            <div style={{ position: 'absolute', bottom: '100%', left: 0, background: 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem', display: 'flex', gap: '0.35rem', zIndex: 10, flexWrap: 'wrap', width: '160px' }}>
+                              {['👍','👎','✅','❌','🔥','⚠️','💡','🎉'].map(e => (
+                                <button key={e} onClick={() => reactToProjectComment(c.id, e)} style={{ background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', padding: '0.1rem' }}>{e}</button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {isMe && <button onClick={() => deleteProjectComment(c.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.68rem', padding: '0.1rem 0.3rem' }}>delete</button>}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {/* Input */}
+            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: '#faf8f4' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                <textarea
+                  value={projectCommentText}
+                  onChange={e => setProjectCommentText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment() } }}
+                  placeholder="Write a comment... (Enter to send)"
+                  style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', resize: 'none', height: '70px', fontFamily: 'inherit', color: '#1a1814', background: 'white' }}
+                />
+                <button onClick={addProjectComment} disabled={!projectCommentText.trim()} style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: projectCommentText.trim() ? 'pointer' : 'not-allowed', fontSize: '0.82rem', fontWeight: '500', opacity: projectCommentText.trim() ? 1 : 0.5, flexShrink: 0 }}>Send</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showCalendarModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
