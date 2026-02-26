@@ -1893,8 +1893,8 @@ export default function Home() {
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 220px)' }}>
-              <div style={{ width: '240px', flexShrink: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 220px)', flexDirection: isMobile ? 'column' : 'row' }}>
+              <div style={{ width: isMobile ? '100%' : '240px', flexShrink: 0, overflowY: 'auto', display: isMobile && selectedNote ? 'none' : 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {currentNotes.length === 0 && <div style={{ color: '#8a8070', fontSize: '0.8rem', padding: '1rem 0', textAlign: 'center' }}>No notes yet.<br/>Click '+ New Note'</div>}
                 {currentNotes.map(note => (
                   <div key={note.id} onClick={() => { setSelectedNoteId(note.id); setNoteEditTitle(note.title); setNoteEditContent(note.content) }} style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid', borderColor: selectedNoteId === note.id ? '#c9a84c' : '#e0d8cc', background: selectedNoteId === note.id ? '#fdfaf5' : 'white', cursor: 'pointer' }}>
@@ -1907,11 +1907,12 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ flex: 1, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: isMobile && !selectedNote ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {!selectedNote && <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.9rem' }}>Select or create a note</div>}
                 {selectedNote && (
                   <>
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0ece0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {isMobile && <button onClick={() => { setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.82rem', padding: '0 0.6rem 0 0', flexShrink: 0 }}>← Back</button>}
                       <input value={noteEditTitle} onChange={e => setNoteEditTitle(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Note title...' style={{ border: 'none', outline: 'none', fontSize: '1rem', fontWeight: '600', flex: 1, background: 'transparent' }} />
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={() => togglePinNote(selectedNoteCompany, selectedNote.id)} title={selectedNote.pinned ? 'Unpin' : 'Pin'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', opacity: selectedNote.pinned ? 1 : 0.4 }}>📌</button>
@@ -2084,7 +2085,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '1.25rem', flex: 1 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 280px', gap: '1.25rem', flex: 1 }}>
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '0.5rem' }}>
                     {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
