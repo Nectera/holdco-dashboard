@@ -2035,7 +2035,7 @@ export default function Home() {
           for (let d = 1; d <= daysInMonth; d++) cells.push(d)
 
           return (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Calendar</h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -2047,7 +2047,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '1.25rem', flex: 1 }}>
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '0.5rem' }}>
                     {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
@@ -2062,7 +2062,7 @@ export default function Home() {
                       const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
                       const isSelected = calendarSelected && calendarSelected.getDate() === day && calendarSelected.getMonth() === month && calendarSelected.getFullYear() === year
                       return (
-                        <div key={day} onClick={() => setCalendarSelected(new Date(year, month, day))} style={{ height: '80px', overflow: 'hidden', padding: '0.4rem', borderRadius: '10px', background: isSelected ? '#0f0e0d' : isToday ? '#fef9f0' : 'white', border: isToday ? '1.5px solid #c9a84c' : '1px solid #f0ece4', cursor: 'pointer', transition: 'all 0.15s' }}>
+                        <div key={day} onClick={() => setCalendarSelected(new Date(year, month, day))} style={{ height: isMobile ? '70px' : '110px', overflow: 'hidden', padding: '0.4rem', borderRadius: '10px', background: isSelected ? '#0f0e0d' : isToday ? '#fef9f0' : 'white', border: isToday ? '1.5px solid #c9a84c' : '1px solid #f0ece4', cursor: 'pointer', transition: 'all 0.15s' }}>
                           <div style={{ fontSize: '0.8rem', fontWeight: isToday ? '700' : '500', color: isSelected ? '#c9a84c' : isToday ? '#c9a84c' : '#3a3530', marginBottom: '0.25rem' }}>{day}</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             {dayEvents.slice(0, 3).map((ev, j) => (
@@ -2102,7 +2102,7 @@ export default function Home() {
                   )}
                 </div>
               </div>
-            </>
+            </div>
           )
         })()}
 
