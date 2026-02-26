@@ -102,6 +102,12 @@ const labelStyle = {
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+  }, [])
+
+  useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900)
     check()
     window.addEventListener('resize', check)
