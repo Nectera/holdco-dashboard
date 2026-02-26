@@ -246,6 +246,7 @@ export default function Home() {
   const [calendarForm, setCalendarForm] = useState({ title: '', date: '', time: '', company: '', notes: '', assignedTo: '' })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
+  const isGuest = currentUser?.role === 'guest'
   const [editingUser, setEditingUser] = useState(null)
   const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
   const [resetPasswordUser, setResetPasswordUser] = useState(null)
@@ -1647,9 +1648,9 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
-              <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              {!isGuest && <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Project
-              </button>
+              </button>}
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.25rem', fontSize: '0.8rem' }}>
               {activeTasks.length} active · {tasks.length} total
@@ -1821,9 +1822,9 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
-              <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              {!isGuest && <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Task
-              </button>
+              </button>}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['all', 'Not Started', 'In Progress', 'Blocked', 'Complete'].map(f => (
@@ -1876,7 +1877,7 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Notes</h1>
-              <button onClick={() => {
+              {!isGuest && <button onClick={() => {
                 const newNote = { id: Date.now(), title: 'Untitled', content: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), pinned: false }
                 const updated = { ...notes, [selectedNoteCompany]: [newNote, ...(notes[selectedNoteCompany] || [])] }
                 setNotes(updated)
@@ -1884,7 +1885,7 @@ export default function Home() {
                 setNoteEditTitle('')
                 setNoteEditContent('')
                 fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: selectedNoteCompany, notes: updated[selectedNoteCompany] }) }).catch(() => {})
-              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ Note</button>
+              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ Note</button>}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
@@ -1964,7 +1965,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
-                    <textarea value={noteEditContent} onChange={e => setNoteEditContent(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
+                    <textarea value={noteEditContent} onChange={e => !isGuest && setNoteEditContent(e.target.value)} readOnly={isGuest} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
                     <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fefcf8' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({(selectedNote.attachments || []).length})</div>
@@ -2081,7 +2082,7 @@ export default function Home() {
                   <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: isMobile ? '110px' : '140px', textAlign: 'center' }}>{monthName}</span>
                   <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
                   <button onClick={() => setCalendarDate(new Date())} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.78rem', color: '#8a8070' }}>Today</button>
-                  <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>{isMobile ? '+' : '+ Event'}</button>
+                  {!isGuest && <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>{isMobile ? '+' : '+ Event'}</button>}
                 </div>
               </div>
 
@@ -2271,7 +2272,7 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Messages</h1>
-              <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>
+              {!isGuest && <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>}
             </div>
 
             {showNewConvo && (
@@ -2392,6 +2393,7 @@ export default function Home() {
                     <select value={newUserForm.role} onChange={e => setNewUserForm(f => ({ ...f, role: e.target.value }))} style={inputStyle}>
                       <option value="member">Member</option>
                       <option value="admin">Admin</option>
+                      <option value="guest">Guest (read-only)</option>
                     </select>
                   </div>
                   {userMgmtError && <p style={{ color: '#b85c38', fontSize: '0.8rem', margin: 0 }}>{userMgmtError}</p>}
@@ -2469,6 +2471,7 @@ export default function Home() {
                   <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }}>
                     <option value="member">Member</option>
                     <option value="admin">Admin</option>
+                    <option value="guest">Guest (read-only)</option>
                   </select>
                 </div>
                 <button onClick={async () => {
@@ -2511,7 +2514,7 @@ export default function Home() {
                   <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: '0 0 0.25rem 0' }}>Team Directory</h1>
                   <p style={{ color: '#8a8070', margin: 0, fontSize: '0.8rem' }}>{employees.length} contact{employees.length !== 1 ? 's' : ''} across {subsidiaries.filter(s => employees.some(e => e.company === s)).length} companies</p>
                 </div>
-                <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>+ Contact</button>
+                {!isGuest && <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>+ Contact</button>}
               </div>
 
               {employees.length === 0 && (
@@ -2547,10 +2550,10 @@ export default function Home() {
                                   {emp.role && <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{emp.role}</div>}
                                   {emp.department && <div style={{ fontSize: '0.7rem', color: '#a09880' }}>{emp.department}</div>}
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                                {!isGuest && <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
                                   <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.68rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
                                   <button onClick={() => deleteEmployee(globalIdx)} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.68rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
-                                </div>
+                                </div>}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.76rem', borderTop: '1px solid #f4f0e8', paddingTop: '0.75rem' }}>
                                 {emp.email && <a href={'mailto:' + emp.email} style={{ color: '#3d5a6e', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

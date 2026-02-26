@@ -17,7 +17,7 @@ export async function GET(request) {
     const username = searchParams.get('username')
     const password = searchParams.get('password')
     const users = await redis.get('nectera:users') || []
-    const user = users.find(u => u.username === username && u.passwordHash === hashPassword(password))
+    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.passwordHash === hashPassword(password))
     if (user) {
       return new Response(JSON.stringify({ success: true, user: { id: user.id, name: user.name, username: user.username, role: user.role, email: user.email } }), { headers: { 'Content-Type': 'application/json' } })
     }
@@ -74,7 +74,7 @@ export async function POST(request) {
 
   if (action === 'create') {
     if (users.length > 0 && !admin) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-    if (users.find(u => u.username === body.username)) return new Response(JSON.stringify({ error: 'Username already exists' }), { status: 400 })
+    if (users.find(u => u.username.toLowerCase() === body.username.toLowerCase())) return new Response(JSON.stringify({ error: 'Username already exists' }), { status: 400 })
     const newUser = { id: Date.now(), name: body.name, username: body.username, email: body.email || '', passwordHash: hashPassword(body.password), role: body.role || 'member' }
     await redis.set('nectera:users', [...users, newUser])
     if (body.email) {
