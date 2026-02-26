@@ -1437,7 +1437,7 @@ export default function Home() {
                           calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                         }
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
                         setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                       } catch(err) {
@@ -1466,7 +1466,7 @@ export default function Home() {
                       calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                     }
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
                     setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                   } catch(err) {
@@ -1987,7 +1987,7 @@ export default function Home() {
                           calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                         }
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
                         setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                       } catch(err) {
@@ -2016,7 +2016,7 @@ export default function Home() {
                       calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                     }
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
                     setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                   } catch(err) {
@@ -2992,7 +2992,7 @@ export default function Home() {
                           calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                         }
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
                         setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                       } catch(err) {
@@ -3021,7 +3021,7 @@ export default function Home() {
                       calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
                     }
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
-                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
                     setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
                   } catch(err) {
