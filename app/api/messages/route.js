@@ -13,7 +13,8 @@ export async function GET(request) {
   if (action === 'conversations') {
     const conversations = await redis.get('nectera:conversations') || []
     // Return only conversations this user is part of
-    const userConvos = conversations.filter(c => c.members.includes(userId))
+    // Coerce userId to match both string and number member IDs
+    const userConvos = conversations.filter(c => c.members.some(m => String(m) === String(userId)))
     return new Response(JSON.stringify(userConvos), { headers: { 'Content-Type': 'application/json' } })
   }
 
