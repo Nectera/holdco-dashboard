@@ -195,7 +195,6 @@ export default function Home() {
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
-  const [useUserLogin, setUseUserLogin] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotStatus, setForgotStatus] = useState('')
@@ -982,16 +981,7 @@ export default function Home() {
             <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '700', margin: '0 auto 0.85rem auto', fontFamily: "'DM Serif Display', serif" }}>N</div>
             <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem', color: '#0f0e0d', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Nectera Holdings</h1>
           </div>
-          {!useUserLogin ? (
-            <>
-              <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Enter your password to continue</p>
-              <input type="password" value={passwordInput} onChange={e => { setPasswordInput(e.target.value); setPasswordError(false) }} onKeyDown={e => e.key === 'Enter' && handleLogin()} placeholder="Password" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: passwordError ? '1px solid #b85c38' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
-              {passwordError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>Incorrect password</p>}
-              <button onClick={handleLogin} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500' }}>Sign In</button>
-              <button onClick={() => setUseUserLogin(true)} style={{ marginTop: '1rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Sign in with user account</button>
-            </>
-          ) : (
-            <>
+          <>
               <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Sign in to your account</p>
               <input value={loginUsername} onChange={e => setLoginUsername(e.target.value)} placeholder="Username" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
               <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUserLogin()} placeholder="Password" style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
@@ -1010,9 +1000,7 @@ export default function Home() {
                   }} style={{ width: '100%', padding: '0.4rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem' }}>Send Reset Link</button>
                 </div>
               )}
-              <button onClick={() => setUseUserLogin(false)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Use master password instead</button>
             </>
-          )}
         </div>
       </div>
     )
