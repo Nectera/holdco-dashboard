@@ -213,6 +213,7 @@ export default function Home() {
   const [loadingFinancials, setLoadingFinancials] = useState(true)
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [filterCompany, setFilterCompany] = useState('all')
+  const [projectsView, setProjectsView] = useState('list')
   const [showNotifications, setShowNotifications] = useState(false)
   const [dismissedNotifications, setDismissedNotifications] = useState([])
   const [notifTab, setNotifTab] = useState('projects')
@@ -1668,7 +1669,7 @@ export default function Home() {
               {activeTasks.length} active · {tasks.length} total
             </p>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {companies.map(c => <option key={c} value={c}>{isMobile ? (c === 'all' ? 'All' : companyLabels[c].split(' ')[0]) : companyLabels[c]}</option>)}
               </select>
@@ -1676,7 +1677,95 @@ export default function Home() {
                 {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s}</option>)}
               </select>
               <span style={{ fontSize: '0.8rem', color: '#8a8070', alignSelf: 'center' }}>{filteredTasks.length} tasks</span>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', background: '#f0ece0', borderRadius: '8px', padding: '0.2rem' }}>
+                <button onClick={() => setProjectsView('list')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'list' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'list' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'list' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>List</button>
+                <button onClick={() => setProjectsView('timeline')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'timeline' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'timeline' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'timeline' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>Timeline</button>
+              </div>
             </div>
+
+            {projectsView === 'timeline' && (() => {
+              const subsidiaryColors = {
+                'Nectera Holdings': '#c9a84c',
+                'Xtract Environmental Services': '#3d5a6e',
+                'Bug Control Specialist': '#4a6741',
+                'Lush Green Landscapes': '#7a5c3e',
+              }
+              const timelineTasks = filteredTasks.filter(t => t.dueDate)
+              if (timelineTasks.length === 0) return <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No projects with due dates found.<br/>Add due dates to projects in Google Sheets.</div>
+
+              // Calculate date range
+              const today = new Date()
+              const dates = timelineTasks.map(t => new Date(t.dueDate + 'T12:00:00'))
+              const minDate = new Date(Math.min(...dates, today))
+              const maxDate = new Date(Math.max(...dates))
+              minDate.setDate(minDate.getDate() - 7)
+              maxDate.setDate(maxDate.getDate() + 7)
+              const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24))
+
+              // Generate month labels
+              const months = []
+              const cur = new Date(minDate)
+              while (cur <= maxDate) {
+                months.push({ label: cur.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), date: new Date(cur) })
+                cur.setMonth(cur.getMonth() + 1)
+                cur.setDate(1)
+              }
+
+              const todayPct = ((today - minDate) / (maxDate - minDate)) * 100
+
+              return (
+                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', overflowX: 'auto' }}>
+                  <div style={{ minWidth: '600px' }}>
+                    {/* Month headers */}
+                    <div style={{ display: 'flex', marginBottom: '0.5rem', position: 'relative', height: '20px' }}>
+                      {months.map((m, i) => {
+                        const pct = ((m.date - minDate) / (maxDate - minDate)) * 100
+                        return <div key={i} style={{ position: 'absolute', left: pct + '%', fontSize: '0.65rem', color: '#a09880', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{m.label}</div>
+                      })}
+                    </div>
+                    {/* Today line + rows */}
+                    <div style={{ position: 'relative' }}>
+                      {/* Today marker */}
+                      <div style={{ position: 'absolute', left: todayPct + '%', top: 0, bottom: 0, width: '2px', background: '#c9a84c', opacity: 0.6, zIndex: 2 }} />
+                      <div style={{ position: 'absolute', left: 'calc(' + todayPct + '% - 14px)', top: '-18px', fontSize: '0.6rem', color: '#c9a84c', fontWeight: '700' }}>TODAY</div>
+                      {/* Task rows */}
+                      {timelineTasks.map((task, i) => {
+                        const company = Object.keys(subsidiaryColors).find(k => task.company && task.company.includes(k.split(' ')[0])) || 'Nectera Holdings'
+                        const color = subsidiaryColors[company] || '#6b6560'
+                        const dueDate = new Date(task.dueDate + 'T12:00:00')
+                        const startDate = task.startDate ? new Date(task.startDate + 'T12:00:00') : new Date(dueDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        const startPct = Math.max(0, ((startDate - minDate) / (maxDate - minDate)) * 100)
+                        const endPct = Math.min(100, ((dueDate - minDate) / (maxDate - minDate)) * 100)
+                        const widthPct = Math.max(1, endPct - startPct)
+                        const isOverdue = dueDate < today && task.status !== 'Complete'
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.75rem' }}>
+                            <div style={{ width: isMobile ? '80px' : '160px', flexShrink: 0, fontSize: '0.72rem', color: '#3a3530', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }} title={task.name}>{task.name}</div>
+                            <div style={{ flex: 1, position: 'relative', height: '28px' }}>
+                              <div style={{ position: 'absolute', left: startPct + '%', width: widthPct + '%', height: '100%', borderRadius: '4px', background: color, opacity: task.status === 'Complete' ? 0.4 : isOverdue ? 0.9 : 0.75, display: 'flex', alignItems: 'center', padding: '0 0.5rem', boxSizing: 'border-box', cursor: 'default', border: isOverdue ? '1.5px solid #b85c38' : 'none' }}>
+                                <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.status === 'Complete' ? '✓' : task.dueDate}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {/* Legend */}
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
+                      {Object.entries(subsidiaryColors).map(([name, color]) => (
+                        <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#6b6560' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
+                          {name.split(' ')[0]}
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#6b6560' }}>
+                        <div style={{ width: '10px', height: '2px', background: '#c9a84c' }} />Today
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {loadingTasks ? <p style={{ color: '#8a8070' }}>Loading tasks...</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
