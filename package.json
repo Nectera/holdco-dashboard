@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@upstash/redis": "^1.36.2",
     "@vercel/blob": "^2.3.0",
     "@vercel/kv": "^3.0.0",

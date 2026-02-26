@@ -256,6 +256,10 @@ export default function Home() {
   const isGuest = currentUser?.role === 'guest'
   const [notifPrefs, setNotifPrefs] = useState({ dueSoon: true, overdue: true, newComment: true, assigned: true })
   const [notifPrefsSaved, setNotifPrefsSaved] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
+  const [aiInput, setAiInput] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
   const [resetPasswordUser, setResetPasswordUser] = useState(null)
@@ -1380,6 +1384,106 @@ export default function Home() {
         </div>
       )}
 
+      {/* AI Chat Bubble */}
+      {!isGuest && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+          {aiOpen && (
+            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+              {/* Header */}
+              <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div>
+                    <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
+                    <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
+                  </div>
+                </div>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+              </div>
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+                {aiMessages.map((msg, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                  </div>
+                )}
+              </div>
+              {/* Input */}
+              <div style={{ padding: '0.75rem', borderTop: '1px solid #f0ece0', display: 'flex', gap: '0.5rem' }}>
+                <input
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter' && aiInput.trim() && !aiLoading) {
+                      const userMsg = { role: 'user', content: aiInput.trim() }
+                      const newMessages = [...aiMessages, userMsg]
+                      setAiMessages(newMessages)
+                      setAiInput('')
+                      setAiLoading(true)
+                      try {
+                        const context = {
+                          financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                          projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                          notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                          calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                        }
+                        const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const d = await res.json()
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                      } catch(err) {
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                      }
+                      setAiLoading(false)
+                    }
+                  }}
+                  placeholder="Ask Nora anything..."
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                />
+                <button onClick={async () => {
+                  if (!aiInput.trim() || aiLoading) return
+                  const userMsg = { role: 'user', content: aiInput.trim() }
+                  const newMessages = [...aiMessages, userMsg]
+                  setAiMessages(newMessages)
+                  setAiInput('')
+                  setAiLoading(true)
+                  try {
+                    const context = {
+                      financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                      projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                      notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                      calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                    }
+                    const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const d = await res.json()
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                  } catch(err) {
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                  }
+                  setAiLoading(false)
+                }} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500', opacity: aiLoading ? 0.5 : 1 }}>↑</button>
+              </div>
+            </div>
+          )}
+          {/* Bubble button */}
+          <button onClick={() => setAiOpen(!aiOpen)} style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#0f0e0d', border: '2px solid #c9a84c', color: '#c9a84c', fontSize: '1.3rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', fontWeight: '700', fontFamily: "'DM Serif Display', serif" }}>
+            {aiOpen ? '✕' : 'N'}
+          </button>
+        </div>
+      )}
+
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
@@ -1829,6 +1933,106 @@ export default function Home() {
             )}
           </>
         )}
+
+      {/* AI Chat Bubble */}
+      {!isGuest && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+          {aiOpen && (
+            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+              {/* Header */}
+              <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div>
+                    <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
+                    <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
+                  </div>
+                </div>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+              </div>
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+                {aiMessages.map((msg, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                  </div>
+                )}
+              </div>
+              {/* Input */}
+              <div style={{ padding: '0.75rem', borderTop: '1px solid #f0ece0', display: 'flex', gap: '0.5rem' }}>
+                <input
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter' && aiInput.trim() && !aiLoading) {
+                      const userMsg = { role: 'user', content: aiInput.trim() }
+                      const newMessages = [...aiMessages, userMsg]
+                      setAiMessages(newMessages)
+                      setAiInput('')
+                      setAiLoading(true)
+                      try {
+                        const context = {
+                          financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                          projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                          notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                          calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                        }
+                        const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const d = await res.json()
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                      } catch(err) {
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                      }
+                      setAiLoading(false)
+                    }
+                  }}
+                  placeholder="Ask Nora anything..."
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                />
+                <button onClick={async () => {
+                  if (!aiInput.trim() || aiLoading) return
+                  const userMsg = { role: 'user', content: aiInput.trim() }
+                  const newMessages = [...aiMessages, userMsg]
+                  setAiMessages(newMessages)
+                  setAiInput('')
+                  setAiLoading(true)
+                  try {
+                    const context = {
+                      financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                      projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                      notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                      calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                    }
+                    const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const d = await res.json()
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                  } catch(err) {
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                  }
+                  setAiLoading(false)
+                }} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500', opacity: aiLoading ? 0.5 : 1 }}>↑</button>
+              </div>
+            </div>
+          )}
+          {/* Bubble button */}
+          <button onClick={() => setAiOpen(!aiOpen)} style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#0f0e0d', border: '2px solid #c9a84c', color: '#c9a84c', fontSize: '1.3rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', fontWeight: '700', fontFamily: "'DM Serif Display', serif" }}>
+            {aiOpen ? '✕' : 'N'}
+          </button>
+        </div>
+      )}
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
@@ -2734,6 +2938,106 @@ export default function Home() {
         })()}
       </div>
 
+
+      {/* AI Chat Bubble */}
+      {!isGuest && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+          {aiOpen && (
+            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+              {/* Header */}
+              <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div>
+                    <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
+                    <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
+                  </div>
+                </div>
+                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+              </div>
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+                {aiMessages.map((msg, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                  </div>
+                )}
+              </div>
+              {/* Input */}
+              <div style={{ padding: '0.75rem', borderTop: '1px solid #f0ece0', display: 'flex', gap: '0.5rem' }}>
+                <input
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter' && aiInput.trim() && !aiLoading) {
+                      const userMsg = { role: 'user', content: aiInput.trim() }
+                      const newMessages = [...aiMessages, userMsg]
+                      setAiMessages(newMessages)
+                      setAiInput('')
+                      setAiLoading(true)
+                      try {
+                        const context = {
+                          financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                          projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                          team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                          notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                          calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                        }
+                        const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                        const d = await res.json()
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                      } catch(err) {
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                      }
+                      setAiLoading(false)
+                    }
+                  }}
+                  placeholder="Ask Nora anything..."
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                />
+                <button onClick={async () => {
+                  if (!aiInput.trim() || aiLoading) return
+                  const userMsg = { role: 'user', content: aiInput.trim() }
+                  const newMessages = [...aiMessages, userMsg]
+                  setAiMessages(newMessages)
+                  setAiInput('')
+                  setAiLoading(true)
+                  try {
+                    const context = {
+                      financials: data.map(s => s.company + ': Revenue $' + getMetric(s.report, 'Total Income').toLocaleString() + ', Expenses $' + getMetric(s.report, 'Total Expenses').toLocaleString() + ', Net $' + getMetric(s.report, 'Net Income').toLocaleString()).join(' | '),
+                      projects: tasks.slice(0, 30).map(t => t.name + ' (' + t.company + ') - ' + t.status + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      tasks: lightTasks.slice(0, 20).map(t => t.name + ' - ' + t.status + (t.assignedTo ? ' assigned to ' + t.assignedTo : '') + (t.dueDate ? ' due ' + t.dueDate : '')).join(', '),
+                      team: employees.map(e => e.name + ' (' + e.role + ', ' + e.company + ')').join(', '),
+                      notes: Object.entries(notes).map(([co, ns]) => co + ': ' + (ns || []).map(n => n.title).join(', ')).join(' | '),
+                      calendar: calendarEvents.map(e => e.title + ' on ' + e.date + (e.company ? ' (' + e.company + ')' : '')).join(', '),
+                    }
+                    const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
+                    const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context }) })
+                    const d = await res.json()
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                  } catch(err) {
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
+                  }
+                  setAiLoading(false)
+                }} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500', opacity: aiLoading ? 0.5 : 1 }}>↑</button>
+              </div>
+            </div>
+          )}
+          {/* Bubble button */}
+          <button onClick={() => setAiOpen(!aiOpen)} style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#0f0e0d', border: '2px solid #c9a84c', color: '#c9a84c', fontSize: '1.3rem', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s', fontWeight: '700', fontFamily: "'DM Serif Display', serif" }}>
+            {aiOpen ? '✕' : 'N'}
+          </button>
+        </div>
+      )}
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
