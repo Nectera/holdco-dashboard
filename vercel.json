@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/notifications?action=cron&secret=nectera_cron_2026",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

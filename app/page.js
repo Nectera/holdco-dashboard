@@ -247,6 +247,8 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [newUserForm, setNewUserForm] = useState({ name: '', username: '', password: '', email: '', role: 'member' })
   const isGuest = currentUser?.role === 'guest'
+  const [notifPrefs, setNotifPrefs] = useState({ dueSoon: true, overdue: true, newComment: true, assigned: true })
+  const [notifPrefsSaved, setNotifPrefsSaved] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
   const [resetPasswordUser, setResetPasswordUser] = useState(null)
@@ -302,6 +304,7 @@ export default function Home() {
     fetch('/api/users?action=list').then(r => r.json()).then(data => setUserList(data)).catch(() => {})
     if (currentUser) {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
+      fetch('/api/notifications?action=prefs&userId=' + currentUser.id).then(r => r.json()).then(setNotifPrefs).catch(() => {})
       fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
     }
   }, [authed])
@@ -311,6 +314,7 @@ export default function Home() {
     if (!authed || !currentUser) return
     const interval = setInterval(() => {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
+      fetch('/api/notifications?action=prefs&userId=' + currentUser.id).then(r => r.json()).then(setNotifPrefs).catch(() => {})
       fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
       if (activeConvo) {
         fetch('/api/messages?action=messages&convoId=' + activeConvo.id).then(r => r.json()).then(setConvoMessages).catch(() => {})
@@ -2359,6 +2363,27 @@ export default function Home() {
               </div>
             </div>
           </>
+        )}
+
+        {!drilldown && page === 'settings' && (
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9', fontWeight: '600' }}>Notification Preferences</h2>
+            <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[{key:'dueSoon',label:'Task due tomorrow',desc:'Email when a task assigned to you is due the next day'},{key:'overdue',label:'Task overdue',desc:'Email when a task assigned to you is past its due date'},{key:'newComment',label:'New project comment',desc:'Email when someone comments on a project discussion'},{key:'assigned',label:'Assigned to a task',desc:'Email when a task is assigned to you'}].map(({key,label,desc}) => (
+                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid #f4f0e8' }}>
+                  <div><div style={{ fontSize: '0.88rem', fontWeight: '500' }}>{label}</div><div style={{ fontSize: '0.74rem', color: '#8a8070' }}>{desc}</div></div>
+                  <div onClick={() => setNotifPrefs(p => ({...p,[key]:!p[key]}))} style={{ width: '40px', height: '22px', borderRadius: '11px', background: notifPrefs[key] ? '#0f0e0d' : '#e0d8cc', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: '3px', left: notifPrefs[key] ? '21px' : '3px', width: '16px', height: '16px', borderRadius: '50%', background: notifPrefs[key] ? '#c9a84c' : 'white', transition: 'left 0.2s' }} />
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem' }}>
+                <button onClick={async () => { await fetch('/api/notifications', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save_prefs',userId:currentUser.id,...notifPrefs})}); setNotifPrefsSaved(true); setTimeout(()=>setNotifPrefsSaved(false),2000) }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Save Preferences</button>
+                {notifPrefsSaved && <span style={{ fontSize: '0.8rem', color: '#4a6741' }}>Saved!</span>}
+              </div>
+              {!currentUser?.email && <p style={{ fontSize: '0.75rem', color: '#b85c38', margin: 0 }}>Add an email to your account to receive notifications.</p>}
+            </div>
+          </div>
         )}
 
         {!drilldown && page === 'settings' && currentUser?.role === 'admin' && (
