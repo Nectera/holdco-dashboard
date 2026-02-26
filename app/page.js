@@ -263,7 +263,7 @@ export default function Home() {
 
   const [showEmployeeModal, setShowEmployeeModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState(null)
-  const [employeeForm, setEmployeeForm] = useState({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
+  const [employeeForm, setEmployeeForm] = useState({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' })
   const [drilldown, setDrilldown] = useState(null)
   const [reportModal, setReportModal] = useState(null)
   const [reportData, setReportData] = useState(null)
@@ -482,7 +482,7 @@ export default function Home() {
     fetch('/api/team', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ employees: updated }) }).catch(() => {})
     setShowEmployeeModal(false)
     setEditingEmployee(null)
-    setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' })
+    setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' })
   }
 
   const deleteEmployee = (idx) => {
@@ -1138,7 +1138,7 @@ export default function Home() {
           <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingEmployee !== null ? 'Edit Employee' : 'Add Employee'}</h2>
-              <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
@@ -1175,8 +1175,22 @@ export default function Home() {
                 <label style={labelStyle}>Photo URL (optional)</label>
                 <input value={employeeForm.photo} onChange={e => setEmployeeForm(f => ({ ...f, photo: e.target.value }))} placeholder="https://..." style={inputStyle} />
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Department</label>
+                  <input value={employeeForm.department || ''} onChange={e => setEmployeeForm(f => ({ ...f, department: e.target.value }))} placeholder="Operations" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Start Date</label>
+                  <input type="date" value={employeeForm.startDate || ''} onChange={e => setEmployeeForm(f => ({ ...f, startDate: e.target.value }))} style={inputStyle} />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Notes</label>
+                <textarea value={employeeForm.notes || ''} onChange={e => setEmployeeForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any additional info..." style={{ ...inputStyle, height: '60px', resize: 'vertical' }} />
+              </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
                   {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
                 </button>
@@ -1882,9 +1896,9 @@ export default function Home() {
                           <button onClick={() => setShowTagMenu(!showTagMenu)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#3a3530', padding: '0.2rem 0.5rem' }}>@ Notify</button>
                           {showTagMenu && (
                             <div style={{ position: 'absolute', top: '100%', right: 0, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
-                              <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f0ece0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notify team member</div>
-                              {employees.length === 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No team members added yet</div>}
-                              {employees.filter(e => e.email).map((emp, idx) => (
+                              <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f0ece0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notify user</div>
+                              {userList.length === 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No users found — click Refresh in Settings</div>}
+                              {userList.filter(u => u.email && u.id !== currentUser?.id).map((u, idx) => (
                                 <div key={idx} onClick={async () => {
                                   setShowTagMenu(false)
                                   setNotifySending(true)
@@ -1893,9 +1907,9 @@ export default function Home() {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
-                                      toEmail: emp.email,
-                                      toName: emp.name,
-                                      fromName: 'A team member',
+                                      toEmail: u.email,
+                                      toName: u.name,
+                                      fromName: currentUser?.name || 'A team member',
                                       noteTitle: noteEditTitle || selectedNote.title,
                                       noteContent: noteEditContent || selectedNote.content,
                                       company: selectedNoteCompany,
@@ -1903,19 +1917,19 @@ export default function Home() {
                                   })
                                   const d = await res.json()
                                   setNotifySending(false)
-                                  setNotifySuccess(d.success ? emp.name : 'Failed')
+                                  setNotifySuccess(d.success ? u.name : 'Failed')
                                   setTimeout(() => setNotifySuccess(null), 3000)
                                 }} style={{ padding: '0.6rem 0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem' }}
                                   onMouseEnter={e => e.currentTarget.style.background = '#f5f1ea'}
                                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '600', flexShrink: 0 }}>{emp.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</div>
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '600', flexShrink: 0 }}>{u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}</div>
                                   <div>
-                                    <div style={{ fontWeight: '500' }}>{emp.name}</div>
-                                    <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{emp.email}</div>
+                                    <div style={{ fontWeight: '500' }}>{u.name}</div>
+                                    <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{u.email}</div>
                                   </div>
                                 </div>
                               ))}
-                              {employees.filter(e => e.email).length === 0 && employees.length > 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No team members have emails</div>}
+                              {userList.filter(u => u.email && u.id !== currentUser?.id).length === 0 && userList.length > 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No other users have emails</div>}
                             </div>
                           )}
                         </div>
@@ -2395,54 +2409,110 @@ export default function Home() {
           </div>
         )}
 
-        {!drilldown && page === 'team' && (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Team Directory</h1>
-              <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
-                + Add Employee
-              </button>
-            </div>
-            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.8rem' }}>{employees.length} team member{employees.length !== 1 ? 's' : ''}</p>
-            {employees.length === 0 && (
-              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>👥</div>
-                <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No team members yet</div>
-                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Employee" to get started</div>
+        {!drilldown && page === 'team' && (() => {
+          const subsidiaries = ['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes']
+          const unassigned = employees.filter(e => !e.company)
+          return (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div>
+                  <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: '0 0 0.25rem 0' }}>Team Directory</h1>
+                  <p style={{ color: '#8a8070', margin: 0, fontSize: '0.8rem' }}>{employees.length} contact{employees.length !== 1 ? 's' : ''} across {subsidiaries.filter(s => employees.some(e => e.company === s)).length} companies</p>
+                </div>
+                <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>+ Add Contact</button>
               </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
-              {employees.map((emp, idx) => {
-                const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                const companyShort = emp.company ? emp.company.split(' ')[0] : ''
-                return (
-                  <div key={idx} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                      {emp.photo ? (
-                        <img src={emp.photo} alt={emp.name} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
-                      )}
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{emp.name}</div>
-                        {emp.role && <div style={{ fontSize: '0.78rem', color: '#8a8070' }}>{emp.role}</div>}
-                        {emp.company && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: '#8a8070' }}>{companyShort}</span>}
+
+              {employees.length === 0 && (
+                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+                  <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No contacts yet</div>
+                  <div style={{ fontSize: '0.8rem' }}>Click "+ Add Contact" to get started</div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                {subsidiaries.filter(s => employees.some(e => e.company === s)).map(subsidiary => {
+                  const group = employees.filter(e => e.company === subsidiary)
+                  return (
+                    <div key={subsidiary}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                        <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#1a1814' }}>{subsidiary}</h2>
+                        <span style={{ fontSize: '0.72rem', color: '#a09880', background: '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{group.length}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.75rem' }}>
+                        {group.map((emp, idx) => {
+                          const globalIdx = employees.indexOf(emp)
+                          const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                          return (
+                            <div key={idx} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                                {emp.photo ? (
+                                  <img src={emp.photo} alt={emp.name} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                                ) : (
+                                  <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
+                                )}
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div style={{ fontWeight: '600', fontSize: '0.92rem' }}>{emp.name}</div>
+                                  {emp.role && <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{emp.role}</div>}
+                                  {emp.department && <div style={{ fontSize: '0.7rem', color: '#a09880' }}>{emp.department}</div>}
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                                  <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.68rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
+                                  <button onClick={() => deleteEmployee(globalIdx)} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.68rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.76rem', borderTop: '1px solid #f4f0e8', paddingTop: '0.75rem' }}>
+                                {emp.email && <a href={'mailto:' + emp.email} style={{ color: '#3d5a6e', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1.5" fill="#3d5a6e" opacity="0.7"/><path d="M1 3 L6 7 L11 3" stroke="white" strokeWidth="1" fill="none"/></svg>{emp.email}
+                                </a>}
+                                {emp.phone && <a href={'tel:' + emp.phone} style={{ color: '#3a3530', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 1.5 C2 1.5 3.5 1.5 4 3 L4.5 4.5 C4.5 4.5 3 5 3.5 6.5 C4 8 5.5 9.5 7 10 C8.5 10.5 8.5 9 8.5 9 L10 9.5 C11.5 10 11.5 11.5 11.5 11.5 C11.5 11.5 10 12.5 8.5 11.5 C5 9.5 2.5 7 1.5 3.5 C0.5 0.5 2 1.5 2 1.5Z" fill="#3a3530" opacity="0.7"/></svg>{emp.phone}
+                                </a>}
+                                {emp.startDate && <div style={{ color: '#a09880', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="9" rx="1.5" fill="#a09880" opacity="0.5"/><rect x="1" y="2" width="10" height="3.5" rx="1.5" fill="#a09880" opacity="0.7"/><rect x="3.5" y="0.5" width="1.5" height="3" rx="0.75" fill="#a09880"/><rect x="7" y="0.5" width="1.5" height="3" rx="0.75" fill="#a09880"/></svg>
+                                  Since {new Date(emp.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                </div>}
+                                {emp.notes && <div style={{ color: '#8a8070', fontStyle: 'italic', marginTop: '0.2rem' }}>{emp.notes}</div>}
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.78rem', borderTop: '1px solid #f0ece0', paddingTop: '0.75rem' }}>
-                      {emp.email && <a href={'mailto:' + emp.email} style={{ color: '#3d5a6e', textDecoration: 'none' }}>✉ {emp.email}</a>}
-                      {emp.phone && <a href={'tel:' + emp.phone} style={{ color: '#3a3530', textDecoration: 'none' }}>📞 {emp.phone}</a>}
+                  )
+                })}
+                {unassigned.length > 0 && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                      <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#a09880' }}>Unassigned</h2>
+                      <span style={{ fontSize: '0.72rem', color: '#a09880', background: '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{unassigned.length}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
-                      <button onClick={() => { setEmployeeForm(emp); setEditingEmployee(idx); setShowEmployeeModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
-                      <button onClick={() => deleteEmployee(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>Remove</button>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.75rem' }}>
+                      {unassigned.map((emp, idx) => {
+                        const globalIdx = employees.indexOf(emp)
+                        const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                        return (
+                          <div key={idx} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: '600', fontSize: '0.92rem' }}>{emp.name}</div>
+                                {emp.role && <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{emp.role}</div>}
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.68rem', cursor: 'pointer' }}>Edit</button>
+                                <button onClick={() => deleteEmployee(globalIdx)} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.68rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          </>
-        )}
+                )}
+              </div>
+            </>
+          )
+        })()}
       </div>
 
 
