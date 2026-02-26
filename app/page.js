@@ -1648,7 +1648,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
               <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
-                + New Project
+                + Project
               </button>
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.25rem', fontSize: '0.8rem' }}>
@@ -1822,7 +1822,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
               <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
-                + Add Task
+                + Task
               </button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
@@ -1836,7 +1836,7 @@ export default function Home() {
               <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
                 <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
-                <div style={{ fontSize: '0.8rem' }}>Click "+ Add Task" to get started</div>
+                <div style={{ fontSize: '0.8rem' }}>Click "+ Task" to get started</div>
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -1884,7 +1884,7 @@ export default function Home() {
                 setNoteEditTitle('')
                 setNoteEditContent('')
                 fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: selectedNoteCompany, notes: updated[selectedNoteCompany] }) }).catch(() => {})
-              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New Note</button>
+              }} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ Note</button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
@@ -1895,7 +1895,7 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: '1rem', height: isMobile ? 'calc(100vh - 200px)' : 'calc(100vh - 220px)', flexDirection: isMobile ? 'column' : 'row' }}>
               <div style={{ width: isMobile ? '100%' : '240px', flexShrink: 0, overflowY: 'auto', display: isMobile && selectedNote ? 'none' : 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {currentNotes.length === 0 && <div style={{ color: '#8a8070', fontSize: '0.8rem', padding: '1rem 0', textAlign: 'center' }}>No notes yet.<br/>Click '+ New Note'</div>}
+                {currentNotes.length === 0 && <div style={{ color: '#8a8070', fontSize: '0.8rem', padding: '1rem 0', textAlign: 'center' }}>No notes yet.<br/>Click '+ Note'</div>}
                 {currentNotes.map(note => (
                   <div key={note.id} onClick={() => { setSelectedNoteId(note.id); setNoteEditTitle(note.title); setNoteEditContent(note.content) }} style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid', borderColor: selectedNoteId === note.id ? '#c9a84c' : '#e0d8cc', background: selectedNoteId === note.id ? '#fdfaf5' : 'white', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
@@ -2074,14 +2074,14 @@ export default function Home() {
 
           return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Calendar</h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.4rem 0.9rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>+ New Event</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
-                  <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: '140px', textAlign: 'center' }}>{monthName}</span>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: isMobile ? '110px' : '140px', textAlign: 'center' }}>{monthName}</span>
                   <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
                   <button onClick={() => setCalendarDate(new Date())} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.78rem', color: '#8a8070' }}>Today</button>
+                  <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>{isMobile ? '+' : '+ Event'}</button>
                 </div>
               </div>
 
@@ -2511,13 +2511,13 @@ export default function Home() {
                   <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: '0 0 0.25rem 0' }}>Team Directory</h1>
                   <p style={{ color: '#8a8070', margin: 0, fontSize: '0.8rem' }}>{employees.length} contact{employees.length !== 1 ? 's' : ''} across {subsidiaries.filter(s => employees.some(e => e.company === s)).length} companies</p>
                 </div>
-                <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>+ Add Contact</button>
+                <button onClick={() => { setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }); setEditingEmployee(null); setShowEmployeeModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>+ Contact</button>
               </div>
 
               {employees.length === 0 && (
                 <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                   <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No contacts yet</div>
-                  <div style={{ fontSize: '0.8rem' }}>Click "+ Add Contact" to get started</div>
+                  <div style={{ fontSize: '0.8rem' }}>Click "+ Contact" to get started</div>
                 </div>
               )}
 
