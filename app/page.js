@@ -940,8 +940,10 @@ export default function Home() {
     cursor: 'pointer',
   })
 
+  const isDeveloper = currentUser?.role === 'developer'
+  if (isDeveloper && page === 'financials') setPage('projects')
   const navItems = [
-    { id: 'financials', label: 'Financials' },
+    ...(isDeveloper ? [] : [{ id: 'financials', label: 'Financials' }]),
     { id: 'messages', label: 'Messages' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'notes', label: 'Notes' },
@@ -1523,7 +1525,7 @@ export default function Home() {
           </>
         )}
 
-        {!drilldown && page === 'financials' && (
+        {!drilldown && page === 'financials' && !isDeveloper && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Portfolio Overview</h1>
@@ -2418,6 +2420,7 @@ export default function Home() {
                     <select value={newUserForm.role} onChange={e => setNewUserForm(f => ({ ...f, role: e.target.value }))} style={inputStyle}>
                       <option value="member">Member</option>
                       <option value="admin">Admin</option>
+                      <option value="developer">Developer</option>
                       <option value="guest">Guest (read-only)</option>
                     </select>
                   </div>
@@ -2496,6 +2499,7 @@ export default function Home() {
                   <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }}>
                     <option value="member">Member</option>
                     <option value="admin">Admin</option>
+                    <option value="developer">Developer</option>
                     <option value="guest">Guest (read-only)</option>
                   </select>
                 </div>
