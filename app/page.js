@@ -687,14 +687,27 @@ export default function Home() {
     const totalNet = totalRevenue - totalExpenses
     const totalMargin = totalRevenue ? ((totalNet / totalRevenue) * 100).toFixed(1) : '0.0'
 
+    const pdfCOGS = data.reduce((s, f) => s + getM(f.report, 'Total Cost of Goods Sold'), 0)
+    const pdfGrossProfit = totalRevenue - pdfCOGS
+    const pdfDepreciation = data.reduce((s, f) => s + getM(f.report, 'Depreciation'), 0)
+    const pdfInterest = data.reduce((s, f) => s + getM(f.report, 'Interest Expense'), 0)
+    const pdfEBITDA = totalNet + pdfInterest + pdfDepreciation
+    const pdfGrossMargin = totalRevenue ? ((pdfGrossProfit / totalRevenue) * 100).toFixed(1) : '0.0'
+    const pdfOpMargin = totalRevenue ? (((pdfGrossProfit - (totalExpenses - pdfCOGS)) / totalRevenue) * 100).toFixed(1) : '0.0'
+
     autoTable(doc, {
       startY: 44,
       head: [['Metric', 'Amount']],
       body: [
         ['Total Revenue', '$' + totalRevenue.toLocaleString()],
-        ['Total Expenses', '$' + totalExpenses.toLocaleString()],
+        ['Cost of Goods Sold', '$' + pdfCOGS.toLocaleString()],
+        ['Gross Profit', '$' + pdfGrossProfit.toLocaleString()],
+        ['Operating Expenses', '$' + (totalExpenses - pdfCOGS).toLocaleString()],
         ['Net Income', '$' + totalNet.toLocaleString()],
+        ['EBITDA', '$' + pdfEBITDA.toLocaleString()],
+        ['Gross Margin', pdfGrossMargin + '%'],
         ['Net Margin', totalMargin + '%'],
+        ['Operating Margin', pdfOpMargin + '%'],
       ],
       headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 9 },
       bodyStyles: { fontSize: 9 },
@@ -711,23 +724,66 @@ export default function Home() {
 
     const companyRows = data.map(f => {
       const rev = getM(f.report, 'Total Income')
-      const exp = getM(f.report, 'Total Expenses') + getM(f.report, 'Cost of Goods Sold')
-      const net = rev - exp
-      const margin = rev ? ((net / rev) * 100).toFixed(1) + '%' : '0.0%'
-      return [f.company, '$' + Math.round(rev).toLocaleString(), '$' + Math.round(getM(f.report, 'Gross Profit')).toLocaleString(), '$' + Math.round(exp).toLocaleString(), '$' + Math.round(net).toLocaleString(), margin]
+      const cogs = getM(f.report, 'Total Cost of Goods Sold')
+      const gp = rev - cogs
+      const opex = getM(f.report, 'Total Expenses')
+      const net = getM(f.report, 'Net Income') || (rev - cogs - opex)
+      const dep = getM(f.report, 'Depreciation')
+      const intExp = getM(f.report, 'Interest Expense')
+      const ebitda = net + intExp + dep
+      const gpMargin = rev ? ((gp / rev) * 100).toFixed(1) + '%' : '0.0%'
+      const netMargin = rev ? ((net / rev) * 100).toFixed(1) + '%' : '0.0%'
+      return [f.company, '$' + Math.round(rev).toLocaleString(), '$' + Math.round(gp).toLocaleString(), '$' + Math.round(net).toLocaleString(), '$' + Math.round(ebitda).toLocaleString(), gpMargin, netMargin]
     })
-    const _unused = data.map(f => [
-    ])
 
     autoTable(doc, {
       startY: afterConsolidated + 4,
-      head: [['Company', 'Revenue', 'Gross Profit', 'Expenses', 'Net Income', 'Margin']],
+      head: [['Company', 'Revenue', 'Gross Profit', 'Net Income', 'EBITDA', 'Gross Margin', 'Net Margin']],
       body: companyRows,
       headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 8 },
       bodyStyles: { fontSize: 8 },
       alternateRowStyles: { fillColor: [250, 247, 240] },
       margin: { left: 14, right: 14 },
     })
+
+    // YoY Comparison
+    try {
+      const priorYear = parseInt(selectedYear) - 1
+      const priorRes = await fetch('/api/qb/financials?year=' + priorYear)
+      const priorData = await priorRes.json()
+      if (priorData && priorData.length > 0) {
+        const priorRevenue = priorData.reduce((s, f) => s + getM(f.report, 'Total Income'), 0)
+        const priorCOGS = priorData.reduce((s, f) => s + getM(f.report, 'Total Cost of Goods Sold'), 0)
+        const priorExpenses = priorData.reduce((s, f) => s + getM(f.report, 'Total Expenses') + getM(f.report, 'Cost of Goods Sold'), 0)
+        const priorNet = priorRevenue - priorExpenses
+        const priorDep = priorData.reduce((s, f) => s + getM(f.report, 'Depreciation'), 0)
+        const priorInt = priorData.reduce((s, f) => s + getM(f.report, 'Interest Expense'), 0)
+        const priorEBITDA = priorNet + priorInt + priorDep
+        const revChange = priorRevenue ? (((totalRevenue - priorRevenue) / priorRevenue) * 100).toFixed(1) : 'N/A'
+        const netChange = priorNet ? (((totalNet - priorNet) / Math.abs(priorNet)) * 100).toFixed(1) : 'N/A'
+        const ebitdaChange = priorEBITDA ? (((pdfEBITDA - priorEBITDA) / Math.abs(priorEBITDA)) * 100).toFixed(1) : 'N/A'
+
+        const afterSubs = doc.lastAutoTable.finalY + 12
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(15, 14, 13)
+        doc.text('Year-over-Year (' + priorYear + ' vs ' + selectedYear + ')', 14, afterSubs)
+
+        autoTable(doc, {
+          startY: afterSubs + 4,
+          head: [['Metric', '' + priorYear, '' + selectedYear, 'Change']],
+          body: [
+            ['Revenue', '$' + Math.round(priorRevenue).toLocaleString(), '$' + Math.round(totalRevenue).toLocaleString(), revChange + '%'],
+            ['Net Income', '$' + Math.round(priorNet).toLocaleString(), '$' + Math.round(totalNet).toLocaleString(), netChange + '%'],
+            ['EBITDA', '$' + Math.round(priorEBITDA).toLocaleString(), '$' + Math.round(pdfEBITDA).toLocaleString(), ebitdaChange + '%'],
+          ],
+          headStyles: { fillColor: [15, 14, 13], textColor: [201, 168, 76], fontSize: 9 },
+          bodyStyles: { fontSize: 9 },
+          alternateRowStyles: { fillColor: [250, 247, 240] },
+          margin: { left: 14, right: 14 },
+        })
+      }
+    } catch (e) {}
 
     // Footer
     const pageHeight = doc.internal.pageSize.height
