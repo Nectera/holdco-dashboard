@@ -2419,7 +2419,7 @@ export default function Home() {
             {(() => {
               const yr = selectedYear
               const companiesConfig = [
-                { key: 'consolidated', label: 'Consolidated (All Companies)', color: '#c9a84c' },
+                { key: 'consolidated', label: 'Nectera Holdings', color: '#c9a84c' },
                 { key: 'xtract', label: 'Xtract Environmental Services', color: '#4a6741' },
                 { key: 'bcs', label: 'Bug Control Specialist', color: '#3d5a6e' },
                 { key: 'lush', label: 'Lush Green Landscapes', color: '#8a6d3b' },
@@ -2463,6 +2463,22 @@ export default function Home() {
                           {allMetricsForComp(comp.key).map(function(metric) {
                             var goalKey = yr + '_' + comp.key + '_' + metric.key
                             var target = goals[goalKey] || 0
+                            if (comp.key === 'consolidated' && metric.key === 'revenue') {
+                              var subRevTarget = (goals[yr + '_xtract_revenue'] || 0) + (goals[yr + '_bcs_revenue'] || 0) + (goals[yr + '_lush_revenue'] || 0)
+                              if (subRevTarget > 0) target = subRevTarget
+                            }
+                            if (comp.key === 'consolidated' && metric.key === 'netMargin') {
+                              var xRev = goals[yr + '_xtract_revenue'] || 0
+                              var bRev = goals[yr + '_bcs_revenue'] || 0
+                              var lRev = goals[yr + '_lush_revenue'] || 0
+                              var totalRev = xRev + bRev + lRev
+                              if (totalRev > 0) {
+                                var xMargin = goals[yr + '_xtract_netMargin'] || 0
+                                var bMargin = goals[yr + '_bcs_netMargin'] || 0
+                                var lMargin = goals[yr + '_lush_netMargin'] || 0
+                                target = parseFloat(((xRev * xMargin + bRev * bMargin + lRev * lMargin) / totalRev).toFixed(1))
+                              }
+                            }
                             var actual = metric.isCustom ? 0 : metric.dataKey === 'netMargin' ? (function() { var rev = getActual(comp.key, 'Total Income'); var net = getActual(comp.key, 'Net Income'); return rev > 0 ? parseFloat(((net / rev) * 100).toFixed(1)) : 0 })() : getActual(comp.key, metric.dataKey)
                             var pct = target > 0 ? Math.min((actual / target) * 100, 150) : 0
                             var displayPct = target > 0 ? ((actual / target) * 100).toFixed(1) : '0.0'
