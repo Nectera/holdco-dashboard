@@ -350,15 +350,16 @@ IMPORTANT RULES FOR ACTIONS:
             await redis.set('nectera:nora_memory_v2:' + userId, unique)
           }
         } catch(e) {
-          // Fallback: just store the user's question topic
+          // Fallback: store question + error info for debugging
           try {
             const lastQ = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || ''
+            const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
             if (lastQ.length > 10) {
-              const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
               const topic = 'Asked about: ' + lastQ.slice(0, 80)
               currentMem.push({ fact: topic, date: new Date().toISOString().split('T')[0] })
-              await redis.set('nectera:nora_memory_v2:' + userId, currentMem.slice(-30))
             }
+            currentMem.push({ fact: '_debug_error: ' + String(e?.message || e).slice(0, 120), date: new Date().toISOString().split('T')[0] })
+            await redis.set('nectera:nora_memory_v2:' + userId, currentMem.slice(-30))
           } catch(e2) {}
         }
       }
