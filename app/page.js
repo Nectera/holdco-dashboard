@@ -347,24 +347,19 @@ export default function Home() {
   useEffect(() => {
     if (!authed) return
     setLoadingFinancials(true)
-    fetch(`/api/qb/financials?year=${selectedYear}`)
-      .then(res => res.json())
-      .then(d => { setData(d); setLoadingFinancials(false) })
-      // Fetch goals
-      fetch('/api/qb/financials?year=' + selectedYear).then(function(r) { return r.json() }).then(function(d) { setData(d) }).catch(function() {})
-      fetch('/api/goals').then(function(r) { return r.json() }).then(function(g) { setGoals(g) }).catch(function() {})
-      // Fetch AR/AP aging for all companies
-      const companies = ['xtract', 'bcs', 'lush']
-      Promise.all(companies.map(c => Promise.all([
-        fetch('/api/qb/report?company=' + c + '&type=ar&year=' + selectedYear).then(r => r.json()),
-        fetch('/api/qb/report?company=' + c + '&type=ap&year=' + selectedYear).then(r => r.json()),
-      ]))).then(results => {
-        const names = { xtract: 'Xtract', bcs: 'BCS', lush: 'Lush' }
-        setAgingData(companies.map((c, idx) => ({ key: c, name: names[c], ar: results[idx][0], ap: results[idx][1] })))
-      }).catch(() => {})
-      // Fetch expense trends for default company
-      fetch('/api/qb/expense-trends?company=xtract&year=' + selectedYear).then(function(r) { return r.json() }).then(function(d) { setExpenseTrends(d) }).catch(function() {})
-      .catch(() => setLoadingFinancials(false))
+    fetch('/api/qb/financials?year=' + selectedYear)
+      .then(function(res) { return res.json() })
+      .then(function(d) { setData(d); setLoadingFinancials(false) })
+      .catch(function() { setLoadingFinancials(false) })
+    fetch('/api/goals').then(function(r) { return r.json() }).then(function(g) { setGoals(g) }).catch(function() {})
+    const companies = ['xtract', 'bcs', 'lush']
+    Promise.all(companies.map(function(c) { return Promise.all([
+      fetch('/api/qb/report?company=' + c + '&type=ar&year=' + selectedYear).then(function(r) { return r.json() }),
+      fetch('/api/qb/report?company=' + c + '&type=ap&year=' + selectedYear).then(function(r) { return r.json() }),
+    ]) })).then(function(results) {
+      var names = { xtract: 'Xtract', bcs: 'BCS', lush: 'Lush' }
+      setAgingData(companies.map(function(c, idx) { return { key: c, name: names[c], ar: results[idx][0], ap: results[idx][1] } }))
+    }).catch(function() {})
     fetch('/api/tasks?company=all')
       .then(res => res.json())
       .then(d => { setTasks(d.tasks || []); setLoadingTasks(false) })
