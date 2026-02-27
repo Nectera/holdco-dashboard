@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
+const spinStyle = typeof document !== 'undefined' && !document.getElementById('nora-spin') ? (() => { const s = document.createElement('style'); s.id = 'nora-spin'; s.textContent = '@keyframes spin { to { transform: rotate(360deg) } }'; document.head.appendChild(s); return true })() : true
+
 const renderMarkdown = (text) => {
   if (!text) return text
   const lines = text.split('\n')
@@ -1523,15 +1525,24 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'action' ? <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
-                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div style={{ padding: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                            <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
-                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
+                            const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
+                            const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+                            const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                          })}
+                          </div>
+                          {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
                               try {
                                 if (a.type === 'calendar_create') {
@@ -1557,15 +1568,18 @@ export default function Home() {
                                 setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
                               } catch(err) {
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'error' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
                               }
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600, transition: 'opacity 0.15s' }}>✓ Confirm</button>
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
@@ -2306,15 +2320,24 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'action' ? <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
-                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div style={{ padding: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                            <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
-                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
+                            const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
+                            const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+                            const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                          })}
+                          </div>
+                          {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
                               try {
                                 if (a.type === 'calendar_create') {
@@ -2340,15 +2363,18 @@ export default function Home() {
                                 setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
                               } catch(err) {
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'error' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
                               }
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600, transition: 'opacity 0.15s' }}>✓ Confirm</button>
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
@@ -3534,15 +3560,24 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'action' ? <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
-                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div style={{ padding: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                            <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
-                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
+                            const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
+                            const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+                            const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                          })}
+                          </div>
+                          {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
                               try {
                                 if (a.type === 'calendar_create') {
@@ -3568,15 +3603,18 @@ export default function Home() {
                                 setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
                               } catch(err) {
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'error' } : m))
                                 setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
                               }
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600, transition: 'opacity 0.15s' }}>✓ Confirm</button>
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
