@@ -323,7 +323,7 @@ IMPORTANT RULES FOR ACTIONS:
       } catch(e) {}
     }
     // Extract memories from this conversation
-    if (userId && messages.length >= 2) {
+    if (userId && messages.length >= 1) {
       try {
         const memoryExtract = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
