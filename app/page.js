@@ -31,6 +31,77 @@ const renderMarkdown = (text) => {
   return elements
 }
 
+const parseNoraAction = (text) => {
+  if (!text) return { message: text, action: null }
+  const actionRegex = /\[ACTION:(\w+):(\{.*\})\]/
+  const match = text.match(actionRegex)
+  if (!match) return { message: text, action: null }
+  try {
+    const type = match[1]
+    const data = JSON.parse(match[2])
+    const message = text.replace(actionRegex, '').trim()
+    return { message, action: { type, data } }
+  } catch(e) {
+    return { message: text, action: null }
+  }
+}
+
+const NoraActionCard = ({ action, onConfirm, onCancel, confirmed }) => {
+  const icons = {
+    calendar_create: '📅',
+    task_create: '✅',
+    note_create: '📝',
+    message_send: '💬',
+  }
+  const labels = {
+    calendar_create: 'Create Calendar Event',
+    task_create: 'Create Task',
+    note_create: 'Create Note',
+    message_send: 'Send Message',
+  }
+  const d = action.data
+  const icon = icons[action.type] || '⚡'
+  const label = labels[action.type] || 'Action'
+
+  const details = []
+  if (action.type === 'calendar_create') {
+    details.push({ k: 'Event', v: d.title })
+    details.push({ k: 'Date', v: d.date + (d.time ? ' at ' + d.time : '') })
+    if (d.company) details.push({ k: 'Company', v: d.company })
+    if (d.notes) details.push({ k: 'Notes', v: d.notes })
+  } else if (action.type === 'task_create') {
+    details.push({ k: 'Task', v: d.name })
+    if (d.dueDate) details.push({ k: 'Due', v: d.dueDate })
+    if (d.priority) details.push({ k: 'Priority', v: d.priority })
+    if (d.lead) details.push({ k: 'Assigned', v: d.lead })
+    if (d.companyKey) details.push({ k: 'Company', v: d.companyKey })
+  } else if (action.type === 'note_create') {
+    details.push({ k: 'Title', v: d.title })
+    details.push({ k: 'Company', v: d.company })
+    if (d.content) details.push({ k: 'Content', v: d.content.length > 80 ? d.content.slice(0, 80) + '...' : d.content })
+  } else if (action.type === 'message_send') {
+    details.push({ k: 'To', v: d.recipientName })
+    details.push({ k: 'Message', v: d.text.length > 80 ? d.text.slice(0, 80) + '...' : d.text })
+  }
+
+  return React.createElement('div', { style: { background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: '10px', padding: '0.75rem', marginTop: '0.5rem' } },
+    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem', color: '#0f0e0d' } },
+      React.createElement('span', null, icon),
+      React.createElement('span', null, label)
+    ),
+    details.map(function(item, i) {
+      return React.createElement('div', { key: i, style: { display: 'flex', gap: '0.4rem', fontSize: '0.75rem', marginBottom: '0.2rem' } },
+        React.createElement('span', { style: { color: '#8a8070', minWidth: '55px' } }, item.k + ':'),
+        React.createElement('span', { style: { color: '#1a1814' } }, item.v)
+      )
+    }),
+    !confirmed ? React.createElement('div', { style: { display: 'flex', gap: '0.5rem', marginTop: '0.6rem' } },
+      React.createElement('button', { onClick: onConfirm, style: { padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 } }, 'Confirm'),
+      React.createElement('button', { onClick: onCancel, style: { padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' } }, 'Cancel')
+    ) : React.createElement('div', { style: { fontSize: '0.75rem', color: '#4a6741', marginTop: '0.5rem', fontStyle: 'italic' } }, '✓ Done!')
+  )
+}
+
 const getTotalExpenses = (report) => {
   return getMetric(report, 'Total Expenses') + getMetric(report, 'Total Cost of Goods Sold')
 }
@@ -296,6 +367,7 @@ export default function Home() {
   const [notifPrefsSaved, setNotifPrefsSaved] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
+  const [pendingActions, setPendingActions] = useState({})
   const [aiInput, setAiInput] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [noraExpanded, setNoraExpanded] = useState(false)
@@ -1524,7 +1596,54 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                      {msg.role === 'assistant' ? (() => {
+                        const parsed = parseNoraAction(msg.content)
+                        return React.createElement(React.Fragment, null,
+                          renderMarkdown(parsed.message),
+                          parsed.action && React.createElement(NoraActionCard, {
+                            action: parsed.action,
+                            confirmed: pendingActions['action_' + i] === 'done',
+                            onConfirm: async function() {
+                              const a = parsed.action
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  var company = a.data.company || 'Nectera Holdings'
+                                  var currentNotes = notes[company] || []
+                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  var updated = [newNote].concat(currentNotes)
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
+                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                } else if (a.type === 'message_send') {
+                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
+                                  if (recipient) {
+                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
+                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
+                                    if (existing) {
+                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                    }
+                                  }
+                                }
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                              } catch(err) {
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                              }
+                            },
+                            onCancel: function() {
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
+                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
+                            }
+                          })
+                        )
+                      })() : msg.content}
                     </div>
                   </div>
                 ))}
@@ -2245,7 +2364,54 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                      {msg.role === 'assistant' ? (() => {
+                        const parsed = parseNoraAction(msg.content)
+                        return React.createElement(React.Fragment, null,
+                          renderMarkdown(parsed.message),
+                          parsed.action && React.createElement(NoraActionCard, {
+                            action: parsed.action,
+                            confirmed: pendingActions['action_' + i] === 'done',
+                            onConfirm: async function() {
+                              const a = parsed.action
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  var company = a.data.company || 'Nectera Holdings'
+                                  var currentNotes = notes[company] || []
+                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  var updated = [newNote].concat(currentNotes)
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
+                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                } else if (a.type === 'message_send') {
+                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
+                                  if (recipient) {
+                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
+                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
+                                    if (existing) {
+                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                    }
+                                  }
+                                }
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                              } catch(err) {
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                              }
+                            },
+                            onCancel: function() {
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
+                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
+                            }
+                          })
+                        )
+                      })() : msg.content}
                     </div>
                   </div>
                 ))}
@@ -3411,7 +3577,54 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                      {msg.role === 'assistant' ? (() => {
+                        const parsed = parseNoraAction(msg.content)
+                        return React.createElement(React.Fragment, null,
+                          renderMarkdown(parsed.message),
+                          parsed.action && React.createElement(NoraActionCard, {
+                            action: parsed.action,
+                            confirmed: pendingActions['action_' + i] === 'done',
+                            onConfirm: async function() {
+                              const a = parsed.action
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  var company = a.data.company || 'Nectera Holdings'
+                                  var currentNotes = notes[company] || []
+                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  var updated = [newNote].concat(currentNotes)
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
+                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                } else if (a.type === 'message_send') {
+                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
+                                  if (recipient) {
+                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
+                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
+                                    if (existing) {
+                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                    }
+                                  }
+                                }
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                              } catch(err) {
+                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
+                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                              }
+                            },
+                            onCancel: function() {
+                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
+                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
+                            }
+                          })
+                        )
+                      })() : msg.content}
                     </div>
                   </div>
                 ))}
