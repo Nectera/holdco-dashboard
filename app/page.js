@@ -268,6 +268,7 @@ export default function Home() {
   const [aiOpen, setAiOpen] = useState(false)
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
   const [aiInput, setAiInput] = useState('')
+  const [isListening, setIsListening] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
@@ -1534,6 +1535,33 @@ export default function Home() {
                   placeholder="Ask Nora anything..."
                   style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
+                <button onClick={function() {
+                  if (isListening) {
+                    window._noraRecognition && window._noraRecognition.stop()
+                    setIsListening(false)
+                    return
+                  }
+                  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+                  if (!SpeechRecognition) { alert('Speech recognition not supported in this browser'); return }
+                  var recognition = new SpeechRecognition()
+                  window._noraRecognition = recognition
+                  recognition.continuous = false
+                  recognition.interimResults = true
+                  recognition.lang = 'en-US'
+                  recognition.onresult = function(event) {
+                    var transcript = ''
+                    for (var i = 0; i < event.results.length; i++) {
+                      transcript += event.results[i][0].transcript
+                    }
+                    setAiInput(transcript)
+                  }
+                  recognition.onend = function() { setIsListening(false) }
+                  recognition.onerror = function() { setIsListening(false) }
+                  recognition.start()
+                  setIsListening(true)
+                }} style={{ background: isListening ? '#b85c38' : 'none', border: isListening ? 'none' : '1px solid #e0d8cc', borderRadius: '8px', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1" width="5" height="9" rx="2.5" fill={isListening ? '#fff' : '#8a8070'}/><path d="M3 7.5C3 10.26 5.24 12.5 8 12.5C10.76 12.5 13 10.26 13 7.5" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/><line x1="8" y1="12.5" x2="8" y2="15" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
                 <button onClick={async () => {
                   if (!aiInput.trim() || aiLoading) return
                   const userMsg = { role: 'user', content: aiInput.trim() }
@@ -2223,6 +2251,33 @@ export default function Home() {
                   placeholder="Ask Nora anything..."
                   style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
+                <button onClick={function() {
+                  if (isListening) {
+                    window._noraRecognition && window._noraRecognition.stop()
+                    setIsListening(false)
+                    return
+                  }
+                  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+                  if (!SpeechRecognition) { alert('Speech recognition not supported in this browser'); return }
+                  var recognition = new SpeechRecognition()
+                  window._noraRecognition = recognition
+                  recognition.continuous = false
+                  recognition.interimResults = true
+                  recognition.lang = 'en-US'
+                  recognition.onresult = function(event) {
+                    var transcript = ''
+                    for (var i = 0; i < event.results.length; i++) {
+                      transcript += event.results[i][0].transcript
+                    }
+                    setAiInput(transcript)
+                  }
+                  recognition.onend = function() { setIsListening(false) }
+                  recognition.onerror = function() { setIsListening(false) }
+                  recognition.start()
+                  setIsListening(true)
+                }} style={{ background: isListening ? '#b85c38' : 'none', border: isListening ? 'none' : '1px solid #e0d8cc', borderRadius: '8px', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1" width="5" height="9" rx="2.5" fill={isListening ? '#fff' : '#8a8070'}/><path d="M3 7.5C3 10.26 5.24 12.5 8 12.5C10.76 12.5 13 10.26 13 7.5" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/><line x1="8" y1="12.5" x2="8" y2="15" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
                 <button onClick={async () => {
                   if (!aiInput.trim() || aiLoading) return
                   const userMsg = { role: 'user', content: aiInput.trim() }
@@ -3359,6 +3414,33 @@ export default function Home() {
                   placeholder="Ask Nora anything..."
                   style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
+                <button onClick={function() {
+                  if (isListening) {
+                    window._noraRecognition && window._noraRecognition.stop()
+                    setIsListening(false)
+                    return
+                  }
+                  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+                  if (!SpeechRecognition) { alert('Speech recognition not supported in this browser'); return }
+                  var recognition = new SpeechRecognition()
+                  window._noraRecognition = recognition
+                  recognition.continuous = false
+                  recognition.interimResults = true
+                  recognition.lang = 'en-US'
+                  recognition.onresult = function(event) {
+                    var transcript = ''
+                    for (var i = 0; i < event.results.length; i++) {
+                      transcript += event.results[i][0].transcript
+                    }
+                    setAiInput(transcript)
+                  }
+                  recognition.onend = function() { setIsListening(false) }
+                  recognition.onerror = function() { setIsListening(false) }
+                  recognition.start()
+                  setIsListening(true)
+                }} style={{ background: isListening ? '#b85c38' : 'none', border: isListening ? 'none' : '1px solid #e0d8cc', borderRadius: '8px', cursor: 'pointer', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1" width="5" height="9" rx="2.5" fill={isListening ? '#fff' : '#8a8070'}/><path d="M3 7.5C3 10.26 5.24 12.5 8 12.5C10.76 12.5 13 10.26 13 7.5" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/><line x1="8" y1="12.5" x2="8" y2="15" stroke={isListening ? '#fff' : '#8a8070'} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
                 <button onClick={async () => {
                   if (!aiInput.trim() || aiLoading) return
                   const userMsg = { role: 'user', content: aiInput.trim() }
