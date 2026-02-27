@@ -13,6 +13,13 @@ const transporter = nodemailer.createTransport({
 const fetchData = async (endpoint) => {
   const base = process.env.NEXTAUTH_URL || 'https://nexus-orcin-psi.vercel.app'
   try {
+    // Only run on the second Monday of the month
+    const today = new Date()
+    const dayOfMonth = today.getUTCDate()
+    if (dayOfMonth < 8 || dayOfMonth > 14) {
+      return new Response(JSON.stringify({ skipped: true, message: 'Not the second Monday' }), { headers: { 'Content-Type': 'application/json' } })
+    }
+
     const res = await fetch(base + '/api/qb/' + endpoint)
     return await res.json()
   } catch (e) { return null }
