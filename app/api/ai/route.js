@@ -358,7 +358,6 @@ IMPORTANT RULES FOR ACTIONS:
               const topic = 'Asked about: ' + lastQ.slice(0, 80)
               currentMem.push({ fact: topic, date: new Date().toISOString().split('T')[0] })
             }
-            currentMem.push({ fact: '_debug_error: ' + String(e?.message || e).slice(0, 120), date: new Date().toISOString().split('T')[0] })
             await redis.set('nectera:nora_memory_v2:' + userId, currentMem.slice(-30))
           } catch(e2) {}
         }
