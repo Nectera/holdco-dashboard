@@ -185,6 +185,10 @@ export async function GET(request) {
       reportType = 'AgedPayables'
       params = ''
       title = 'A/P Aging'
+    } else if (type === 'cashflow') {
+      reportType = 'CashFlow'
+      params = 'start_date=' + year + '-01-01&end_date=' + year + '-12-31'
+      title = 'Cash Flow Statement'
     } else {
       return new Response(JSON.stringify({ error: 'Invalid type' }), { status: 400 })
     }

@@ -1,0 +1,9 @@
+code ~/holdco-dashboard/app/api/qb/cashflow/route.js
+```
+
+That'll open the file in VS Code where you can paste the code and save.
+
+Once the file is saved, test it by visiting this URL in your **browser** (not terminal):
+```
+http://localhost:3000/api/qb/cashflow?company=xtract&year=2025≈
+c
