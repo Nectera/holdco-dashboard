@@ -298,6 +298,8 @@ export default function Home() {
   const [notifPrefsSaved, setNotifPrefsSaved] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
+  const [noraMemories, setNoraMemories] = useState([])
+  const [showMemoryPanel, setShowMemoryPanel] = useState(false)
   const [aiInput, setAiInput] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [noraExpanded, setNoraExpanded] = useState(false)
@@ -1517,10 +1519,25 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={() => { fetch('/api/memory?userId=' + currentUser?.id).then(r => r.json()).then(d => setNoraMemories(d.memories || [])); setShowMemoryPanel(!showMemoryPanel) }} style={{ background: showMemoryPanel ? '#c9a84c' : 'none', border: 'none', color: showMemoryPanel ? '#0f0e0d' : '#8a8070', cursor: 'pointer', padding: '0.2rem 0.35rem', display: 'flex', alignItems: 'center', fontSize: '0.8rem', lineHeight: 1, borderRadius: '4px', transition: 'all 0.15s' }} title="Nora's Memory">🧠</button>
                   <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
               </div>
+              {/* Memory Panel */}
+              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
+                </div>
+                {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
+                  </div>
+                  <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
+                </div>)}
+              </div>}
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
@@ -2316,6 +2333,20 @@ export default function Home() {
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
               </div>
+              {/* Memory Panel */}
+              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
+                </div>
+                {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
+                  </div>
+                  <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
+                </div>)}
+              </div>}
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
@@ -3556,6 +3587,20 @@ export default function Home() {
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
               </div>
+              {/* Memory Panel */}
+              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
+                </div>
+                {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
+                  </div>
+                  <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
+                </div>)}
+              </div>}
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (

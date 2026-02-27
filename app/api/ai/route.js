@@ -199,14 +199,8 @@ export async function POST(request) {
   const body = await request.json()
   const { messages, context, userId } = body
 
-  const memory = userId ? (await redis.get('nectera:nora_memory:' + userId) || []) : []
-  const memoryContext = memory.length > 0 ? '\n\nCONVERSATION MEMORY (previous sessions):\n' + memory.map(m => '- ' + m).join('\n') : ''
-
-  if (userId && messages.length > 0) {
-    const recentUserMsgs = messages.filter(m => m.role === 'user').slice(-3).map(m => m.content)
-    const newMemory = [...memory, ...recentUserMsgs].slice(-20)
-    await redis.set('nectera:nora_memory:' + userId, newMemory)
-  }
+  const memories = userId ? (await redis.get('nectera:nora_memory_v2:' + userId) || []) : []
+  const memoryContext = memories.length > 0 ? '\n\nYOUR MEMORY OF THIS USER (things you remember from past conversations):\n' + memories.map(m => '- [' + m.date + '] ' + m.fact).join('\n') + '\n\nUse these memories naturally — reference past conversations when relevant, but don\'t force it. You remember these things about this person.' : ''
 
   const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : ''
   const isFinancialQuestion = /financ|revenue|expense|profit|loss|income|cash|money|budget|cost|margin|ebitda|earning|ar |a\/r|receivable|payable|a\/p|ap |invoice|bill|customer.*owe|vendor|paid|payment|quarterly|monthly trend|biggest expense|top expense|who owes|balance sheet|cash flow|assets|liabilities|equity|debt|loan|yoy|year.over.year|compar/i.test(lastMsg)
@@ -328,6 +322,38 @@ IMPORTANT RULES FOR ACTIONS:
         reply = reply.replace(actionMatch[0], '').trim()
       } catch(e) {}
     }
+    // Extract memories from this conversation
+    if (userId && messages.length >= 2) {
+      try {
+        const memoryExtract = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          system: 'Extract 0-3 key facts worth remembering from this conversation. Focus on: user preferences, important decisions, things they care about, recurring topics, action items, or personal details they shared. Return ONLY a JSON array of short strings, e.g. ["prefers detailed breakdowns", "tracking Xtract expenses closely"]. If nothing worth remembering, return []. No explanation, just the JSON array.',
+          messages: [{ role: 'user', content: messages.slice(-6).map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply }]
+        })
+        const extractText = memoryExtract.content[0]?.text || '[]'
+        const newFacts = JSON.parse(extractText.replace(/```json|```/g, '').trim())
+        if (Array.isArray(newFacts) && newFacts.length > 0) {
+          const today = new Date().toISOString().split('T')[0]
+          const newMemories = newFacts.map(f => ({ fact: f, date: today }))
+          const combined = [...memories, ...newMemories]
+          // Deduplicate similar memories and keep last 30
+          const unique = combined.filter((m, idx) => {
+            const isDupe = combined.slice(idx + 1).some(other => {
+              const words1 = m.fact.toLowerCase().split(/\s+/)
+              const words2 = other.fact.toLowerCase().split(/\s+/)
+              const overlap = words1.filter(w => words2.includes(w)).length
+              return overlap / Math.max(words1.length, words2.length) > 0.6
+            })
+            return !isDupe
+          }).slice(-30)
+          await redis.set('nectera:nora_memory_v2:' + userId, unique)
+        }
+      } catch(memErr) {
+        console.log('Memory extraction error:', memErr.message)
+      }
+    }
+
     return new Response(JSON.stringify({ reply, action }), {
       headers: { 'Content-Type': 'application/json' }
     })
