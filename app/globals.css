@@ -158,3 +158,42 @@ a {
 a:hover {
   opacity: 0.75;
 }
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] strong,
+[data-theme="dark"] b {
+  color: #e8e2d9 !important;
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div,
+[data-theme="dark"] td,
+[data-theme="dark"] th,
+[data-theme="dark"] label,
+[data-theme="dark"] button {
+  color: inherit;
+}
+
+/* Force light text on all dark cards and backgrounds */
+[data-theme="dark"] [style*="background"] {
+  color: #d4cfc6;
+}
+
+/* Ensure sidebar stays correct */
+[data-theme="dark"] nav button {
+  color: #f5f1ea !important;
+}
+
+[data-theme="dark"] .recharts-cartesian-axis-tick-value,
+[data-theme="dark"] .recharts-legend-item-text {
+  fill: #a09880 !important;
+  color: #a09880 !important;
+}
+
+[data-theme="dark"] .recharts-text {
+  fill: #a09880 !important;
+}

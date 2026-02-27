@@ -19,11 +19,11 @@ const renderMarkdown = (text) => {
     }
     const formatted = line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>')
     if (line.startsWith('### ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '0.3rem', color: '#3a3530' }} dangerouslySetInnerHTML={{ __html: formatted.slice(4) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '0.3rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530' }} dangerouslySetInnerHTML={{ __html: formatted.slice(4) }} />)
     } else if (line.startsWith('## ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.85rem', marginTop: '0.4rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(3) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.85rem', marginTop: '0.4rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(3) }} />)
     } else if (line.startsWith('# ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
     } else if (line.startsWith('---') || line.startsWith('—Nora') || line.startsWith('— Nora')) {
       elements.push(<div key={key} style={{ borderTop: '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
     } else {
@@ -1068,7 +1068,7 @@ export default function Home() {
   const periodToggle = (
     <div style={{ display: 'flex', gap: '0.25rem', background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '6px', padding: '0.2rem' }}>
       {['monthly', 'quarterly', 'yearly'].map(p => (
-        <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: 'none', background: period === p ? 'white' : 'transparent', color: period === p ? '#0f0e0d' : '#8a8070', fontSize: '0.7rem', cursor: 'pointer', fontWeight: period === p ? '600' : '400', textTransform: 'capitalize' }}>
+        <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: 'none', background: period === p ? (theme === 'dark' ? '#333' : 'white') : 'transparent', color: period === p ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', fontSize: '0.7rem', cursor: 'pointer', fontWeight: period === p ? '600' : '400', textTransform: 'capitalize' }}>
           {p.charAt(0).toUpperCase() + p.slice(1)}
         </button>
       ))}
@@ -1132,7 +1132,7 @@ export default function Home() {
         <div style={{ background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '16px', padding: '2.5rem', width: '380px', maxWidth: '90vw', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '700', margin: '0 auto 0.85rem auto', fontFamily: "'DM Serif Display', serif" }}>N</div>
-            <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem', color: '#0f0e0d', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Nectera Holdings</h1>
+            <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Nectera Holdings</h1>
           </div>
           <>
               <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Sign in to your account</p>
@@ -1143,7 +1143,7 @@ export default function Home() {
               <button onClick={() => setShowForgotPassword(!showForgotPassword)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>
               {showForgotPassword && (
                 <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '6px' }}>
-                  <p style={{ fontSize: '0.78rem', color: '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
+                  <p style={{ fontSize: '0.78rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
                   <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
                   {forgotStatus && <p style={{ fontSize: '0.75rem', color: '#4a6741', margin: '0 0 0.5rem 0' }}>{forgotStatus}</p>}
                   <button onClick={async () => {
@@ -1237,7 +1237,7 @@ export default function Home() {
         <div style={{ width: '220px', background: '#0f0e0d', color: '#f5f1ea', padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', flexShrink: 0 }}>
           <div style={{ borderBottom: '1px solid #2a2825', paddingBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '700', flexShrink: 0, fontFamily: "'DM Serif Display', serif" }}>N</div>
+              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#c9a84c', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '700', flexShrink: 0, fontFamily: "'DM Serif Display', serif" }}>N</div>
               <h2 style={{ fontSize: '1.1rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400', letterSpacing: '0.02em' }}>Nectera Holdings</h2>
             </div>
           </div>
@@ -1263,7 +1263,7 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', borderBottom: '1px solid #f0ece0' }}>
             {[['projects', 'Projects', notifications.length], ['tasks', 'Tasks', taskNotifications.length], ['notes', 'Notes', notesNotifications.length]].map(([id, label, count]) => (
-              <button key={id} onClick={() => setNotifTab(id)} style={{ flex: 1, padding: '0.6rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: notifTab === id ? '600' : '400', color: notifTab === id ? '#0f0e0d' : '#8a8070', borderBottom: notifTab === id ? '2px solid #c9a84c' : '2px solid transparent' }}>
+              <button key={id} onClick={() => setNotifTab(id)} style={{ flex: 1, padding: '0.6rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: notifTab === id ? '600' : '400', color: notifTab === id ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', borderBottom: notifTab === id ? '2px solid #c9a84c' : '2px solid transparent' }}>
                 {label}{count > 0 ? ' (' + count + ')' : ''}
               </button>
             ))}
@@ -1279,7 +1279,7 @@ export default function Home() {
                   </span>
                   {n.company && <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company.split(' ')[0]}</span>}
                 </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{n.task}</div>
                 {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
               </div>
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
@@ -1293,7 +1293,7 @@ export default function Home() {
                   <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: theme === 'dark' ? '#1a2a1a' : '#e8f0e8', color: '#4a6741', fontWeight: '600' }}>Note</span>
                   <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
                 </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{n.task}</div>
                 {n.notifiedTo && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Notified: {n.notifiedTo}</div>}
               </div>
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
@@ -1311,7 +1311,7 @@ export default function Home() {
                   </span>
                   <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
                 </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
+                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{n.task}</div>
                 {n.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070', marginTop: '0.15rem' }}>Due: {n.dueDate}</div>}
               </div>
               <button onClick={() => dismissNotification(n.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
@@ -1527,7 +1527,7 @@ export default function Home() {
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>N</div>
                   <div>
                     <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
@@ -1756,13 +1756,13 @@ export default function Home() {
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -1791,7 +1791,7 @@ export default function Home() {
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && !row.colHeaders && !row.isTotal && (
@@ -1801,7 +1801,7 @@ export default function Home() {
                           <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
-                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && row.colHeaders && (
@@ -1840,7 +1840,7 @@ export default function Home() {
             {currentUser && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.75rem', borderLeft: '1px solid #e8e2d9' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
-                <span style={{ fontSize: '0.82rem', color: '#3a3530' }}>{currentUser.name}</span>
+                <span style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530' }}>{currentUser.name}</span>
                 <button onClick={handleLogout} style={{ background: 'none', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '6px', color: '#8a8070', fontSize: '0.72rem', cursor: 'pointer', padding: '0.2rem 0.5rem', marginLeft: '0.25rem' }}>Sign out</button>
               </div>
             )}
@@ -2041,7 +2041,7 @@ export default function Home() {
                       <div key={comp.key} style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                           <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{comp.name}</span>
-                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '0.4rem' }}>
                           {currentPct > 0 && <div style={{ width: currentPct + '%', background: '#4a6741' }} title={'Current: $' + (total.current || 0).toLocaleString()} />}
@@ -2077,7 +2077,7 @@ export default function Home() {
                       <div key={comp.key} style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                           <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{comp.name}</span>
-                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '0.4rem' }}>
                           {currentPct > 0 && <div style={{ width: currentPct + '%', background: '#4a6741' }} title={'Current: $' + (total.current || 0).toLocaleString()} />}
@@ -2181,8 +2181,8 @@ export default function Home() {
               </select>
               <span style={{ fontSize: '0.8rem', color: '#8a8070', alignSelf: 'center' }}>{filteredTasks.length} tasks</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '8px', padding: '0.2rem' }}>
-                <button onClick={() => setProjectsView('list')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'list' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'list' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'list' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>List</button>
-                <button onClick={() => setProjectsView('timeline')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'timeline' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'timeline' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'timeline' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>Timeline</button>
+                <button onClick={() => setProjectsView('list')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'list' ? (theme === 'dark' ? '#333' : 'white') : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'list' ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', boxShadow: projectsView === 'list' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>List</button>
+                <button onClick={() => setProjectsView('timeline')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'timeline' ? (theme === 'dark' ? '#333' : 'white') : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'timeline' ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', boxShadow: projectsView === 'timeline' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>Timeline</button>
               </div>
             </div>
 
@@ -2243,7 +2243,7 @@ export default function Home() {
                         const isOverdue = dueDate < today && task.status !== 'Complete'
                         return (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', gap: '0.75rem' }}>
-                            <div style={{ width: isMobile ? '80px' : '160px', flexShrink: 0, fontSize: '0.72rem', color: '#3a3530', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }} title={task.name}>{task.name}</div>
+                            <div style={{ width: isMobile ? '80px' : '160px', flexShrink: 0, fontSize: '0.72rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }} title={task.name}>{task.name}</div>
                             <div style={{ flex: 1, position: 'relative', height: '28px' }}>
                               <div style={{ position: 'absolute', left: startPct + '%', width: widthPct + '%', height: '100%', borderRadius: '4px', background: color, opacity: task.status === 'Complete' ? 0.4 : isOverdue ? 0.9 : 0.75, display: 'flex', alignItems: 'center', padding: '0 0.5rem', boxSizing: 'border-box', cursor: 'default', border: isOverdue ? '1.5px solid #b85c38' : 'none' }}>
                                 <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.status === 'Complete' ? '✓' : task.dueDate}</span>
@@ -2256,12 +2256,12 @@ export default function Home() {
                     {/* Legend */}
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', paddingTop: '0.75rem', borderTop: '1px solid #f0ece0' }}>
                       {Object.entries(subsidiaryColors).map(([name, color]) => (
-                        <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#6b6560' }}>
+                        <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: theme === 'dark' ? '#a09880' : '#6b6560' }}>
                           <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
                           {name.split(' ')[0]}
                         </div>
                       ))}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#6b6560' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: theme === 'dark' ? '#a09880' : '#6b6560' }}>
                         <div style={{ width: '10px', height: '2px', background: '#c9a84c' }} />Today
                       </div>
                     </div>
@@ -2314,10 +2314,10 @@ export default function Home() {
                             {task.lead && <span>Lead: {task.lead}</span>}
                             {task.teamMembers && <span>Team: {task.teamMembers}</span>}
                             {task.dueDate && <span>Due: {task.dueDate}</span>}
-                            {task.notes && <span style={{ color: '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
+                            {task.notes && <span style={{ color: theme === 'dark' ? '#a09880' : '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="9" rx="2" fill="#6b6560" opacity="0.7"/><path d="M3 13 L3 10 L7 10" fill="#6b6560" opacity="0.5"/><rect x="3" y="4" width="4" height="1.2" rx="0.6" fill="#f4f0e8"/><rect x="3" y="6.5" width="7" height="1.2" rx="0.6" fill="#f4f0e8" opacity="0.7"/></svg>
                               Discussion
                             </button>
@@ -2341,7 +2341,7 @@ export default function Home() {
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>N</div>
                   <div>
                     <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
@@ -2570,13 +2570,13 @@ export default function Home() {
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -2605,7 +2605,7 @@ export default function Home() {
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && !row.colHeaders && !row.isTotal && (
@@ -2615,7 +2615,7 @@ export default function Home() {
                           <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
-                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && row.colHeaders && (
@@ -2752,7 +2752,7 @@ export default function Home() {
                   {companiesConfig.map(function(comp) {
                     return (
                       <div key={comp.key} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', borderLeft: '4px solid ' + comp.color }}>
-                        <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '1rem', color: '#0f0e0d' }}>{comp.label}</div>
+                        <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '1rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{comp.label}</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                           {allMetricsForComp(comp.key).map(function(metric) {
                             var goalKey = yr + '_' + comp.key + '_' + metric.key
@@ -2782,7 +2782,7 @@ export default function Home() {
                               return (
                                 <div key={metric.key}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                    <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label} Target</span>
+                                    <span style={{ fontSize: '0.8rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', fontWeight: '500' }}>{metric.label} Target</span>
                                     <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>{metric.isCustom ? '' : metric.unit === 'percent' ? 'Current: ' + actual + '%' : 'Current: ' + fmt(actual)}</span>
                                       <button onClick={function() { var nd = {...goalDrafts}; delete nd[goalKey]; if (metric.isCustom) { nd._customMetrics = (nd._customMetrics || []).filter(function(m) { return m.key !== metric.key }) }; setGoalDrafts(nd) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0' }}>remove</button>
                                   </div>
@@ -2796,7 +2796,7 @@ export default function Home() {
                             return (
                               <div key={metric.key}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                                  <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label}</span>
+                                  <span style={{ fontSize: '0.8rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', fontWeight: '500' }}>{metric.label}</span>
                                   <span style={{ fontSize: '0.75rem', color: '#8a8070' }}>{metric.unit === 'percent' ? actual + '% / ' + target + '%' : fmt(actual) + ' / ' + fmt(target)}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -2919,7 +2919,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div style={{ padding: '0.5rem 1rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f5f1ea' }}>{selectedNote.date} · {selectedNoteCompany}</div>
-                    <textarea value={noteEditContent} onChange={e => !isGuest && setNoteEditContent(e.target.value)} readOnly={isGuest} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
+                    <textarea value={noteEditContent} onChange={e => !isGuest && setNoteEditContent(e.target.value)} readOnly={isGuest} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Start writing...' style={{ flex: 1, padding: '1rem', border: 'none', outline: 'none', fontSize: '0.88rem', lineHeight: '1.6', resize: 'none', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', background: 'transparent', fontFamily: 'inherit', minHeight: '120px' }} />
                     <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fefcf8' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({(selectedNote.attachments || []).length})</div>
@@ -2956,12 +2956,12 @@ export default function Home() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '600' }}>{c.author.slice(0,2).toUpperCase()}</div>
-                                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#0f0e0d' }}>{c.author}</span>
+                                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{c.author}</span>
                                 <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{c.date}</span>
                               </div>
                               <button onClick={() => deleteComment(selectedNoteCompany, selectedNote.id, c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.7rem', padding: 0 }}>x</button>
                             </div>
-                            <div style={{ fontSize: '0.82rem', color: '#3a3530', lineHeight: '1.5' }}>{c.text}</div>
+                            <div style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', lineHeight: '1.5' }}>{c.text}</div>
                           </div>
                         ))}
                       </div>
@@ -3074,7 +3074,7 @@ export default function Home() {
                     <div style={{ textAlign: 'center', color: '#8a8070', fontSize: '0.85rem', padding: '2rem 0' }}>Click a day to see events</div>
                   ) : (
                     <>
-                      <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '1rem', color: '#0f0e0d' }}>{calendarSelected.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                      <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '1rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{calendarSelected.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
                       {selectedEvents.length === 0 ? (
                         <div style={{ color: '#8a8070', fontSize: '0.82rem' }}>No events this day</div>
                       ) : (
@@ -3082,7 +3082,7 @@ export default function Home() {
                           {selectedEvents.map((ev, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
-                              <div style={{ fontSize: '0.82rem', color: '#3a3530', flex: 1 }}>{ev.label}</div>
+                              <div style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', flex: 1 }}>{ev.label}</div>
                               {ev.id && <button onClick={async () => {
                                 await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: ev.id }) })
                                 setCalendarEvents(prev => prev.filter(e => e.id !== ev.id))
@@ -3126,7 +3126,7 @@ export default function Home() {
                         <span style={{ fontSize: '0.78rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{c.author}</span>
                         <span style={{ fontSize: '0.65rem', color: '#a09880' }}>{time}</span>
                       </div>
-                      <div style={{ fontSize: '0.82rem', color: '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{c.text}</div>
+                      <div style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{c.text}</div>
                       {/* Reactions */}
                       <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                         {Object.entries(c.reactions || {}).map(([emoji, users]) => (
@@ -3269,7 +3269,7 @@ export default function Home() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                         <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: convo.type === 'group' ? '#3d5a6e' : '#0f0e0d', color: convo.type === 'group' ? 'white' : '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: '700', flexShrink: 0 }}>{convo.type === 'group' ? '👥' : displayName.slice(0,2).toUpperCase()}</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#0f0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
                           {convo.lastMessage && <div style={{ fontSize: '0.72rem', color: '#8a8070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{convo.lastMessage.senderName}: {convo.lastMessage.text}</div>}
                         </div>
                       </div>
@@ -3549,7 +3549,7 @@ export default function Home() {
                                 {emp.email && <a href={'mailto:' + emp.email} style={{ color: '#3d5a6e', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1.5" fill="#3d5a6e" opacity="0.7"/><path d="M1 3 L6 7 L11 3" stroke="white" strokeWidth="1" fill="none"/></svg>{emp.email}
                                 </a>}
-                                {emp.phone && <a href={'tel:' + emp.phone} style={{ color: '#3a3530', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                {emp.phone && <a href={'tel:' + emp.phone} style={{ color: theme === 'dark' ? '#d4cfc6' : '#3a3530', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 1.5 C2 1.5 3.5 1.5 4 3 L4.5 4.5 C4.5 4.5 3 5 3.5 6.5 C4 8 5.5 9.5 7 10 C8.5 10.5 8.5 9 8.5 9 L10 9.5 C11.5 10 11.5 11.5 11.5 11.5 C11.5 11.5 10 12.5 8.5 11.5 C5 9.5 2.5 7 1.5 3.5 C0.5 0.5 2 1.5 2 1.5Z" fill="#3a3530" opacity="0.7"/></svg>{emp.phone}
                                 </a>}
                                 {emp.startDate && <div style={{ color: '#a09880', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -3609,7 +3609,7 @@ export default function Home() {
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: '#0f0e0d' }}>N</div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>N</div>
                   <div>
                     <div style={{ color: '#f5f1ea', fontSize: '0.88rem', fontWeight: '600' }}>Nora</div>
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
@@ -3838,13 +3838,13 @@ export default function Home() {
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -3873,7 +3873,7 @@ export default function Home() {
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#b85c38', minWidth: '70px', textAlign: 'right' }}>${row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span style={{ color: '#8b0000', minWidth: '70px', textAlign: 'right' }}>${row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          <span style={{ color: '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && !row.colHeaders && !row.isTotal && (
@@ -3883,7 +3883,7 @@ export default function Home() {
                           <span style={{ color: row.over60 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over60 > 0 ? '$' + row.over60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over90 > 0 ? '#b85c38' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over90 > 0 ? '$' + row.over90.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
                           <span style={{ color: row.over91 > 0 ? '#8b0000' : '#ccc', minWidth: '70px', textAlign: 'right' }}>{row.over91 > 0 ? '$' + row.over91.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</span>
-                          <span style={{ color: '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span style={{ color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', fontWeight: '600', minWidth: '70px', textAlign: 'right' }}>${row.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       )}
                       {row.isAging && row.colHeaders && (
@@ -3946,7 +3946,7 @@ export default function Home() {
                 </nav>
                 {currentUser && (
                   <div style={{ borderTop: '1px solid #2a2825', paddingTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', color: '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c9a84c', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
                     <span style={{ color: '#c9c5be', fontSize: '0.8rem', flex: 1 }}>{currentUser.name}</span>
                     <button onClick={() => { handleLogout(); setMobileMenuOpen(false) }} style={{ background: 'none', border: '1px solid #3a3530', borderRadius: '4px', color: '#8a8070', fontSize: '0.65rem', cursor: 'pointer', padding: '0.2rem 0.5rem' }}>Sign out</button>
                   </div>
