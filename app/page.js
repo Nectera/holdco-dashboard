@@ -292,6 +292,7 @@ export default function Home() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
   const [period, setPeriod] = useState('monthly')
   const [drilldownData, setDrilldownData] = useState(null)
+  const [drilldownCashflow, setDrilldownCashflow] = useState(null)
   const [loadingDrilldown, setLoadingDrilldown] = useState(false)
 
   const handleLogin = () => {
@@ -805,6 +806,7 @@ export default function Home() {
     const d = await res.json()
     setDrilldownData(d)
     setLoadingDrilldown(false)
+    fetch('/api/qb/cashflow?company=' + companyKey + '&year=' + selectedYear).then(function(r) { return r.json() }).then(function(cf) { setDrilldownCashflow(cf) }).catch(function() {})
   }
 
   const openReport = async (companyKey, type) => {
@@ -1684,6 +1686,38 @@ export default function Home() {
             </div>
             {loadingDrilldown ? <p style={{ color: '#8a8070' }}>Loading details...</p> : drilldownData && (
               <>
+                {(() => {
+                  const dRows = drilldownData.rows || []
+                  const dFindVal = (match) => { for (const r of dRows) { if (r.label && r.label.toLowerCase().includes(match.toLowerCase()) && r.value !== null) return r.value } return 0 }
+                  const dRev = dFindVal('Total Income')
+                  const dCOGS = dFindVal('Total Cost of Goods Sold')
+                  const dGP = dRev - dCOGS
+                  const dOpex = dFindVal('Total Expenses')
+                  const dNet = dFindVal('Net Income') || (dGP - dOpex)
+                  const dDep = dFindVal('Depreciation')
+                  const dInt = dFindVal('Interest Expense')
+                  const dEBITDA = dNet + dInt + dDep
+                  const dGPM = dRev > 0 ? ((dGP / dRev) * 100).toFixed(1) : '0.0'
+                  const dNM = dRev > 0 ? ((dNet / dRev) * 100).toFixed(1) : '0.0'
+                  const dOM = dRev > 0 ? (((dGP - dOpex) / dRev) * 100).toFixed(1) : '0.0'
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                      {[
+                        { label: 'Revenue', value: dRev, isCurrency: true, color: '#4a6741' },
+                        { label: 'Net Income', value: dNet, isCurrency: true, color: dNet >= 0 ? '#3d5a6e' : '#b85c38' },
+                        { label: 'EBITDA', value: dEBITDA, isCurrency: true, color: '#c9a84c' },
+                        { label: 'Gross Margin', value: dGPM, isCurrency: false, color: '#4a6741' },
+                      ].map(function(kpi) {
+                        return (
+                          <div key={kpi.label} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
+                            <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{kpi.label}</div>
+                            <div style={{ fontSize: isMobile ? '1.1rem' : '1.4rem', fontWeight: '600', color: parseFloat(kpi.value) < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif" }}>{kpi.isCurrency ? fmt(kpi.value) : kpi.value + '%'}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
                 <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070' }}>Trend</div>
@@ -1710,6 +1744,21 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+                {drilldownCashflow && drilldownCashflow.rows && drilldownCashflow.rows.length > 0 && (
+                  <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginTop: '1.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Cash Flow Statement</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                      {drilldownCashflow.rows.map(function(row, i) {
+                        return (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.5rem', borderRadius: '4px', background: row.isTotal ? '#f5f1ea' : row.isHeader ? '#faf8f4' : 'transparent', fontWeight: row.isTotal || row.isHeader ? '600' : '400', fontSize: row.isHeader ? '0.7rem' : row.isTotal ? '0.85rem' : '0.82rem', paddingLeft: (0.5 + (row.depth || 0)) + 'rem', textTransform: row.isHeader ? 'uppercase' : 'none', letterSpacing: row.isHeader ? '0.06em' : 'normal' }}>
+                            <span style={{ color: row.isHeader ? '#8a8070' : row.isTotal ? '#0f0e0d' : '#3a3530' }}>{row.label}</span>
+                            {row.value !== null && <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d' }}>{fmt(row.value)}</span>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </>
