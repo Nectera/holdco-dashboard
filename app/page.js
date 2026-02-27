@@ -2430,12 +2430,12 @@ export default function Home() {
                 { key: 'lush', label: 'Lush Green Landscapes', color: '#8a6d3b' },
               ]
               const defaultMetrics = [
-                { key: 'revenue', label: 'Revenue', dataKey: 'Total Income' },
-                { key: 'netIncome', label: 'Net Income', dataKey: 'Net Income' },
+                { key: 'revenue', label: 'Revenue', dataKey: 'Total Income', unit: 'dollar' },
+                { key: 'netMargin', label: 'Net Margin', dataKey: 'netMargin', unit: 'percent' },
               ]
               var customMetrics = goals._customMetrics || []
               var allMetricsForComp = function(compKey) {
-                var defaults = defaultMetrics.map(function(m) { return { ...m, isCustom: false } })
+                var defaults = defaultMetrics.map(function(m) { return { ...m, isCustom: false, unit: m.unit || 'dollar' } })
                 var customs = customMetrics.filter(function(m) { return m.company === compKey || m.company === 'all' }).map(function(m) { return { key: m.key, label: m.label, dataKey: null, isCustom: true, unit: m.unit || 'dollar' } })
                 return defaults.concat(customs)
               }
@@ -2468,7 +2468,7 @@ export default function Home() {
                           {allMetricsForComp(comp.key).map(function(metric) {
                             var goalKey = yr + '_' + comp.key + '_' + metric.key
                             var target = goals[goalKey] || 0
-                            var actual = metric.isCustom ? 0 : getActual(comp.key, metric.dataKey)
+                            var actual = metric.isCustom ? 0 : metric.dataKey === 'netMargin' ? (function() { var rev = getActual(comp.key, 'Total Income'); var net = getActual(comp.key, 'Net Income'); return rev > 0 ? parseFloat(((net / rev) * 100).toFixed(1)) : 0 })() : getActual(comp.key, metric.dataKey)
                             var pct = target > 0 ? Math.min((actual / target) * 100, 150) : 0
                             var displayPct = target > 0 ? ((actual / target) * 100).toFixed(1) : '0.0'
                             var barColor = pct >= 100 ? '#4a6741' : pct >= 75 ? '#c9a84c' : pct >= 50 ? '#d4804e' : '#b85c38'
@@ -2478,10 +2478,10 @@ export default function Home() {
                                 <div key={metric.key}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                     <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label} Target</span>
-                                    <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>{metric.isCustom ? '' : 'Current: ' + fmt(actual)}</span>
+                                    <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>{metric.isCustom ? '' : metric.unit === 'percent' ? 'Current: ' + actual + '%' : 'Current: ' + fmt(actual)}</span>
                                       <button onClick={function() { var nd = {...goalDrafts}; delete nd[goalKey]; if (metric.isCustom) { nd._customMetrics = (nd._customMetrics || []).filter(function(m) { return m.key !== metric.key }) }; setGoalDrafts(nd) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0' }}>remove</button>
                                   </div>
-                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder={metric.unit === 'percent' ? 'Enter target %' : 'Enter target amount'} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder={metric.unit === 'percent' || (!metric.isCustom && metric.dataKey === 'netMargin') ? 'Enter target %' : 'Enter target amount'} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
                                 </div>
                               )
                             }
