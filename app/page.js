@@ -2,6 +2,35 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
+const renderMarkdown = (text) => {
+  if (!text) return text
+  const lines = text.split('\n')
+  const elements = []
+  let i = 0
+  for (const line of lines) {
+    const key = i++
+    if (line.trim() === '') { elements.push(<div key={key} style={{ height: '0.4rem' }} />); continue }
+    if (line.startsWith('- ') || line.startsWith('* ')) {
+      const bullet = line.slice(2).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>')
+      elements.push(<div key={key} style={{ display: 'flex', gap: '0.5rem', paddingLeft: '0.25rem' }}><span style={{ color: '#c9a84c', flexShrink: 0 }}>•</span><span dangerouslySetInnerHTML={{ __html: bullet }} /></div>)
+      continue
+    }
+    const formatted = line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>')
+    if (line.startsWith('### ')) {
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '0.3rem', color: '#3a3530' }} dangerouslySetInnerHTML={{ __html: formatted.slice(4) }} />)
+    } else if (line.startsWith('## ')) {
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.85rem', marginTop: '0.4rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(3) }} />)
+    } else if (line.startsWith('# ')) {
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
+    } else if (line.startsWith('---') || line.startsWith('—Nora') || line.startsWith('— Nora')) {
+      elements.push(<div key={key} style={{ borderTop: '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
+    } else {
+      elements.push(<div key={key} dangerouslySetInnerHTML={{ __html: formatted }} />)
+    }
+  }
+  return elements
+}
+
 const getTotalExpenses = (report) => {
   return getMetric(report, 'Total Expenses') + getMetric(report, 'Total Cost of Goods Sold')
 }
@@ -1491,7 +1520,7 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.content}
+                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
@@ -2207,7 +2236,7 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.content}
+                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
@@ -3370,7 +3399,7 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.content}
+                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
