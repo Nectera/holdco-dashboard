@@ -3041,7 +3041,7 @@ export default function Home() {
                   <>
                     <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f0ece0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       {isMobile && <button onClick={() => { setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.82rem', padding: '0 0.6rem 0 0', flexShrink: 0 }}>← Back</button>}
-                      <input value={noteEditTitle} onChange={e => setNoteEditTitle(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Note title...' style={{ border: 'none', outline: 'none', fontSize: '1rem', fontWeight: '600', flex: 1, background: 'transparent' }} />
+                      <input value={noteEditTitle} onChange={e => setNoteEditTitle(e.target.value)} onBlur={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} placeholder='Note title...' style={{ border: 'none', outline: 'none', fontSize: isMobile ? '0.9rem' : '1rem', fontWeight: '600', flex: 1, background: 'transparent', minWidth: 0 }} />
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={() => togglePinNote(selectedNoteCompany, selectedNote.id)} title={selectedNote.pinned ? 'Unpin' : 'Pin'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', opacity: selectedNote.pinned ? 1 : 0.4 }}>📌</button>
                         <div style={{ position: 'relative' }}>
@@ -3152,7 +3152,7 @@ export default function Home() {
                           </div>
                         ))}
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', paddingBottom: isMobile ? '1rem' : 0 }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', paddingBottom: isMobile ? '4rem' : 0 }}>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
                           <textarea value={projectCommentText} onChange={e => setProjectCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
