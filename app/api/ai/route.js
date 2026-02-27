@@ -319,8 +319,16 @@ IMPORTANT RULES FOR ACTIONS:
       messages: messages,
     })
     const textContent = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n')
-    const reply = textContent || "I searched for that but couldn't find a clear answer."
-    return new Response(JSON.stringify({ reply }), {
+    let reply = textContent || "I searched for that but couldn't find a clear answer."
+    let action = null
+    const actionMatch = reply.match(/\[ACTION:(\w+):(\{.*\})\]/)
+    if (actionMatch) {
+      try {
+        action = { type: actionMatch[1], data: JSON.parse(actionMatch[2]) }
+        reply = reply.replace(actionMatch[0], '').trim()
+      } catch(e) {}
+    }
+    return new Response(JSON.stringify({ reply, action }), {
       headers: { 'Content-Type': 'application/json' }
     })
   } catch(err) {

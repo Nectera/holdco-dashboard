@@ -367,7 +367,6 @@ export default function Home() {
   const [notifPrefsSaved, setNotifPrefsSaved] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
-  const [pendingActions, setPendingActions] = useState({})
   const [aiInput, setAiInput] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [noraExpanded, setNoraExpanded] = useState(false)
@@ -1596,54 +1595,52 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? (() => {
-                        const parsed = parseNoraAction(msg.content)
-                        return React.createElement('div', null,
-                          renderMarkdown(parsed.message),
-                          parsed.action ? React.createElement(NoraActionCard, {
-                            action: parsed.action,
-                            confirmed: pendingActions['action_' + i] === 'done',
-                            onConfirm: async function() {
-                              const a = parsed.action
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                      {msg.role === 'assistant' ? <div>
+                        {renderMarkdown(msg.content)}
+                        {msg.action && !msg.actionDone && <div style={{ background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: '10px', padding: '0.75rem', marginTop: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem', color: '#0f0e0d' }}>
+                            <span>{msg.action.type === 'calendar_create' ? '📅' : msg.action.type === 'task_create' ? '✅' : msg.action.type === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.action.type === 'calendar_create' ? 'Create Calendar Event' : msg.action.type === 'task_create' ? 'Create Task' : msg.action.type === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.action.data).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = msg.action
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
                                 } else if (a.type === 'note_create') {
-                                  var company = a.data.company || 'Nectera Holdings'
-                                  var currentNotes = notes[company] || []
-                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
-                                  var updated = [newNote].concat(currentNotes)
-                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
-                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
                                 } else if (a.type === 'message_send') {
-                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
-                                  if (recipient) {
-                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
-                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
-                                    if (existing) {
-                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
-                                    }
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
                                   }
                                 }
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed.\n\n—Nora' }])
                               } catch(err) {
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Error executing action.\n\n—Nora' }])
                               }
-                            },
-                            onCancel: function() {
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
-                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
-                            }
-                          }) : null
-                        )
-                      })() : msg.content}
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'Cancelled.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </div>}
+                        {msg.action && msg.actionDone && <div style={{ fontSize: '0.75rem', color: '#4a6741', marginTop: '0.4rem', fontStyle: 'italic' }}>✓ Action completed</div>}
+                      </div> : msg.content}
                     </div>
                   </div>
                 ))}
@@ -1677,7 +1674,7 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -1733,7 +1730,7 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
@@ -2364,54 +2361,52 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? (() => {
-                        const parsed = parseNoraAction(msg.content)
-                        return React.createElement('div', null,
-                          renderMarkdown(parsed.message),
-                          parsed.action ? React.createElement(NoraActionCard, {
-                            action: parsed.action,
-                            confirmed: pendingActions['action_' + i] === 'done',
-                            onConfirm: async function() {
-                              const a = parsed.action
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                      {msg.role === 'assistant' ? <div>
+                        {renderMarkdown(msg.content)}
+                        {msg.action && !msg.actionDone && <div style={{ background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: '10px', padding: '0.75rem', marginTop: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem', color: '#0f0e0d' }}>
+                            <span>{msg.action.type === 'calendar_create' ? '📅' : msg.action.type === 'task_create' ? '✅' : msg.action.type === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.action.type === 'calendar_create' ? 'Create Calendar Event' : msg.action.type === 'task_create' ? 'Create Task' : msg.action.type === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.action.data).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = msg.action
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
                                 } else if (a.type === 'note_create') {
-                                  var company = a.data.company || 'Nectera Holdings'
-                                  var currentNotes = notes[company] || []
-                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
-                                  var updated = [newNote].concat(currentNotes)
-                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
-                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
                                 } else if (a.type === 'message_send') {
-                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
-                                  if (recipient) {
-                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
-                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
-                                    if (existing) {
-                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
-                                    }
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
                                   }
                                 }
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed.\n\n—Nora' }])
                               } catch(err) {
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Error executing action.\n\n—Nora' }])
                               }
-                            },
-                            onCancel: function() {
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
-                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
-                            }
-                          }) : null
-                        )
-                      })() : msg.content}
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'Cancelled.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </div>}
+                        {msg.action && msg.actionDone && <div style={{ fontSize: '0.75rem', color: '#4a6741', marginTop: '0.4rem', fontStyle: 'italic' }}>✓ Action completed</div>}
+                      </div> : msg.content}
                     </div>
                   </div>
                 ))}
@@ -2445,7 +2440,7 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -2501,7 +2496,7 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
@@ -3577,54 +3572,52 @@ export default function Home() {
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? (() => {
-                        const parsed = parseNoraAction(msg.content)
-                        return React.createElement('div', null,
-                          renderMarkdown(parsed.message),
-                          parsed.action ? React.createElement(NoraActionCard, {
-                            action: parsed.action,
-                            confirmed: pendingActions['action_' + i] === 'done',
-                            onConfirm: async function() {
-                              const a = parsed.action
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'loading' }) })
+                      {msg.role === 'assistant' ? <div>
+                        {renderMarkdown(msg.content)}
+                        {msg.action && !msg.actionDone && <div style={{ background: '#faf8f4', border: '1px solid #e8e2d9', borderRadius: '10px', padding: '0.75rem', marginTop: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem', color: '#0f0e0d' }}>
+                            <span>{msg.action.type === 'calendar_create' ? '📅' : msg.action.type === 'task_create' ? '✅' : msg.action.type === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.action.type === 'calendar_create' ? 'Create Calendar Event' : msg.action.type === 'task_create' ? 'Create Task' : msg.action.type === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.action.data).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = msg.action
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(function(r) { return r.json() }).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(function(r) { return r.json() }).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
                                 } else if (a.type === 'note_create') {
-                                  var company = a.data.company || 'Nectera Holdings'
-                                  var currentNotes = notes[company] || []
-                                  var newNote = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
-                                  var updated = [newNote].concat(currentNotes)
-                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: company, notes: updated }) })
-                                  setNotes(function(prev) { var n = Object.assign({}, prev); n[company] = updated; return n })
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
                                 } else if (a.type === 'message_send') {
-                                  var recipient = employees.find(function(e) { return e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()) })
-                                  if (recipient) {
-                                    var convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(function(r) { return r.json() })
-                                    var existing = convos.find(function(c) { return c.members.includes(String(recipient.id)) && c.members.includes(String(currentUser.id)) })
-                                    if (existing) {
-                                      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: existing.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
-                                    }
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
                                   }
                                 }
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'done' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: '✓ Done! The action has been completed successfully.\n\n—Nora' }]) })
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed.\n\n—Nora' }])
                               } catch(err) {
-                                setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'error' }) })
-                                setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'Sorry, there was an error executing that action. Please try again.\n\n—Nora' }]) })
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Error executing action.\n\n—Nora' }])
                               }
-                            },
-                            onCancel: function() {
-                              setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
-                              setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
-                            }
-                          }) : null
-                        )
-                      })() : msg.content}
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, actionDone: true } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'Cancelled.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>
+                        </div>}
+                        {msg.action && msg.actionDone && <div style={{ fontSize: '0.75rem', color: '#4a6741', marginTop: '0.4rem', fontStyle: 'italic' }}>✓ Action completed</div>}
+                      </div> : msg.content}
                     </div>
                   </div>
                 ))}
@@ -3658,7 +3651,7 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -3714,7 +3707,7 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply, action: d.action || null }])
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
