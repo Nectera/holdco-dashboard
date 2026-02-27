@@ -352,7 +352,7 @@ export default function Home() {
     fetch('/api/notes').then(r => r.json()).then(data => setNotes(data)).catch(() => {})
     fetch('/api/team').then(r => r.json()).then(data => setEmployees(data)).catch(() => {})
     fetch('/api/lighttasks').then(r => r.json()).then(data => setLightTasks(data)).catch(() => {})
-    fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents).catch(() => {})
+    fetch('/api/calendar').then(r => r.json()).then(d => setCalendarEvents(Array.isArray(d) ? d : d.events || [])).catch(() => {})
     fetch('/api/users?action=list').then(r => r.json()).then(data => setUserList(data)).catch(() => {})
     if (currentUser) {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
@@ -1536,10 +1536,10 @@ export default function Home() {
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(d => setCalendarEvents(Array.isArray(d) ? d : d.events || []))
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(d => setTasks(d.tasks || []))
                                 } else if (a.type === 'note_create') {
                                   const co = a.data.company || 'Nectera Holdings'
                                   const cur = notes[co] || []
@@ -2319,10 +2319,10 @@ export default function Home() {
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(d => setCalendarEvents(Array.isArray(d) ? d : d.events || []))
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(d => setTasks(d.tasks || []))
                                 } else if (a.type === 'note_create') {
                                   const co = a.data.company || 'Nectera Holdings'
                                   const cur = notes[co] || []
@@ -3547,10 +3547,10 @@ export default function Home() {
                               try {
                                 if (a.type === 'calendar_create') {
                                   await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
-                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                  fetch('/api/calendar').then(r => r.json()).then(d => setCalendarEvents(Array.isArray(d) ? d : d.events || []))
                                 } else if (a.type === 'task_create') {
                                   await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
-                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(d => setTasks(d.tasks || []))
                                 } else if (a.type === 'note_create') {
                                   const co = a.data.company || 'Nectera Holdings'
                                   const cur = notes[co] || []
