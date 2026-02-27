@@ -15,32 +15,86 @@ const fetchQBData = async (endpoint, params) => {
   }
 }
 
+const findRowValue = (rows, labelMatch) => {
+  if (!rows) return 0
+  for (const row of rows) {
+    if (row.label && row.label.toLowerCase().includes(labelMatch.toLowerCase()) && row.value !== null) {
+      return row.value
+    }
+  }
+  return 0
+}
+
+const calcMetrics = (rows) => {
+  const totalIncome = findRowValue(rows, 'Total Income')
+  const totalCOGS = findRowValue(rows, 'Total Cost of Goods Sold')
+  const grossProfit = totalIncome - totalCOGS
+  const totalExpenses = findRowValue(rows, 'Total Expenses')
+  const netIncome = findRowValue(rows, 'Net Income') || (grossProfit - totalExpenses)
+  const depreciation = findRowValue(rows, 'Depreciation') + findRowValue(rows, 'Amortization')
+  const interest = findRowValue(rows, 'Interest Expense')
+  const taxes = findRowValue(rows, 'Tax') + findRowValue(rows, 'Income Tax')
+  const ebitda = netIncome + interest + taxes + depreciation
+  const grossMargin = totalIncome > 0 ? ((grossProfit / totalIncome) * 100).toFixed(1) : '0.0'
+  const netMargin = totalIncome > 0 ? ((netIncome / totalIncome) * 100).toFixed(1) : '0.0'
+  const operatingMargin = totalIncome > 0 ? (((grossProfit - totalExpenses) / totalIncome) * 100).toFixed(1) : '0.0'
+  return { totalIncome, totalCOGS, grossProfit, totalExpenses, netIncome, depreciation, interest, taxes, ebitda, grossMargin, netMargin, operatingMargin }
+}
+
 const buildFinancialContext = async (basicContext, year) => {
   if (!year) year = new Date().getFullYear()
+  const priorYear = year - 1
   const companies = ['xtract', 'bcs', 'lush']
   const companyNames = { xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
 
   let detailed = basicContext + '\n\nDETAILED FINANCIAL DATA:\n'
 
   const results = await Promise.all(companies.map(async (key) => {
-    const [details, cashflow, transactions, customers, vendors] = await Promise.all([
+    const [details, priorDetails, balanceSheet, cashflow, transactions, customers, vendors] = await Promise.all([
       fetchQBData('details', `company=${key}&year=${year}`),
+      fetchQBData('details', `company=${key}&year=${priorYear}`),
+      fetchQBData('report', `company=${key}&type=bs&year=${year}`),
       fetchQBData('cashflow', `company=${key}&year=${year}`),
       fetchQBData('transactions', `company=${key}&type=all&limit=20`),
       fetchQBData('customers', `company=${key}`),
       fetchQBData('vendors', `company=${key}`),
     ])
-    return { key, name: companyNames[key], details, cashflow, transactions, customers, vendors }
+    return { key, name: companyNames[key], details, priorDetails, balanceSheet, cashflow, transactions, customers, vendors }
   }))
 
   for (const r of results) {
     detailed += `\n--- ${r.name} ---\n`
 
+    const currentMetrics = calcMetrics(r.details && r.details.rows ? r.details.rows : [])
+    const priorMetrics = calcMetrics(r.priorDetails && r.priorDetails.rows ? r.priorDetails.rows : [])
+
+    detailed += `KEY METRICS (${year}):\n`
+    detailed += `  Revenue: $${currentMetrics.totalIncome.toLocaleString()}\n`
+    detailed += `  COGS: $${currentMetrics.totalCOGS.toLocaleString()}\n`
+    detailed += `  Gross Profit: $${currentMetrics.grossProfit.toLocaleString()} (${currentMetrics.grossMargin}% margin)\n`
+    detailed += `  Operating Expenses: $${currentMetrics.totalExpenses.toLocaleString()}\n`
+    detailed += `  Net Income: $${currentMetrics.netIncome.toLocaleString()} (${currentMetrics.netMargin}% margin)\n`
+    detailed += `  EBITDA: $${currentMetrics.ebitda.toLocaleString()}\n`
+    detailed += `  Operating Margin: ${currentMetrics.operatingMargin}%\n`
+    detailed += `  Interest Expense: $${currentMetrics.interest.toLocaleString()}\n`
+    detailed += `  Depreciation: $${currentMetrics.depreciation.toLocaleString()}\n`
+
+    if (priorMetrics.totalIncome > 0) {
+      const revenueGrowth = (((currentMetrics.totalIncome - priorMetrics.totalIncome) / priorMetrics.totalIncome) * 100).toFixed(1)
+      const netGrowth = priorMetrics.netIncome !== 0 ? (((currentMetrics.netIncome - priorMetrics.netIncome) / Math.abs(priorMetrics.netIncome)) * 100).toFixed(1) : 'N/A'
+      detailed += `YEAR-OVER-YEAR (${priorYear} vs ${year}):\n`
+      detailed += `  Prior Revenue: $${priorMetrics.totalIncome.toLocaleString()} -> Current: $${currentMetrics.totalIncome.toLocaleString()} (${revenueGrowth}% change)\n`
+      detailed += `  Prior Net Income: $${priorMetrics.netIncome.toLocaleString()} -> Current: $${currentMetrics.netIncome.toLocaleString()} (${netGrowth}% change)\n`
+      detailed += `  Prior Gross Margin: ${priorMetrics.grossMargin}% -> Current: ${currentMetrics.grossMargin}%\n`
+      detailed += `  Prior EBITDA: $${priorMetrics.ebitda.toLocaleString()} -> Current: $${currentMetrics.ebitda.toLocaleString()}\n`
+    }
+
     if (r.details && r.details.rows) {
       detailed += 'P&L LINE ITEMS:\n'
       for (const row of r.details.rows) {
         if (row.value !== null && row.value !== 0) {
-          detailed += `  ${'  '.repeat(row.depth || 0)}${row.label}: $${row.value.toLocaleString()}\n`
+          const indent = '  '.repeat((row.depth || 0) + 1)
+          detailed += `${indent}${row.label}: $${row.value.toLocaleString()}\n`
         }
       }
     }
@@ -50,6 +104,16 @@ const buildFinancialContext = async (basicContext, year) => {
       for (const m of r.details.monthly) {
         if (m.income > 0 || m.expenses > 0) {
           detailed += `  ${m.month}: Revenue $${m.income.toLocaleString()}, Expenses $${m.expenses.toLocaleString()}, Net $${m.net.toLocaleString()}\n`
+        }
+      }
+    }
+
+    if (r.balanceSheet && r.balanceSheet.rows) {
+      detailed += 'BALANCE SHEET:\n'
+      for (const row of r.balanceSheet.rows) {
+        if (row.value !== null && (row.isTotal || row.depth <= 1)) {
+          const indent = '  '.repeat((row.depth || 0) + 1)
+          detailed += `${indent}${row.label}: $${row.value.toLocaleString()}\n`
         }
       }
     }
@@ -65,8 +129,8 @@ const buildFinancialContext = async (basicContext, year) => {
 
     if (r.transactions && r.transactions.transactions) {
       const txns = r.transactions.transactions
-      const openInvoices = txns.filter(t => t.type === 'Invoice' && t.balance > 0)
-      const openBills = txns.filter(t => t.type === 'Bill' && t.balance > 0)
+      const openInvoices = txns.filter(function(t) { return t.type === 'Invoice' && t.balance > 0 })
+      const openBills = txns.filter(function(t) { return t.type === 'Bill' && t.balance > 0 })
       if (openInvoices.length > 0) {
         detailed += 'OPEN INVOICES:\n'
         for (const inv of openInvoices.slice(0, 10)) {
@@ -84,7 +148,7 @@ const buildFinancialContext = async (basicContext, year) => {
     if (r.customers) {
       detailed += `CUSTOMERS: ${r.customers.totalCustomers} total, ${r.customers.customersWithBalance} with open balance ($${(r.customers.totalBalance || 0).toLocaleString()} total AR)\n`
       if (r.customers.customers) {
-        const topOwing = r.customers.customers.filter(c => c.balance > 0).slice(0, 5)
+        const topOwing = r.customers.customers.filter(function(c) { return c.balance > 0 }).slice(0, 5)
         if (topOwing.length > 0) {
           detailed += 'TOP CUSTOMERS OWING:\n'
           for (const c of topOwing) {
@@ -97,7 +161,7 @@ const buildFinancialContext = async (basicContext, year) => {
     if (r.vendors) {
       detailed += `VENDORS: ${r.vendors.totalVendors} total, ${r.vendors.vendorsWithBalance} with open balance ($${(r.vendors.totalBalance || 0).toLocaleString()} total AP)\n`
       if (r.vendors.vendors) {
-        const topOwed = r.vendors.vendors.filter(v => v.balance > 0).slice(0, 5)
+        const topOwed = r.vendors.vendors.filter(function(v) { return v.balance > 0 }).slice(0, 5)
         if (topOwed.length > 0) {
           detailed += 'TOP VENDORS OWED:\n'
           for (const v of topOwed) {
@@ -125,7 +189,7 @@ export async function POST(request) {
   }
 
   const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : ''
-  const isFinancialQuestion = /financ|revenue|expense|profit|loss|income|cash|money|budget|cost|margin|ar |a\/r|receivable|payable|a\/p|ap |invoice|bill|customer.*owe|vendor|paid|payment|quarterly|monthly trend|biggest expense|top expense|who owes|balance sheet|cash flow/i.test(lastMsg)
+  const isFinancialQuestion = /financ|revenue|expense|profit|loss|income|cash|money|budget|cost|margin|ebitda|earning|ar |a\/r|receivable|payable|a\/p|ap |invoice|bill|customer.*owe|vendor|paid|payment|quarterly|monthly trend|biggest expense|top expense|who owes|balance sheet|cash flow|assets|liabilities|equity|debt|loan|yoy|year.over.year|compar/i.test(lastMsg)
 
   const yearMatch = lastMsg.match(/(202[0-9])/);
   const queryYear = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear()
