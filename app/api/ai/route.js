@@ -328,8 +328,8 @@ IMPORTANT RULES FOR ACTIONS:
         try {
           const convoText = messages.slice(-6).map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply
           const memoryExtract = await anthropic.messages.create({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 300,
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 200,
             system: 'Extract 0-3 key facts worth remembering about this user from their conversation. Focus on: what they care about, preferences, priorities, concerns, decisions made, or personal context. Return ONLY a valid JSON array of short strings. Example: ["concerned about Xtract expenses", "wants to reduce Bug Control costs"]. If nothing notable, return []. Output only the JSON array, nothing else.',
             messages: [{ role: 'user', content: convoText }]
           })
@@ -360,7 +360,7 @@ IMPORTANT RULES FOR ACTIONS:
           } catch(e2) {}
         }
       }
-      doMemoryExtract()  // Fire and forget - don't block the response
+      await doMemoryExtract()
     }
 
     return new Response(JSON.stringify({ reply, action }), {
