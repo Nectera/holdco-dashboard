@@ -1515,9 +1515,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">{noraExpanded ? <><polyline points="5,1 1,1 1,5" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><polyline points="11,15 15,15 15,11" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="1" y1="1" x2="6" y2="6" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/><line x1="15" y1="15" x2="10" y2="10" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/></> : <><polyline points="10,1 15,1 15,6" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><polyline points="6,15 1,15 1,10" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="15" y1="1" x2="9" y2="7" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/><line x1="1" y1="15" x2="7" y2="9" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/></>}</svg>
-                  </button>
+                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>{noraExpanded ? '↙' : '↗'}</button>
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
               </div>
