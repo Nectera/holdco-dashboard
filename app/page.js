@@ -1742,12 +1742,14 @@ export default function Home() {
 
         {drilldown && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <button onClick={() => { setDrilldown(null); setDrilldownData(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.85rem', padding: 0 }}>
-                Back
-              </button>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <button onClick={() => { setDrilldown(null); setDrilldownData(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.85rem', padding: 0 }}>
+                  ← Back
+                </button>
+                <select value={selectedYear} onChange={async e => { const y = e.target.value; setSelectedYear(y); setDrilldownData(null); setLoadingDrilldown(true); const res = await fetch("/api/qb/details?company=" + drilldown + "&year=" + y); const d = await res.json(); setDrilldownData(d); setLoadingDrilldown(false); }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
+              </div>
               <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.8rem', margin: 0 }}>{drilldownData?.company || '...'}</h1>
-              <select value={selectedYear} onChange={async e => { const y = e.target.value; setSelectedYear(y); setDrilldownData(null); setLoadingDrilldown(true); const res = await fetch("/api/qb/details?company=" + drilldown + "&year=" + y); const d = await res.json(); setDrilldownData(d); setLoadingDrilldown(false); }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
             </div>
             {loadingDrilldown ? <p style={{ color: '#8a8070' }}>Loading details...</p> : drilldownData && (
               <>
@@ -1802,9 +1804,9 @@ export default function Home() {
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>P&L Breakdown (YTD)</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                     {drilldownData.rows.map((row, i) => (
-                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.5rem', borderRadius: '4px', background: row.isTotal ? '#f5f1ea' : 'transparent', fontWeight: row.isTotal ? '600' : '400', fontSize: row.isTotal ? '0.85rem' : '0.82rem', paddingLeft: (0.5 + row.depth) + 'rem' }}>
-                        <span style={{ color: row.isTotal ? '#0f0e0d' : '#3a3530' }}>{row.label}</span>
-                        <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d' }}>{fmt(row.value)}</span>
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.5rem', borderRadius: '4px', background: row.isTotal ? '#f5f1ea' : 'transparent', fontWeight: row.isTotal ? '600' : '400', fontSize: isMobile ? (row.isTotal ? '0.78rem' : '0.74rem') : (row.isTotal ? '0.85rem' : '0.82rem'), paddingLeft: (0.5 + row.depth * (isMobile ? 0.5 : 1)) + 'rem', gap: '0.5rem' }}>
+                        <span style={{ color: row.isTotal ? '#0f0e0d' : '#3a3530', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{row.label}</span>
+                        <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmt(row.value)}</span>
                       </div>
                     ))}
                   </div>
@@ -1815,8 +1817,8 @@ export default function Home() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                       {drilldownCashflow.rows.map(function(row, i) {
                         return (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.5rem', borderRadius: '4px', background: row.isTotal ? '#f5f1ea' : row.isHeader ? '#faf8f4' : 'transparent', fontWeight: row.isTotal || row.isHeader ? '600' : '400', fontSize: row.isHeader ? '0.7rem' : row.isTotal ? '0.85rem' : '0.82rem', paddingLeft: (0.5 + (row.depth || 0)) + 'rem', textTransform: row.isHeader ? 'uppercase' : 'none', letterSpacing: row.isHeader ? '0.06em' : 'normal' }}>
-                            <span style={{ color: row.isHeader ? '#8a8070' : row.isTotal ? '#0f0e0d' : '#3a3530' }}>{row.label}</span>
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.5rem', borderRadius: '4px', background: row.isTotal ? '#f5f1ea' : row.isHeader ? '#faf8f4' : 'transparent', fontWeight: row.isTotal || row.isHeader ? '600' : '400', fontSize: isMobile ? (row.isHeader ? '0.65rem' : row.isTotal ? '0.78rem' : '0.74rem') : (row.isHeader ? '0.7rem' : row.isTotal ? '0.85rem' : '0.82rem'), paddingLeft: (0.5 + (row.depth || 0) * (isMobile ? 0.5 : 1)) + 'rem', textTransform: row.isHeader ? 'uppercase' : 'none', letterSpacing: row.isHeader ? '0.06em' : 'normal', gap: '0.5rem' }}>
+                            <span style={{ color: row.isHeader ? '#8a8070' : row.isTotal ? '#0f0e0d' : '#3a3530', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{row.label}</span>
                             {row.value !== null && <span style={{ color: row.value < 0 ? '#b85c38' : '#0f0e0d' }}>{fmt(row.value)}</span>}
                           </div>
                         )
@@ -1940,12 +1942,12 @@ export default function Home() {
                           {over90Pct > 0 && <div style={{ width: over90Pct + '%', background: '#9a4a2a' }} title={'61-90: $' + (total.over90 || 0).toLocaleString()} />}
                           {over91Pct > 0 && <div style={{ width: over91Pct + '%', background: '#8b0000' }} title={'91+: $' + (total.over91 || 0).toLocaleString()} />}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.65rem', color: '#8a8070' }}>
-                          {total.current > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#4a6741', borderRadius: 2, marginRight: 3 }} />Current {'$' + total.current.toLocaleString()}</span>}
-                          {total.over30 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#c9a84c', borderRadius: 2, marginRight: 3 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
-                          {total.over60 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#b85c38', borderRadius: 2, marginRight: 3 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
-                          {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
-                          {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '0.2rem' : '0.4rem', fontSize: isMobile ? '0.6rem' : '0.65rem', color: '#8a8070' }}>
+                          {total.current > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#4a6741', borderRadius: 2, marginRight: 2 }} />Current {'$' + total.current.toLocaleString()}</span>}
+                          {total.over30 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#c9a84c', borderRadius: 2, marginRight: 2 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
+                          {total.over60 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#b85c38', borderRadius: 2, marginRight: 2 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
+                          {total.over90 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#9a4a2a', borderRadius: 2, marginRight: 2 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
+                          {total.over91 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#8b0000', borderRadius: 2, marginRight: 2 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
                         </div>
 
                       </div>
@@ -1976,12 +1978,12 @@ export default function Home() {
                           {over90Pct > 0 && <div style={{ width: over90Pct + '%', background: '#9a4a2a' }} title={'61-90: $' + (total.over90 || 0).toLocaleString()} />}
                           {over91Pct > 0 && <div style={{ width: over91Pct + '%', background: '#8b0000' }} title={'91+: $' + (total.over91 || 0).toLocaleString()} />}
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.65rem', color: '#8a8070' }}>
-                          {total.current > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#4a6741', borderRadius: 2, marginRight: 3 }} />Current {'$' + total.current.toLocaleString()}</span>}
-                          {total.over30 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#c9a84c', borderRadius: 2, marginRight: 3 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
-                          {total.over60 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#b85c38', borderRadius: 2, marginRight: 3 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
-                          {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
-                          {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '0.2rem' : '0.4rem', fontSize: isMobile ? '0.6rem' : '0.65rem', color: '#8a8070' }}>
+                          {total.current > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#4a6741', borderRadius: 2, marginRight: 2 }} />Current {'$' + total.current.toLocaleString()}</span>}
+                          {total.over30 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#c9a84c', borderRadius: 2, marginRight: 2 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
+                          {total.over60 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#b85c38', borderRadius: 2, marginRight: 2 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
+                          {total.over90 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#9a4a2a', borderRadius: 2, marginRight: 2 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
+                          {total.over91 > 0 && <span style={{ whiteSpace: 'nowrap' }}><span style={{ display: 'inline-block', width: 7, height: 7, background: '#8b0000', borderRadius: 2, marginRight: 2 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
                         </div>
 
                       </div>
