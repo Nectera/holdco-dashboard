@@ -1504,7 +1504,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -2223,7 +2223,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -2233,10 +2233,13 @@ export default function Home() {
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
                   </div>
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
+                  <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                </div>
               </div>
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
@@ -3386,7 +3389,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -3396,10 +3399,13 @@ export default function Home() {
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
                   </div>
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
+                  <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                </div>
               </div>
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
