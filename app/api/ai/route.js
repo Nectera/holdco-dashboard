@@ -194,10 +194,34 @@ export async function POST(request) {
   const yearMatch = lastMsg.match(/(202[0-9])/);
   const queryYear = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear()
 
-  let financialContext = context.financials || 'No financial data available'
+  const multiYearMatch = lastMsg.match(/(\d+)\s*year/i)
+  const wantsMultiYear = multiYearMatch || /running|trend|history|historical|over time|year.over|annual|every year|all years|past \d/i.test(lastMsg)
+  const numYears = multiYearMatch ? Math.min(parseInt(multiYearMatch[1]), 7) : (wantsMultiYear ? 5 : 0)
+
+  const basicContext = context.financials || 'No financial data available'
+  let financialContext = basicContext
   if (isFinancialQuestion) {
     try {
-      financialContext = await buildFinancialContext(financialContext, queryYear)
+      if (numYears > 1) {
+        const endYear = queryYear || new Date().getFullYear()
+        const startYear = endYear - numYears + 1
+        let multiYearData = basicContext + '\n\nMULTI-YEAR FINANCIAL DATA:\n'
+        for (let y = startYear; y <= endYear; y++) {
+          const yearResults = await Promise.all(['xtract', 'bcs', 'lush'].map(async (key) => {
+            const details = await fetchQBData('details', `company=${key}&year=${y}`)
+            return { key, details }
+          }))
+          multiYearData += `\n=== YEAR ${y} ===\n`
+          const names = { xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+          for (const r of yearResults) {
+            const metrics = calcMetrics(r.details && r.details.rows ? r.details.rows : [])
+            multiYearData += `${names[r.key]} (${y}): Revenue $${metrics.totalIncome.toLocaleString()}, COGS $${metrics.totalCOGS.toLocaleString()}, Gross Profit $${metrics.grossProfit.toLocaleString()} (${metrics.grossMargin}%), Net Income $${metrics.netIncome.toLocaleString()} (${metrics.netMargin}%), EBITDA $${metrics.ebitda.toLocaleString()}\n`
+          }
+        }
+        financialContext = multiYearData
+      } else {
+        financialContext = await buildFinancialContext(financialContext, queryYear)
+      }
     } catch (err) {
       financialContext = context.financials || 'No financial data available'
     }
