@@ -80,13 +80,33 @@ const buildFinancialContext = async (basicContext, year) => {
     detailed += `  Depreciation: $${currentMetrics.depreciation.toLocaleString()}\n`
 
     if (priorMetrics.totalIncome > 0) {
-      const revenueGrowth = (((currentMetrics.totalIncome - priorMetrics.totalIncome) / priorMetrics.totalIncome) * 100).toFixed(1)
-      const netGrowth = priorMetrics.netIncome !== 0 ? (((currentMetrics.netIncome - priorMetrics.netIncome) / Math.abs(priorMetrics.netIncome)) * 100).toFixed(1) : 'N/A'
-      detailed += `YEAR-OVER-YEAR (${priorYear} vs ${year}):\n`
-      detailed += `  Prior Revenue: $${priorMetrics.totalIncome.toLocaleString()} -> Current: $${currentMetrics.totalIncome.toLocaleString()} (${revenueGrowth}% change)\n`
-      detailed += `  Prior Net Income: $${priorMetrics.netIncome.toLocaleString()} -> Current: $${currentMetrics.netIncome.toLocaleString()} (${netGrowth}% change)\n`
-      detailed += `  Prior Gross Margin: ${priorMetrics.grossMargin}% -> Current: ${currentMetrics.grossMargin}%\n`
-      detailed += `  Prior EBITDA: $${priorMetrics.ebitda.toLocaleString()} -> Current: $${currentMetrics.ebitda.toLocaleString()}\n`
+      const curMonthly = r.details && r.details.monthly ? r.details.monthly : []
+      const priorMonthly = r.priorDetails && r.priorDetails.monthly ? r.priorDetails.monthly : []
+      const activeMonths = curMonthly.filter(function(m) { return m.income > 0 || m.expenses > 0 }).length
+      const isPartialYear = activeMonths < 12 && activeMonths > 0
+
+      if (isPartialYear && priorMonthly.length >= activeMonths) {
+        const priorSlice = priorMonthly.slice(0, activeMonths)
+        const priorYTDRevenue = priorSlice.reduce(function(s, m) { return s + (m.income || 0) }, 0)
+        const priorYTDNet = priorSlice.reduce(function(s, m) { return s + (m.net || 0) }, 0)
+        const curYTDRevenue = currentMetrics.totalIncome
+        const curYTDNet = currentMetrics.netIncome
+        const revGrowth = priorYTDRevenue > 0 ? (((curYTDRevenue - priorYTDRevenue) / priorYTDRevenue) * 100).toFixed(1) : 'N/A'
+        const netGrowth = priorYTDNet !== 0 ? (((curYTDNet - priorYTDNet) / Math.abs(priorYTDNet)) * 100).toFixed(1) : 'N/A'
+        const monthNames = curMonthly.filter(function(m) { return m.income > 0 || m.expenses > 0 }).map(function(m) { return m.month })
+        const periodLabel = monthNames.length > 0 ? monthNames[0] + '-' + monthNames[monthNames.length - 1] : 'YTD'
+        detailed += `YTD COMPARISON (${periodLabel} ${priorYear} vs ${periodLabel} ${year}):\n`
+        detailed += `  Prior YTD Revenue: $${priorYTDRevenue.toLocaleString()} -> Current YTD: $${curYTDRevenue.toLocaleString()} (${revGrowth}% change)\n`
+        detailed += `  Prior YTD Net Income: $${priorYTDNet.toLocaleString()} -> Current YTD: $${curYTDNet.toLocaleString()} (${netGrowth}% change)\n`
+      } else {
+        const revenueGrowth = (((currentMetrics.totalIncome - priorMetrics.totalIncome) / priorMetrics.totalIncome) * 100).toFixed(1)
+        const netGrowth = priorMetrics.netIncome !== 0 ? (((currentMetrics.netIncome - priorMetrics.netIncome) / Math.abs(priorMetrics.netIncome)) * 100).toFixed(1) : 'N/A'
+        detailed += `YEAR-OVER-YEAR (${priorYear} vs ${year}):\n`
+        detailed += `  Prior Revenue: $${priorMetrics.totalIncome.toLocaleString()} -> Current: $${currentMetrics.totalIncome.toLocaleString()} (${revenueGrowth}% change)\n`
+        detailed += `  Prior Net Income: $${priorMetrics.netIncome.toLocaleString()} -> Current: $${currentMetrics.netIncome.toLocaleString()} (${netGrowth}% change)\n`
+        detailed += `  Prior Gross Margin: ${priorMetrics.grossMargin}% -> Current: ${currentMetrics.grossMargin}%\n`
+        detailed += `  Prior EBITDA: $${priorMetrics.ebitda.toLocaleString()} -> Current: $${currentMetrics.ebitda.toLocaleString()}\n`
+      }
     }
 
     if (r.details && r.details.rows) {
