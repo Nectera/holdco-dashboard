@@ -298,6 +298,7 @@ export default function Home() {
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
   const [aiInput, setAiInput] = useState('')
   const [isListening, setIsListening] = useState(false)
+  const [noraExpanded, setNoraExpanded] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editUserForm, setEditUserForm] = useState({ name: '', email: '', role: 'member' })
@@ -1503,7 +1504,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -1513,10 +1514,15 @@ export default function Home() {
                     <div style={{ color: '#8a8070', fontSize: '0.65rem' }}>Nectera AI Assistant</div>
                   </div>
                 </div>
-                <button onClick={() => setAiOpen(false)} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}>
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">{noraExpanded ? <><polyline points="5,1 1,1 1,5" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><polyline points="11,15 15,15 15,11" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="1" y1="1" x2="6" y2="6" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/><line x1="15" y1="15" x2="10" y2="10" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/></> : <><polyline points="10,1 15,1 15,6" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><polyline points="6,15 1,15 1,10" stroke="#8a8070" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="15" y1="1" x2="9" y2="7" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/><line x1="1" y1="15" x2="7" y2="9" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/></>}</svg>
+                  </button>
+                  <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
+                </div>
               </div>
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
@@ -2219,7 +2225,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -3382,7 +3388,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={{ position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, width: isMobile ? 'calc(100vw - 2rem)' : '380px', background: 'white', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '520px' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
