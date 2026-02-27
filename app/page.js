@@ -1821,36 +1821,6 @@ export default function Home() {
               </div>
             )}
 
-            {expenseTrends && expenseTrends.monthly && expenseTrends.monthly.length > 0 && (
-              <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070' }}>Expense Trends by Category</div>
-                  <select value={expenseTrendCompany} onChange={function(e) { var c = e.target.value; setExpenseTrendCompany(c); fetch('/api/qb/expense-trends?company=' + c + '&year=' + selectedYear).then(function(r) { return r.json() }).then(function(d) { setExpenseTrends(d) }) }} style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer' }}>
-                    <option value="xtract">Xtract</option>
-                    <option value="bcs">BCS</option>
-                    <option value="lush">Lush</option>
-                  </select>
-                </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={expenseTrends.monthly} barSize={undefined}>
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#8a8070' }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={fmtK} tick={{ fontSize: 10, fill: '#8a8070' }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    {expenseTrends.categories.map(function(cat, idx) {
-                      var expenseColors = ['#4a6741','#c9a84c','#3d5a6e','#b85c38','#8a6d3b','#6b5b95','#d4804e','#5b8a72','#aa4455']
-                      return <Bar key={cat} dataKey={cat} stackId="expenses" fill={expenseColors[idx % expenseColors.length]} />
-                    })}
-                  </BarChart>
-                </ResponsiveContainer>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.75rem' }}>
-                  {expenseTrends.categories.map(function(cat, idx) {
-                    var expenseColors = ['#4a6741','#c9a84c','#3d5a6e','#b85c38','#8a6d3b','#6b5b95','#d4804e','#5b8a72','#aa4455']
-                    return <div key={cat} style={{ fontSize: '0.65rem', color: '#8a8070', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><div style={{ width: 8, height: 8, background: expenseColors[idx % expenseColors.length], borderRadius: 2 }} />{cat}</div>
-                  })}
-                </div>
-              </div>
-            )}
-
             <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Subsidiaries</h2>
             {loadingFinancials ? <p style={{ color: '#8a8070' }}>Loading...</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
