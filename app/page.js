@@ -211,6 +211,7 @@ export default function Home() {
   const [data, setData] = useState([])
   const [tasks, setTasks] = useState([])
   const [loadingFinancials, setLoadingFinancials] = useState(true)
+  const [agingData, setAgingData] = useState(null)
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [filterCompany, setFilterCompany] = useState('all')
   const [projectsView, setProjectsView] = useState('list')
@@ -340,6 +341,15 @@ export default function Home() {
     fetch(`/api/qb/financials?year=${selectedYear}`)
       .then(res => res.json())
       .then(d => { setData(d); setLoadingFinancials(false) })
+      // Fetch AR/AP aging for all companies
+      const companies = ['xtract', 'bcs', 'lush']
+      Promise.all(companies.map(c => Promise.all([
+        fetch('/api/qb/report?company=' + c + '&type=ar&year=' + selectedYear).then(r => r.json()),
+        fetch('/api/qb/report?company=' + c + '&type=ap&year=' + selectedYear).then(r => r.json()),
+      ]))).then(results => {
+        const names = { xtract: 'Xtract', bcs: 'BCS', lush: 'Lush' }
+        setAgingData(companies.map((c, idx) => ({ key: c, name: names[c], ar: results[idx][0], ap: results[idx][1] })))
+      }).catch(() => {})
       .catch(() => setLoadingFinancials(false))
     fetch('/api/tasks?company=all')
       .then(res => res.json())
@@ -1726,6 +1736,103 @@ export default function Home() {
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+
+            {agingData && (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Accounts Receivable Aging</div>
+                  {agingData.map(comp => {
+                    const rows = comp.ar && comp.ar.rows ? comp.ar.rows.filter(r => !r.colHeaders && !r.isHeader) : []
+                    const total = rows.find(r => r.isTotal)
+                    const items = rows.filter(r => !r.isTotal && r.value > 0)
+                    if (!total || total.value === 0) return null
+                    const currentPct = total.value > 0 ? ((total.current || 0) / total.value * 100) : 0
+                    const over30Pct = total.value > 0 ? ((total.over30 || 0) / total.value * 100) : 0
+                    const over60Pct = total.value > 0 ? ((total.over60 || 0) / total.value * 100) : 0
+                    const over90Pct = total.value > 0 ? ((total.over90 || 0) / total.value * 100) : 0
+                    const over91Pct = total.value > 0 ? ((total.over91 || 0) / total.value * 100) : 0
+                    return (
+                      <div key={comp.key} style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{comp.name}</span>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+                          {currentPct > 0 && <div style={{ width: currentPct + '%', background: '#4a6741' }} title={'Current: $' + (total.current || 0).toLocaleString()} />}
+                          {over30Pct > 0 && <div style={{ width: over30Pct + '%', background: '#c9a84c' }} title={'1-30: $' + (total.over30 || 0).toLocaleString()} />}
+                          {over60Pct > 0 && <div style={{ width: over60Pct + '%', background: '#b85c38' }} title={'31-60: $' + (total.over60 || 0).toLocaleString()} />}
+                          {over90Pct > 0 && <div style={{ width: over90Pct + '%', background: '#9a4a2a' }} title={'61-90: $' + (total.over90 || 0).toLocaleString()} />}
+                          {over91Pct > 0 && <div style={{ width: over91Pct + '%', background: '#8b0000' }} title={'91+: $' + (total.over91 || 0).toLocaleString()} />}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.65rem', color: '#8a8070' }}>
+                          {total.current > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#4a6741', borderRadius: 2, marginRight: 3 }} />Current {'$' + total.current.toLocaleString()}</span>}
+                          {total.over30 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#c9a84c', borderRadius: 2, marginRight: 3 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
+                          {total.over60 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#b85c38', borderRadius: 2, marginRight: 3 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
+                          {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
+                          {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
+                        </div>
+                        {items.length > 0 && (
+                          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+                            {items.slice(0, 3).map((item, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0', color: '#3a3530' }}>
+                                <span>{item.label}</span>
+                                <span style={{ fontWeight: '500', color: item.over91 > 0 ? '#8b0000' : item.over60 > 0 ? '#b85c38' : '#0f0e0d' }}>{'$' + item.value.toLocaleString()}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Accounts Payable Aging</div>
+                  {agingData.map(comp => {
+                    const rows = comp.ap && comp.ap.rows ? comp.ap.rows.filter(r => !r.colHeaders && !r.isHeader) : []
+                    const total = rows.find(r => r.isTotal)
+                    const items = rows.filter(r => !r.isTotal && r.value > 0)
+                    if (!total || total.value === 0) return null
+                    const currentPct = total.value > 0 ? ((total.current || 0) / total.value * 100) : 0
+                    const over30Pct = total.value > 0 ? ((total.over30 || 0) / total.value * 100) : 0
+                    const over60Pct = total.value > 0 ? ((total.over60 || 0) / total.value * 100) : 0
+                    const over90Pct = total.value > 0 ? ((total.over90 || 0) / total.value * 100) : 0
+                    const over91Pct = total.value > 0 ? ((total.over91 || 0) / total.value * 100) : 0
+                    return (
+                      <div key={comp.key} style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{comp.name}</span>
+                          <span style={{ fontWeight: '600', fontSize: '0.85rem', color: '#0f0e0d' }}>{'$' + total.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+                          {currentPct > 0 && <div style={{ width: currentPct + '%', background: '#4a6741' }} title={'Current: $' + (total.current || 0).toLocaleString()} />}
+                          {over30Pct > 0 && <div style={{ width: over30Pct + '%', background: '#c9a84c' }} title={'1-30: $' + (total.over30 || 0).toLocaleString()} />}
+                          {over60Pct > 0 && <div style={{ width: over60Pct + '%', background: '#b85c38' }} title={'31-60: $' + (total.over60 || 0).toLocaleString()} />}
+                          {over90Pct > 0 && <div style={{ width: over90Pct + '%', background: '#9a4a2a' }} title={'61-90: $' + (total.over90 || 0).toLocaleString()} />}
+                          {over91Pct > 0 && <div style={{ width: over91Pct + '%', background: '#8b0000' }} title={'91+: $' + (total.over91 || 0).toLocaleString()} />}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.65rem', color: '#8a8070' }}>
+                          {total.current > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#4a6741', borderRadius: 2, marginRight: 3 }} />Current {'$' + total.current.toLocaleString()}</span>}
+                          {total.over30 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#c9a84c', borderRadius: 2, marginRight: 3 }} />1-30 {'$' + total.over30.toLocaleString()}</span>}
+                          {total.over60 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#b85c38', borderRadius: 2, marginRight: 3 }} />31-60 {'$' + total.over60.toLocaleString()}</span>}
+                          {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
+                          {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
+                        </div>
+                        {items.length > 0 && (
+                          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+                            {items.slice(0, 3).map((item, idx) => (
+                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0', color: '#3a3530' }}>
+                                <span>{item.label}</span>
+                                <span style={{ fontWeight: '500', color: item.over91 > 0 ? '#8b0000' : item.over60 > 0 ? '#b85c38' : '#0f0e0d' }}>{'$' + item.value.toLocaleString()}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
