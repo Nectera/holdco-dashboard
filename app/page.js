@@ -1557,7 +1557,7 @@ export default function Home() {
 
       {/* AI Chat Bubble */}
       {!isGuest && (
-        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500, display: activeCommentProject ? 'none' : 'block' }}>
           {aiOpen && (
             <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
@@ -2371,7 +2371,7 @@ export default function Home() {
 
       {/* AI Chat Bubble */}
       {!isGuest && (
-        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500, display: activeCommentProject ? 'none' : 'block' }}>
           {aiOpen && (
             <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
@@ -3666,7 +3666,7 @@ export default function Home() {
 
       {/* AI Chat Bubble */}
       {!isGuest && (
-        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500, display: activeCommentProject ? 'none' : 'block' }}>
           {aiOpen && (
             <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
