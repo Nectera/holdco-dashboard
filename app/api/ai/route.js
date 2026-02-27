@@ -15,8 +15,8 @@ const fetchQBData = async (endpoint, params) => {
   }
 }
 
-const buildFinancialContext = async (basicContext) => {
-  const year = new Date().getFullYear()
+const buildFinancialContext = async (basicContext, year) => {
+  if (!year) year = new Date().getFullYear()
   const companies = ['xtract', 'bcs', 'lush']
   const companyNames = { xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
 
@@ -124,12 +124,16 @@ export async function POST(request) {
     await redis.set('nectera:nora_memory:' + userId, newMemory)
   }
 
-  const isFinancialQuestion = messages.length > 0 && /financ|revenue|expense|profit|loss|income|cash|money|budget|cost|margin|ar |a\/r|receivable|payable|a\/p|ap |invoice|bill|customer.*owe|vendor|paid|payment|quarterly|monthly trend|biggest expense|top expense|who owes|balance sheet|cash flow/i.test(messages[messages.length - 1].content)
+  const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : ''
+  const isFinancialQuestion = /financ|revenue|expense|profit|loss|income|cash|money|budget|cost|margin|ar |a\/r|receivable|payable|a\/p|ap |invoice|bill|customer.*owe|vendor|paid|payment|quarterly|monthly trend|biggest expense|top expense|who owes|balance sheet|cash flow/i.test(lastMsg)
+
+  const yearMatch = lastMsg.match(/(202[0-9])/);
+  const queryYear = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear()
 
   let financialContext = context.financials || 'No financial data available'
   if (isFinancialQuestion) {
     try {
-      financialContext = await buildFinancialContext(financialContext)
+      financialContext = await buildFinancialContext(financialContext, queryYear)
     } catch (err) {
       financialContext = context.financials || 'No financial data available'
     }
