@@ -122,6 +122,9 @@ export default function Home() {
     const base = active ? '#c9a84c' : '#6b6560'
     const accent = active ? '#ffffff' : '#3a3530'
     const s = { display: 'block' }
+    if (id === 'goals') return (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={active ? '#c9a84c' : '#8a8070'} strokeWidth="1.5" fill="none"/><circle cx="8" cy="8" r="3.5" stroke={active ? '#c9a84c' : '#8a8070'} strokeWidth="1.5" fill="none"/><circle cx="8" cy="8" r="1" fill={active ? '#c9a84c' : '#8a8070'}/></svg>
+    )
     if (id === 'financials') return (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
         <rect x="1" y="9" width="4" height="8" rx="1" fill={base} opacity="0.7"/>
@@ -214,6 +217,9 @@ export default function Home() {
   const [agingData, setAgingData] = useState(null)
   const [expenseTrends, setExpenseTrends] = useState(null)
   const [expenseTrendCompany, setExpenseTrendCompany] = useState('xtract')
+  const [goals, setGoals] = useState({})
+  const [editingGoals, setEditingGoals] = useState(false)
+  const [goalDrafts, setGoalDrafts] = useState({})
   const [loadingTasks, setLoadingTasks] = useState(true)
   const [filterCompany, setFilterCompany] = useState('all')
   const [projectsView, setProjectsView] = useState('list')
@@ -344,6 +350,8 @@ export default function Home() {
     fetch(`/api/qb/financials?year=${selectedYear}`)
       .then(res => res.json())
       .then(d => { setData(d); setLoadingFinancials(false) })
+      // Fetch goals
+      fetch('/api/goals').then(function(r) { return r.json() }).then(function(g) { setGoals(g) }).catch(function() {})
       // Fetch AR/AP aging for all companies
       const companies = ['xtract', 'bcs', 'lush']
       Promise.all(companies.map(c => Promise.all([
@@ -1035,7 +1043,7 @@ export default function Home() {
   const isDeveloper = currentUser?.role === 'developer'
   if (isDeveloper && page === 'financials') setPage('projects')
   const navItems = [
-    ...(isDeveloper ? [] : [{ id: 'financials', label: 'Financials' }]),
+    ...(isDeveloper ? [] : [{ id: 'financials', label: 'Financials' }, { id: 'goals', label: 'Goals' }]),
     { id: 'messages', label: 'Messages' },
     { id: 'calendar', label: 'Calendar' },
     { id: 'notes', label: 'Notes' },
@@ -2395,6 +2403,108 @@ export default function Home() {
                 )
               })}
             </div>
+          </>
+        )}
+
+        {!drilldown && page === 'goals' && !isDeveloper && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Goals</h1>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <select value={selectedYear} onChange={function(e) { setSelectedYear(e.target.value) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
+                </select>
+                <button onClick={function() { if (editingGoals) { fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(goalDrafts) }).then(function(r) { return r.json() }).then(function(g) { setGoals(g); setEditingGoals(false) }) } else { setGoalDrafts({...goals}); setEditingGoals(true) } }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: editingGoals ? '#c9a84c' : 'white', color: editingGoals ? '#0f0e0d' : '#3a3530', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '500' }}>{editingGoals ? 'Save Goals' : 'Edit Goals'}</button>
+                {editingGoals && <button onClick={function() { setEditingGoals(false) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#8a8070' }}>Cancel</button>}
+              </div>
+            </div>
+            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>{selectedYear} Annual Targets · Track progress against your financial goals</p>
+
+            {(() => {
+              const yr = selectedYear
+              const companiesConfig = [
+                { key: 'consolidated', label: 'Consolidated (All Companies)', color: '#c9a84c' },
+                { key: 'xtract', label: 'Xtract Environmental Services', color: '#4a6741' },
+                { key: 'bcs', label: 'Bug Control Specialist', color: '#3d5a6e' },
+                { key: 'lush', label: 'Lush Green Landscapes', color: '#8a6d3b' },
+              ]
+              const metrics = [
+                { key: 'revenue', label: 'Revenue', dataKey: 'Total Income' },
+                { key: 'netIncome', label: 'Net Income', dataKey: 'Net Income' },
+              ]
+
+              const getActual = function(compKey, metricDataKey) {
+                if (compKey === 'consolidated') {
+                  return data.reduce(function(sum, s) {
+                    if (metricDataKey === 'Total Income') return sum + getMetric(s.report, 'Total Income')
+                    if (metricDataKey === 'Net Income') return sum + getMetric(s.report, 'Net Income')
+                    return sum
+                  }, 0)
+                }
+                var match = data.find(function(s) {
+                  return s.company.toLowerCase().includes(compKey === 'xtract' ? 'xtract' : compKey === 'bcs' ? 'bug' : 'lush')
+                })
+                if (!match) return 0
+                return getMetric(match.report, metricDataKey)
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {companiesConfig.map(function(comp) {
+                    return (
+                      <div key={comp.key} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', borderLeft: '4px solid ' + comp.color }}>
+                        <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '1rem', color: '#0f0e0d' }}>{comp.label}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                          {metrics.map(function(metric) {
+                            var goalKey = yr + '_' + comp.key + '_' + metric.key
+                            var target = goals[goalKey] || 0
+                            var actual = getActual(comp.key, metric.dataKey)
+                            var pct = target > 0 ? Math.min((actual / target) * 100, 150) : 0
+                            var displayPct = target > 0 ? ((actual / target) * 100).toFixed(1) : '0.0'
+                            var barColor = pct >= 100 ? '#4a6741' : pct >= 75 ? '#c9a84c' : pct >= 50 ? '#d4804e' : '#b85c38'
+
+                            if (editingGoals) {
+                              return (
+                                <div key={metric.key}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                                    <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label} Target</span>
+                                    <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>Current: {fmt(actual)}</span>
+                                  </div>
+                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder="Enter target amount" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                                </div>
+                              )
+                            }
+
+                            if (!target) return null
+
+                            return (
+                              <div key={metric.key}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                                  <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label}</span>
+                                  <span style={{ fontSize: '0.75rem', color: '#8a8070' }}>{fmt(actual)} / {fmt(target)}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <div style={{ flex: 1, height: '10px', background: '#f0ece0', borderRadius: '5px', overflow: 'hidden' }}>
+                                    <div style={{ width: Math.min(pct, 100) + '%', height: '100%', background: barColor, borderRadius: '5px', transition: 'width 0.5s ease' }} />
+                                  </div>
+                                  <span style={{ fontSize: '0.8rem', fontWeight: '600', color: barColor, minWidth: '50px', textAlign: 'right' }}>{displayPct}%</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {!editingGoals && Object.keys(goals).length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#8a8070' }}>
+                      <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>No goals set yet</p>
+                      <p style={{ fontSize: '0.85rem' }}>Click "Edit Goals" to set your annual revenue and net income targets</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </>
         )}
 
