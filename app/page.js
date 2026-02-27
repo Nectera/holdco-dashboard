@@ -156,6 +156,12 @@ export default function Home() {
     if (id === 'goals') return (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={active ? '#c9a84c' : '#8a8070'} strokeWidth="1.5" fill="none"/><circle cx="8" cy="8" r="3.5" stroke={active ? '#c9a84c' : '#8a8070'} strokeWidth="1.5" fill="none"/><circle cx="8" cy="8" r="1" fill={active ? '#c9a84c' : '#8a8070'}/></svg>
     )
+    if (id === 'home') return (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
+        <path d="M2 9L9 2L16 9" stroke={base} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 7.5V15C4 15.5 4.3 16 5 16H7.5V12C7.5 11.5 7.8 11 8.5 11H9.5C10.2 11 10.5 11.5 10.5 12V16H13C13.7 16 14 15.5 14 15V7.5" stroke={base} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    )
     if (id === 'financials') return (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={s}>
         <rect x="1" y="9" width="4" height="8" rx="1" fill={base} opacity="0.7"/>
@@ -241,7 +247,7 @@ export default function Home() {
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState(false)
   const isMobile = useIsMobile()
-  const [page, setPage] = useState('financials')
+  const [page, setPage] = useState('home')
   const [data, setData] = useState([])
   const [tasks, setTasks] = useState([])
   const [loadingFinancials, setLoadingFinancials] = useState(true)
@@ -1123,8 +1129,9 @@ export default function Home() {
   })
 
   const isDeveloper = currentUser?.role === 'developer'
-  if (isDeveloper && page === 'financials') setPage('projects')
+  if (isDeveloper && page === 'financials') setPage('home')
   const navItems = [
+    { id: 'home', label: 'Home' },
     ...(isDeveloper ? [] : [{ id: 'financials', label: 'Financials' }, { id: 'goals', label: 'Goals' }]),
     { id: 'messages', label: 'Messages' },
     { id: 'calendar', label: 'Calendar' },
@@ -1974,6 +1981,136 @@ export default function Home() {
             )}
           </>
         )}
+
+
+        {!drilldown && page === 'home' && (() => {
+          const greeting = (() => {
+            const h = new Date().getHours()
+            if (h < 12) return 'Good morning'
+            if (h < 17) return 'Good afternoon'
+            return 'Good evening'
+          })()
+          const today = new Date()
+          const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+          const totalRevenue = data.reduce((s, f) => s + getMetric(f.report, 'Total Income'), 0)
+          const totalNet = data.reduce((s, f) => s + getMetric(f.report, 'Net Income'), 0)
+          const activeProjects = tasks.filter(t => t.status === 'In Progress').length
+          const totalProjects = tasks.length
+          const openTasks = lightTasks.filter(t => t.status !== 'Complete').length
+          const overdueTasks = lightTasks.filter(t => t.dueDate && new Date(t.dueDate) < today && t.status !== 'Complete').length
+          const upcomingTasks = [...lightTasks].filter(t => t.status !== 'Complete' && t.dueDate).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 5)
+          const todayStr = today.toISOString().split('T')[0]
+          const todayEvents = calendarEvents.filter(e => e.date === todayStr)
+          const tomorrowStr = new Date(today.getTime() + 86400000).toISOString().split('T')[0]
+          const tomorrowEvents = calendarEvents.filter(e => e.date === tomorrowStr)
+          const urgentProjects = tasks.filter(t => t.status === 'In Progress' && t.priority === 'High')
+          const cardStyle = { background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', padding: isMobile ? '1rem' : '1.25rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }
+          const labelStyle2 = { fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8a8070', marginBottom: '0.35rem' }
+          return (
+            <>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h1 style={{ fontSize: isMobile ? '1.5rem' : '2rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d', fontWeight: '700' }}>{greeting}, {currentUser?.name?.split(' ')[0] || 'there'}</h1>
+                <p style={{ margin: '0.25rem 0 0', color: '#8a8070', fontSize: '0.9rem' }}>{dateStr}</p>
+              </div>
+              {!isDeveloper && (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                <div style={{ ...cardStyle, cursor: 'pointer', borderLeft: '3px solid #4a6741' }} onClick={() => setPage('financials')}>
+                  <div style={labelStyle2}>Revenue ({selectedYear})</div>
+                  <div style={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>${totalRevenue.toLocaleString()}</div>
+                </div>
+                <div style={{ ...cardStyle, cursor: 'pointer', borderLeft: '3px solid #2d6a9f' }} onClick={() => setPage('financials')}>
+                  <div style={labelStyle2}>Net Income</div>
+                  <div style={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>${totalNet.toLocaleString()}</div>
+                </div>
+                <div style={{ ...cardStyle, cursor: 'pointer', borderLeft: '3px solid #c9a84c' }} onClick={() => setPage('projects')}>
+                  <div style={labelStyle2}>Active Projects</div>
+                  <div style={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{activeProjects} <span style={{ fontSize: '0.8rem', fontWeight: '400', color: '#8a8070' }}>/ {totalProjects}</span></div>
+                </div>
+                <div style={{ ...cardStyle, cursor: 'pointer', borderLeft: overdueTasks > 0 ? '3px solid #b85c38' : '3px solid #9a6a20' }} onClick={() => setPage('tasks')}>
+                  <div style={labelStyle2}>Open Tasks</div>
+                  <div style={{ fontSize: isMobile ? '1.2rem' : '1.4rem', fontWeight: '700', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{openTasks} {overdueTasks > 0 && <span style={{ fontSize: '0.7rem', fontWeight: '600', color: '#b85c38', background: '#fde8e8', padding: '0.1rem 0.4rem', borderRadius: '20px', marginLeft: '0.25rem' }}>{overdueTasks} overdue</span>}</div>
+                </div>
+              </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={cardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>Upcoming Tasks</h3>
+                    <button onClick={() => setPage('tasks')} style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}>View all →</button>
+                  </div>
+                  {upcomingTasks.length === 0 ? (
+                    <p style={{ color: '#8a8070', fontSize: '0.85rem', margin: 0 }}>No upcoming tasks — nice work!</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {upcomingTasks.map((task, i) => {
+                        const isOverdue = new Date(task.dueDate) < today
+                        const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderBottom: i < upcomingTasks.length - 1 ? '1px solid ' + (theme === 'dark' ? '#2a2825' : '#f0ece0') : 'none' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: priorityColor, flexShrink: 0 }}></div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#d4cfc8' : '#1a1814', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: isOverdue ? '#b85c38' : '#8a8070' }}>{isOverdue ? 'Overdue — ' : ''}{new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{task.assignedTo ? ' · ' + task.assignedTo : ''}</div>
+                            </div>
+                            <span style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', borderRadius: '20px', background: task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : (theme === 'dark' ? '#2a2825' : '#f0ece0'), color: task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070', flexShrink: 0 }}>{task.status}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+                <div style={cardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>Today’s Schedule</h3>
+                    <button onClick={() => setPage('calendar')} style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}>View calendar →</button>
+                  </div>
+                  {todayEvents.length === 0 ? (
+                    <p style={{ color: '#8a8070', fontSize: '0.85rem', margin: 0 }}>No events today — clear schedule</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {todayEvents.map((evt, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderBottom: i < todayEvents.length - 1 ? '1px solid ' + (theme === 'dark' ? '#2a2825' : '#f0ece0') : 'none' }}>
+                          <div style={{ width: '3px', height: '28px', borderRadius: '2px', background: '#c9a84c', flexShrink: 0 }}></div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#d4cfc8' : '#1a1814' }}>{evt.title}</div>
+                            <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>{evt.time || 'All day'}{evt.company ? ' · ' + evt.company : ''}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {tomorrowEvents.length > 0 && (
+                    <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid ' + (theme === 'dark' ? '#2a2825' : '#f0ece0') }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8a8070', marginBottom: '0.5rem' }}>Tomorrow</div>
+                      {tomorrowEvents.slice(0, 3).map((evt, i) => (
+                        <div key={i} style={{ fontSize: '0.8rem', color: theme === 'dark' ? '#a8a49c' : '#6b6560', marginBottom: '0.3rem' }}>{evt.time || 'All day'} — {evt.title}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {urgentProjects.length > 0 && (
+                <div style={cardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>High Priority Projects</h3>
+                    <button onClick={() => setPage('projects')} style={{ background: 'none', border: 'none', color: '#c9a84c', fontSize: '0.75rem', cursor: 'pointer', fontWeight: '500' }}>View all →</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                    {urgentProjects.slice(0, 6).map((proj, i) => (
+                      <div key={i} style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: theme === 'dark' ? '#252220' : '#faf8f4', border: '1px solid ' + (theme === 'dark' ? '#333' : '#e8e2d9'), cursor: 'pointer' }} onClick={() => setPage('projects')}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#d4cfc8' : '#1a1814', marginBottom: '0.25rem' }}>{proj.name}</div>
+                        <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#8a8070' }}>
+                          {proj.dueDate && <span>Due {new Date(proj.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                          {proj.company && <span>· {proj.company.split(' ')[0]}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         {!drilldown && page === 'financials' && !isDeveloper && (
           <>
