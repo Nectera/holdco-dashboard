@@ -19,11 +19,11 @@ const renderMarkdown = (text) => {
     }
     const formatted = line.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>')
     if (line.startsWith('### ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '0.3rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530' }} dangerouslySetInnerHTML={{ __html: formatted.slice(4) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.8rem', marginTop: '0.3rem', color: '#3a3530' }} dangerouslySetInnerHTML={{ __html: formatted.slice(4) }} />)
     } else if (line.startsWith('## ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.85rem', marginTop: '0.4rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(3) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.85rem', marginTop: '0.4rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(3) }} />)
     } else if (line.startsWith('# ')) {
-      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
+      elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
     } else if (line.startsWith('---') || line.startsWith('—Nora') || line.startsWith('— Nora')) {
       elements.push(<div key={key} style={{ borderTop: '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
     } else {
@@ -264,6 +264,8 @@ export default function Home() {
   const [expandedTask, setExpandedTask] = useState(null)
   const [commentPanel, setCommentPanel] = useState(false)
   const [activeCommentProject, setActiveCommentProject] = useState(null)
+  const [projectAttachments, setProjectAttachments] = useState([])
+  const [uploadingProjectFile, setUploadingProjectFile] = useState(false)
   const [comments, setComments] = useState([])
   const [projectCommentText, setProjectCommentText] = useState('')
   const [commentLoading, setCommentLoading] = useState(false)
@@ -507,6 +509,40 @@ export default function Home() {
     updated[company] = (updated[company] || []).map(n => n.id === noteId ? { ...n, attachments: (n.attachments || []).filter(a => a.url !== url) } : n)
     setNotes(updated)
     fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, notes: updated[company] }) }).catch(() => {})
+  }
+
+  const loadProjectAttachments = async (projectId) => {
+    try {
+      const res = await fetch('/api/project-attachments?projectId=' + encodeURIComponent(projectId))
+      const data = await res.json()
+      setProjectAttachments(data.attachments || [])
+    } catch(e) { setProjectAttachments([]) }
+  }
+
+  const uploadProjectFile = async (projectId, file) => {
+    setUploadingProjectFile(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) {
+        const attachment = { url: data.url, name: data.name, size: data.size, type: data.type, uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), uploadedBy: currentUser?.name || 'Unknown' }
+        const updated = [...projectAttachments, attachment]
+        setProjectAttachments(updated)
+        await fetch('/api/project-attachments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, attachments: updated }) })
+      }
+    } catch(e) { console.error('Upload error:', e) }
+    setUploadingProjectFile(false)
+  }
+
+  const removeProjectAttachment = async (projectId, url) => {
+    try {
+      await fetch('/api/upload', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
+      const updated = projectAttachments.filter(a => a.url !== url)
+      setProjectAttachments(updated)
+      await fetch('/api/project-attachments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, attachments: updated }) })
+    } catch(e) { console.error('Delete error:', e) }
   }
 
   const saveNote = (company, id, title, content_text) => {
@@ -2317,7 +2353,7 @@ export default function Home() {
                             {task.notes && <span style={{ color: theme === 'dark' ? '#a09880' : '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task); loadProjectAttachments(task.rowIndex || (task.companyKey + "-" + task.name.replace(/\s+/g, "-"))) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="9" rx="2" fill="#6b6560" opacity="0.7"/><path d="M3 13 L3 10 L7 10" fill="#6b6560" opacity="0.5"/><rect x="3" y="4" width="4" height="1.2" rx="0.6" fill="#f4f0e8"/><rect x="3" y="6.5" width="7" height="1.2" rx="0.6" fill="#f4f0e8" opacity="0.7"/></svg>
                               Discussion
                             </button>
@@ -3150,6 +3186,33 @@ export default function Home() {
                   </div>
                 )
               })}
+            </div>
+            {/* Attachments */}
+            <div style={{ padding: '0.75rem 1.25rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({projectAttachments.length})</span>
+                <label style={{ cursor: 'pointer' }}>
+                  <input type="file" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) { const projId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-')); uploadProjectFile(projId, e.target.files[0]); e.target.value = '' } }} />
+                  <span style={{ fontSize: '0.75rem', color: '#c9a84c', fontWeight: '500' }}>{uploadingProjectFile ? 'Uploading...' : '+ Add file'}</span>
+                </label>
+              </div>
+              {projectAttachments.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '120px', overflowY: 'auto' }}>
+                  {projectAttachments.map((att, i) => {
+                    const isImage = att.type && att.type.startsWith('image/')
+                    const sizeStr = att.size ? (att.size > 1048576 ? (att.size / 1048576).toFixed(1) + ' MB' : (att.size / 1024).toFixed(0) + ' KB') : ''
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.5rem', borderRadius: '6px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', fontSize: '0.78rem' }}>
+                        <span style={{ fontSize: '0.9rem' }}>{isImage ? '\u{1F5BC}' : '\u{1F4CE}'}</span>
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, color: theme === 'dark' ? '#c9a84c' : '#3d5a6e', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name}</a>
+                        <span style={{ fontSize: '0.65rem', color: '#8a8070', flexShrink: 0 }}>{sizeStr}</span>
+                        <span style={{ fontSize: '0.65rem', color: '#8a8070', flexShrink: 0 }}>{att.uploadedAt}</span>
+                        <button onClick={() => { const projId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-')); removeProjectAttachment(projId, att.url) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0 0.2rem', flexShrink: 0 }}>\u2715</button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
             {/* Input */}
             <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: theme === 'dark' ? '#121212' : '#faf8f4' }}>
