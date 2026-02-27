@@ -1598,9 +1598,9 @@ export default function Home() {
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'assistant' ? (() => {
                         const parsed = parseNoraAction(msg.content)
-                        return React.createElement(React.Fragment, null,
+                        return React.createElement('div', null,
                           renderMarkdown(parsed.message),
-                          parsed.action && React.createElement(NoraActionCard, {
+                          parsed.action ? React.createElement(NoraActionCard, {
                             action: parsed.action,
                             confirmed: pendingActions['action_' + i] === 'done',
                             onConfirm: async function() {
@@ -1641,7 +1641,7 @@ export default function Home() {
                               setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
                               setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
                             }
-                          })
+                          }) : null
                         )
                       })() : msg.content}
                     </div>
@@ -2366,9 +2366,9 @@ export default function Home() {
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'assistant' ? (() => {
                         const parsed = parseNoraAction(msg.content)
-                        return React.createElement(React.Fragment, null,
+                        return React.createElement('div', null,
                           renderMarkdown(parsed.message),
-                          parsed.action && React.createElement(NoraActionCard, {
+                          parsed.action ? React.createElement(NoraActionCard, {
                             action: parsed.action,
                             confirmed: pendingActions['action_' + i] === 'done',
                             onConfirm: async function() {
@@ -2409,7 +2409,7 @@ export default function Home() {
                               setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
                               setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
                             }
-                          })
+                          }) : null
                         )
                       })() : msg.content}
                     </div>
@@ -3579,9 +3579,9 @@ export default function Home() {
                     <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'assistant' ? (() => {
                         const parsed = parseNoraAction(msg.content)
-                        return React.createElement(React.Fragment, null,
+                        return React.createElement('div', null,
                           renderMarkdown(parsed.message),
-                          parsed.action && React.createElement(NoraActionCard, {
+                          parsed.action ? React.createElement(NoraActionCard, {
                             action: parsed.action,
                             confirmed: pendingActions['action_' + i] === 'done',
                             onConfirm: async function() {
@@ -3622,7 +3622,7 @@ export default function Home() {
                               setPendingActions(function(prev) { return Object.assign({}, prev, { ['action_' + i]: 'cancelled' }) })
                               setAiMessages(function(prev) { return prev.concat([{ role: 'assistant', content: 'No problem, I cancelled that action.\n\n—Nora' }]) })
                             }
-                          })
+                          }) : null
                         )
                       })() : msg.content}
                     </div>
