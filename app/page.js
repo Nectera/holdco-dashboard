@@ -1747,7 +1747,7 @@ export default function Home() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                        {[['pl', 'P&L'], ['balance', 'Balance Sheet'], ['ar', 'A/R Aging'], ['ap', 'A/P Aging']].map(([type, label]) => (
+                        {[['pl', 'P&L'], ['balance', 'Balance Sheet'], ['cashflow', 'Cash Flow'], ['ar', 'A/R Aging'], ['ap', 'A/P Aging']].map(([type, label]) => (
                           <button key={type} onClick={e => { e.stopPropagation(); openReport(companyKeys[sub.name], type) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>
                             {label}
                           </button>
