@@ -2434,8 +2434,10 @@ export default function Home() {
               ]
 
               const getActual = function(compKey, metricDataKey) {
+                try {
                 if (compKey === 'consolidated') {
                   return data.reduce(function(sum, s) {
+                    if (!s || !s.report) return sum
                     if (metricDataKey === 'Total Income') return sum + getMetric(s.report, 'Total Income')
                     if (metricDataKey === 'Net Income') return sum + getMetric(s.report, 'Net Income')
                     return sum
@@ -2446,6 +2448,7 @@ export default function Home() {
                 })
                 if (!match) return 0
                 return getMetric(match.report, metricDataKey)
+                } catch(e) { return 0 }
               }
 
               return (
