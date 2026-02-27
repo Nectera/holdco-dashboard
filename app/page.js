@@ -25,7 +25,7 @@ const renderMarkdown = (text) => {
     } else if (line.startsWith('# ')) {
       elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
     } else if (line.startsWith('---') || line.startsWith('—Nora') || line.startsWith('— Nora')) {
-      elements.push(<div key={key} style={{ borderTop: '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
+      elements.push(<div key={key} style={{ borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
     } else {
       elements.push(<div key={key} dangerouslySetInnerHTML={{ __html: formatted }} />)
     }
@@ -99,7 +99,7 @@ const shortName = (name) => {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
+      <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
         <div style={{ fontWeight: '600', marginBottom: '0.4rem' }}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} style={{ color: p.color }}>{p.name}: {fmtK(p.value)}</div>
@@ -114,10 +114,10 @@ const inputStyle = {
   width: '100%',
   padding: '0.5rem 0.75rem',
   borderRadius: '4px',
-  border: '1px solid #e0d8cc',
+  border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc',
   fontSize: '0.85rem',
-  background: 'white',
-  color: '#1a1814',
+  background: theme === 'dark' ? '#1e1e1e' : 'white',
+  color: theme === 'dark' ? '#e8e2d9' : '#1a1814',
   boxSizing: 'border-box',
 }
 
@@ -1129,22 +1129,22 @@ export default function Home() {
   if (!authed) {
     return (
       <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0f0e0d', fontFamily: "'DM Sans', sans-serif" }}>
-        <div style={{ background: '#f4f0e8', borderRadius: '16px', padding: '2.5rem', width: '380px', maxWidth: '90vw', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+        <div style={{ background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '16px', padding: '2.5rem', width: '380px', maxWidth: '90vw', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: '700', margin: '0 auto 0.85rem auto', fontFamily: "'DM Serif Display', serif" }}>N</div>
             <h1 style={{ fontSize: '1.4rem', marginBottom: '0.25rem', color: '#0f0e0d', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Nectera Holdings</h1>
           </div>
           <>
               <p style={{ fontSize: '0.85rem', color: '#8a8070', marginBottom: '1.5rem' }}>Sign in to your account</p>
-              <input value={loginUsername} onChange={e => setLoginUsername(e.target.value)} placeholder="Username" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
-              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUserLogin()} placeholder="Password" style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
+              <input value={loginUsername} onChange={e => setLoginUsername(e.target.value)} placeholder="Username" autoFocus style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
+              <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUserLogin()} placeholder="Password" style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: '4px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
               {loginError && <p style={{ color: '#b85c38', fontSize: '0.8rem', marginBottom: '0.75rem', marginTop: '-0.25rem' }}>{loginError}</p>}
               <button onClick={handleUserLogin} disabled={loginLoading} style={{ width: '100%', padding: '0.6rem', borderRadius: '4px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.9rem', cursor: 'pointer', fontWeight: '500', opacity: loginLoading ? 0.6 : 1 }}>{loginLoading ? 'Signing in...' : 'Sign In'}</button>
               <button onClick={() => setShowForgotPassword(!showForgotPassword)} style={{ marginTop: '0.5rem', width: '100%', background: 'none', border: 'none', color: '#8a8070', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>
               {showForgotPassword && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f4f0e8', borderRadius: '6px' }}>
+                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '6px' }}>
                   <p style={{ fontSize: '0.78rem', color: '#3a3530', margin: '0 0 0.5rem 0' }}>Enter your email to receive a reset link</p>
-                  <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
+                  <input value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} placeholder="your@email.com" style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '4px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.82rem', marginBottom: '0.5rem', boxSizing: 'border-box', outline: 'none' }} />
                   {forgotStatus && <p style={{ fontSize: '0.75rem', color: '#4a6741', margin: '0 0 0.5rem 0' }}>{forgotStatus}</p>}
                   <button onClick={async () => {
                     const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'forgot_password', email: forgotEmail }) })
@@ -1223,7 +1223,7 @@ export default function Home() {
                 <textarea value={newTask.notes} onChange={e => setNewTask(t => ({ ...t, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, height: '100px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <button onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => setShowModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={handleCreate} disabled={creating || !newTask.name || !newTask.companyKey} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', opacity: (creating || !newTask.name || !newTask.companyKey) ? 0.5 : 1 }}>
                   {creating ? 'Creating...' : 'Create Task'}
                 </button>
@@ -1256,7 +1256,7 @@ export default function Home() {
       )}
 
       {showNotifications && (
-        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', minHeight: '300px', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: isMobile ? '90vw' : '440px', background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', zIndex: 150, maxHeight: '70vh', minHeight: '300px', overflowY: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', borderBottom: '1px solid #f0ece0' }}>
             <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>Notifications</span>
             <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
@@ -1377,7 +1377,7 @@ export default function Home() {
                 <textarea value={employeeForm.notes || ''} onChange={e => setEmployeeForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any additional info..." style={{ ...inputStyle, height: '60px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveEmployee(employeeForm)} disabled={!employeeForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !employeeForm.name ? 0.5 : 1 }}>
                   {editingEmployee !== null ? 'Save Changes' : 'Add Employee'}
                 </button>
@@ -1443,7 +1443,7 @@ export default function Home() {
                 <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
@@ -1509,7 +1509,7 @@ export default function Home() {
                 <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
@@ -1523,7 +1523,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -1542,12 +1542,12 @@ export default function Home() {
               {/* Memory Panel */}
               {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
                 </div>
                 {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.72rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
                     <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
                   </div>
                   <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
@@ -1559,20 +1559,20 @@ export default function Home() {
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
                             const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
                             const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
                             const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
-                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: theme === 'dark' ? '#e8e2d9' : '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
                           })}
                           </div>
                           {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
@@ -1607,18 +1607,18 @@ export default function Home() {
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
-                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
-                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
                 {aiLoading && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
                   </div>
                 )}
               </div>
@@ -1664,7 +1664,7 @@ export default function Home() {
                     }
                   }}
                   placeholder="Ask Nora anything..."
-                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
                 <button onClick={function() {
                   if (isListening) {
@@ -1746,7 +1746,7 @@ export default function Home() {
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
             </div>
           </div>
@@ -1762,7 +1762,7 @@ export default function Home() {
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -1826,9 +1826,9 @@ export default function Home() {
 
 
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f4f0e8', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', overflow: 'hidden' }}>
         {!isMobile && (
-          <div style={{ padding: '0.75rem 2rem', borderBottom: '1px solid #e8e2d9', background: '#f4f0e8', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          <div style={{ padding: '0.75rem 2rem', borderBottom: '1px solid #e8e2d9', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
             <button onClick={() => { setPage('messages'); setDrilldown(null) }} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.3rem', display: 'flex', alignItems: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="2" width="16" height="11" rx="2.5" fill="#6b6560" opacity="0.8"/><path d="M4 14 L3 17 L8 14" fill="#3a3530"/><rect x="4" y="6" width="5" height="1.5" rx="0.75" fill="#3a3530" opacity="0.9"/><rect x="4" y="9" width="8" height="1.5" rx="0.75" fill="#3a3530" opacity="0.6"/></svg>
               {unreadMessages > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
@@ -1841,7 +1841,7 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.75rem', borderLeft: '1px solid #e8e2d9' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '700' }}>{currentUser.name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}</div>
                 <span style={{ fontSize: '0.82rem', color: '#3a3530' }}>{currentUser.name}</span>
-                <button onClick={handleLogout} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '6px', color: '#8a8070', fontSize: '0.72rem', cursor: 'pointer', padding: '0.2rem 0.5rem', marginLeft: '0.25rem' }}>Sign out</button>
+                <button onClick={handleLogout} style={{ background: 'none', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '6px', color: '#8a8070', fontSize: '0.72rem', cursor: 'pointer', padding: '0.2rem 0.5rem', marginLeft: '0.25rem' }}>Sign out</button>
               </div>
             )}
           </div>
@@ -1855,7 +1855,7 @@ export default function Home() {
                 <button onClick={() => { setDrilldown(null); setDrilldownData(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '0.85rem', padding: 0 }}>
                   ← Back
                 </button>
-                <select value={selectedYear} onChange={async e => { const y = e.target.value; setSelectedYear(y); setDrilldownData(null); setLoadingDrilldown(true); const res = await fetch("/api/qb/details?company=" + drilldown + "&year=" + y); const d = await res.json(); setDrilldownData(d); setLoadingDrilldown(false); }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
+                <select value={selectedYear} onChange={async e => { const y = e.target.value; setSelectedYear(y); setDrilldownData(null); setLoadingDrilldown(true); const res = await fetch("/api/qb/details?company=" + drilldown + "&year=" + y); const d = await res.json(); setDrilldownData(d); setLoadingDrilldown(false); }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.85rem', cursor: 'pointer' }}><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
               </div>
               <h1 style={{ fontSize: isMobile ? '1.3rem' : '1.8rem', margin: 0 }}>{drilldownData?.company || '...'}</h1>
             </div>
@@ -1893,7 +1893,7 @@ export default function Home() {
                     </div>
                   )
                 })()}
-                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070' }}>Trend</div>
                     {periodToggle}
@@ -1908,7 +1908,7 @@ export default function Home() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>P&L Breakdown (YTD)</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                     {drilldownData.rows.map((row, i) => (
@@ -1920,7 +1920,7 @@ export default function Home() {
                   </div>
                 </div>
                 {drilldownCashflow && drilldownCashflow.rows && drilldownCashflow.rows.length > 0 && (
-                  <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginTop: '1.5rem' }}>
+                  <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginTop: '1.5rem' }}>
                     <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Cash Flow Statement</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                       {drilldownCashflow.rows.map(function(row, i) {
@@ -1944,8 +1944,8 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Portfolio Overview</h1>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>
-                <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
+                <button onClick={exportFinancialsPDF} style={{ padding: '0.35rem 0.75rem', border: '1px solid #ede8df', borderRadius: '8px', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#3a3530', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>
+                <select value={selectedYear} onChange={e => { setSelectedYear(e.target.value); setDrilldown(null) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
                   <option value="2026">2026</option>
                   <option value="2025">2025</option>
                   <option value="2024">2024</option>
@@ -1962,7 +1962,7 @@ export default function Home() {
                 { label: 'Total Expenses', value: totalExpenses, color: '#b85c38' },
                 { label: 'Net Income', value: totalNet, color: totalNet >= 0 ? '#3d5a6e' : '#b85c38' },
               ].map(({ label, value, color }) => (
-                <div key={label} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + color }}>
+                <div key={label} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + color }}>
                   <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
                   <div style={{ fontSize: isMobile ? '1.4rem' : '2rem', fontWeight: '600', color: value < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.01em' }}>{loadingFinancials ? '-' : fmt(value)}</div>
                 </div>
@@ -1976,7 +1976,7 @@ export default function Home() {
                   { label: 'Net Margin', value: netMarginPct, isCurrency: false, color: '#3d5a6e' },
                   { label: 'Operating Margin', value: operatingMarginPct, isCurrency: false, color: '#8a6d3b' },
                 ].map((kpi) => (
-                  <div key={kpi.label} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
+                  <div key={kpi.label} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
                     <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{kpi.label}</div>
                     <div style={{ fontSize: isMobile ? '1.2rem' : '1.6rem', fontWeight: '600', color: parseFloat(kpi.value) < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.01em' }}>{kpi.isCurrency ? fmt(kpi.value) : kpi.value + '%'}</div>
                   </div>
@@ -1986,7 +1986,7 @@ export default function Home() {
 
             {!loadingFinancials && chartData.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Revenue vs Expenses</div>
                   <ResponsiveContainer width="100%" height={180}>
                     <BarChart data={chartData} barGap={4}>
@@ -2006,7 +2006,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Net Income by Subsidiary</div>
                   <ResponsiveContainer width="100%" height={180}>
                     <BarChart data={chartData}>
@@ -2112,7 +2112,7 @@ export default function Home() {
                   const margin = income > 0 ? ((net / income) * 100).toFixed(1) : '0.0'
                   const marginPct = Math.min(Math.max(parseFloat(margin), 0), 30) / 30 * 100
                   return (
-                    <div key={sub.name} onClick={() => companyKeys[sub.name] && openDrilldown(companyKeys[sub.name])} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', cursor: companyKeys[sub.name] ? 'pointer' : 'default' }} onMouseEnter={e => companyKeys[sub.name] && (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)')} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                    <div key={sub.name} onClick={() => companyKeys[sub.name] && openDrilldown(companyKeys[sub.name])} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', cursor: companyKeys[sub.name] ? 'pointer' : 'default' }} onMouseEnter={e => companyKeys[sub.name] && (e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)')} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, fontSize: '0.95rem' }}>{sub.name}</h3>
                         <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.6rem', borderRadius: '20px', background: net >= 0 ? '#e8f0e8' : '#fdf3e0', color: net >= 0 ? '#4a6741' : '#9a6a20' }}>
@@ -2143,7 +2143,7 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
                         {[['pl', 'P&L'], ['balance', 'Balance Sheet'], ['cashflow', 'Cash Flow'], ['ar', 'A/R Aging'], ['ap', 'A/P Aging']].map(([type, label]) => (
-                          <button key={type} onClick={e => { e.stopPropagation(); openReport(companyKeys[sub.name], type) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>
+                          <button key={type} onClick={e => { e.stopPropagation(); openReport(companyKeys[sub.name], type) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>
                             {label}
                           </button>
                         ))}
@@ -2169,13 +2169,13 @@ export default function Home() {
             </p>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+              <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {companies.map(c => <option key={c} value={c}>{isMobile ? (c === 'all' ? 'All' : companyLabels[c].split(' ')[0]) : companyLabels[c]}</option>)}
               </select>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s}</option>)}
               </select>
-              <select value={filterLead} onChange={e => setFilterLead(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+              <select value={filterLead} onChange={e => setFilterLead(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 <option value="all">All Leads</option>
                 {[...new Set(tasks.map(t => t.lead).filter(Boolean))].sort().map(l => <option key={l} value={l}>{l}</option>)}
               </select>
@@ -2277,7 +2277,7 @@ export default function Home() {
                   const pc = priorityColor(task.priority)
                   const isExpanded = expandedTask === i
                   return (
-                    <div key={i} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem' }}>
+                    <div key={i} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div onClick={() => setExpandedTask(isExpanded ? null : i)} style={{ fontWeight: '500', marginBottom: '0.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
@@ -2317,7 +2317,7 @@ export default function Home() {
                             {task.notes && <span style={{ color: '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
                           </div>
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="9" rx="2" fill="#6b6560" opacity="0.7"/><path d="M3 13 L3 10 L7 10" fill="#6b6560" opacity="0.5"/><rect x="3" y="4" width="4" height="1.2" rx="0.6" fill="#f4f0e8"/><rect x="3" y="6.5" width="7" height="1.2" rx="0.6" fill="#f4f0e8" opacity="0.7"/></svg>
                               Discussion
                             </button>
@@ -2337,7 +2337,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -2356,12 +2356,12 @@ export default function Home() {
               {/* Memory Panel */}
               {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
                 </div>
                 {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.72rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
                     <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
                   </div>
                   <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
@@ -2373,20 +2373,20 @@ export default function Home() {
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
                             const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
                             const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
                             const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
-                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: theme === 'dark' ? '#e8e2d9' : '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
                           })}
                           </div>
                           {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
@@ -2421,18 +2421,18 @@ export default function Home() {
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
-                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
-                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
                 {aiLoading && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
                   </div>
                 )}
               </div>
@@ -2478,7 +2478,7 @@ export default function Home() {
                     }
                   }}
                   placeholder="Ask Nora anything..."
-                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
                 <button onClick={function() {
                   if (isListening) {
@@ -2560,7 +2560,7 @@ export default function Home() {
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
             </div>
           </div>
@@ -2576,7 +2576,7 @@ export default function Home() {
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -2651,13 +2651,13 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['all', 'Not Started', 'In Progress', 'Blocked', 'Complete'].map(f => (
-                <button key={f} onClick={() => setLightTaskFilter(f)} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: lightTaskFilter === f ? '#0f0e0d' : 'white', color: lightTaskFilter === f ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer' }}>
+                <button key={f} onClick={() => setLightTaskFilter(f)} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: lightTaskFilter === f ? '#0f0e0d' : 'white', color: lightTaskFilter === f ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer' }}>
                   {f === 'all' ? 'All' : f}
                 </button>
               ))}
             </div>
             {lightTasks.length === 0 && (
-              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                 <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>✅</div>
                 <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No tasks yet</div>
                 <div style={{ fontSize: '0.8rem' }}>Click "+ Task" to get started</div>
@@ -2668,7 +2668,7 @@ export default function Home() {
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'Complete'
                 const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
                 return (
-                  <div key={idx} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem 1.25rem' }}>
+                  <div key={idx} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem 1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
@@ -2685,7 +2685,7 @@ export default function Home() {
                         {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                        <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
                         <button onClick={() => deleteLightTask(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
                       </div>
                     </div>
@@ -2701,11 +2701,11 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>Goals</h1>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <select value={selectedYear} onChange={function(e) { setSelectedYear(e.target.value) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
+                <select value={selectedYear} onChange={function(e) { setSelectedYear(e.target.value) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.85rem', cursor: 'pointer' }}>
                   <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
                 </select>
-                <button onClick={function() { if (editingGoals) { fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(goalDrafts) }).then(function(r) { return r.json() }).then(function(g) { setGoals(g); setEditingGoals(false) }) } else { setGoalDrafts({...goals}); setEditingGoals(true) } }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: editingGoals ? '#c9a84c' : 'white', color: editingGoals ? '#0f0e0d' : '#3a3530', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '500' }}>{editingGoals ? 'Save Goals' : 'Edit Goals'}</button>
-                {editingGoals && <button onClick={function() { setEditingGoals(false) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#8a8070' }}>Cancel</button>}
+                <button onClick={function() { if (editingGoals) { fetch('/api/goals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(goalDrafts) }).then(function(r) { return r.json() }).then(function(g) { setGoals(g); setEditingGoals(false) }) } else { setGoalDrafts({...goals}); setEditingGoals(true) } }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #ede8df', background: editingGoals ? '#c9a84c' : 'white', color: editingGoals ? '#0f0e0d' : '#3a3530', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '500' }}>{editingGoals ? 'Save Goals' : 'Edit Goals'}</button>
+                {editingGoals && <button onClick={function() { setEditingGoals(false) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.8rem', cursor: 'pointer', color: '#8a8070' }}>Cancel</button>}
               </div>
             </div>
             <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>{selectedYear} Annual Targets · Track progress against your financial goals</p>
@@ -2786,7 +2786,7 @@ export default function Home() {
                                     <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>{metric.isCustom ? '' : metric.unit === 'percent' ? 'Current: ' + actual + '%' : 'Current: ' + fmt(actual)}</span>
                                       <button onClick={function() { var nd = {...goalDrafts}; delete nd[goalKey]; if (metric.isCustom) { nd._customMetrics = (nd._customMetrics || []).filter(function(m) { return m.key !== metric.key }) }; setGoalDrafts(nd) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0' }}>remove</button>
                                   </div>
-                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder={metric.unit === 'percent' || (!metric.isCustom && metric.dataKey === 'netMargin') ? 'Enter target %' : 'Enter target amount'} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder={metric.unit === 'percent' || (!metric.isCustom && metric.dataKey === 'netMargin') ? 'Enter target %' : 'Enter target amount'} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
                                 </div>
                               )
                             }
@@ -2843,7 +2843,7 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
-                <button key={co} onClick={() => { setSelectedNoteCompany(co); setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: selectedNoteCompany === co ? '#0f0e0d' : 'white', color: selectedNoteCompany === co ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button key={co} onClick={() => { setSelectedNoteCompany(co); setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: selectedNoteCompany === co ? '#0f0e0d' : 'white', color: selectedNoteCompany === co ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {co.split(' ')[0]}
                 </button>
               ))}
@@ -2862,7 +2862,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <div style={{ flex: 1, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: isMobile && !selectedNote ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ flex: 1, background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', display: isMobile && !selectedNote ? 'none' : 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 {!selectedNote && <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.9rem' }}>Select or create a note</div>}
                 {selectedNote && (
                   <>
@@ -2872,9 +2872,9 @@ export default function Home() {
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={() => togglePinNote(selectedNoteCompany, selectedNote.id)} title={selectedNote.pinned ? 'Unpin' : 'Pin'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', opacity: selectedNote.pinned ? 1 : 0.4 }}>📌</button>
                         <div style={{ position: 'relative' }}>
-                          <button onClick={() => setShowTagMenu(!showTagMenu)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#3a3530', padding: '0.2rem 0.5rem' }}>@ Notify</button>
+                          <button onClick={() => setShowTagMenu(!showTagMenu)} style={{ background: 'none', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#3a3530', padding: '0.2rem 0.5rem' }}>@ Notify</button>
                           {showTagMenu && (
-                            <div style={{ position: 'absolute', top: '100%', right: 0, background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
+                            <div style={{ position: 'absolute', top: '100%', right: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '220px', marginTop: '4px' }}>
                               <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.68rem', color: '#8a8070', borderBottom: '1px solid #f0ece0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Notify user</div>
                               {userList.length === 0 && <div style={{ padding: '0.75rem', fontSize: '0.78rem', color: '#8a8070' }}>No users found — click Refresh in Settings</div>}
                               {userList.filter(u => u.email && u.id !== currentUser?.id).map((u, idx) => (
@@ -2914,7 +2914,7 @@ export default function Home() {
                         </div>
                         {notifySending && <span style={{ fontSize: '0.7rem', color: '#8a8070' }}>Sending...</span>}
                         {notifySuccess && <span style={{ fontSize: '0.7rem', color: notifySuccess === 'Failed' ? '#b85c38' : '#4a6741', fontWeight: '500' }}>{notifySuccess === 'Failed' ? 'Failed to send' : 'Notified ' + notifySuccess}</span>}
-                        <button onClick={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} style={{ background: 'none', border: '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#4a6741', padding: '0.2rem 0.5rem' }}>Save</button>
+                        <button onClick={() => saveNote(selectedNoteCompany, selectedNote.id, noteEditTitle, noteEditContent)} style={{ background: 'none', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#4a6741', padding: '0.2rem 0.5rem' }}>Save</button>
                         <button onClick={() => deleteNote(selectedNoteCompany, selectedNote.id)} style={{ background: 'none', border: '1px solid #fde8e8', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem', color: '#b85c38', padding: '0.2rem 0.5rem' }}>Delete</button>
                       </div>
                     </div>
@@ -2923,7 +2923,7 @@ export default function Home() {
                     <div style={{ borderTop: '1px solid #f0ece0', padding: '0.75rem 1rem', background: '#fefcf8' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                         <div style={{ fontSize: '0.7rem', color: '#8a8070', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Attachments ({(selectedNote.attachments || []).length})</div>
-                        <label style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', color: '#3a3530' }}>
+                        <label style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', color: '#3a3530' }}>
                           {uploadingFile ? 'Uploading...' : '+ Attach File'}
                           <input type="file" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) uploadFile(selectedNoteCompany, selectedNote.id, e.target.files[0]); e.target.value = '' }} />
                         </label>
@@ -2952,7 +2952,7 @@ export default function Home() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '0.75rem', maxHeight: '180px', overflowY: 'auto' }}>
                         {(selectedNote.comments || []).length === 0 && <div style={{ fontSize: '0.78rem', color: '#ccc', fontStyle: 'italic' }}>No comments yet</div>}
                         {(selectedNote.comments || []).map(c => (
-                          <div key={c.id} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.5rem 0.75rem' }}>
+                          <div key={c.id} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.5rem 0.75rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: '600' }}>{c.author.slice(0,2).toUpperCase()}</div>
@@ -2967,8 +2967,8 @@ export default function Home() {
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
-                          <textarea value={projectCommentText} onChange={e => setProjectCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
+                          {!currentUser && <input value={commenterName} onChange={e => setCommenterName(e.target.value)} placeholder='Your name...' style={{ border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', padding: '0.3rem 0.5rem', fontSize: '0.72rem', outline: 'none', color: '#3a3530' }} />}
+                          <textarea value={projectCommentText} onChange={e => setProjectCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(selectedNoteCompany, selectedNote.id) } }} placeholder='Add a comment... (Enter to send)' style={{ border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px', padding: '0.4rem 0.5rem', fontSize: '0.82rem', outline: 'none', resize: 'none', minHeight: '50px', color: '#3a3530', fontFamily: 'inherit' }} />
                         </div>
                         <button onClick={() => addComment(selectedNoteCompany, selectedNote.id)} disabled={!projectCommentText.trim()} style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.78rem', fontWeight: '500', opacity: !projectCommentText.trim() ? 0.4 : 1, alignSelf: 'flex-end' }}>Send</button>
                       </div>
@@ -3032,10 +3032,10 @@ export default function Home() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Calendar</h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
+                  <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
                   <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: isMobile ? '110px' : '140px', textAlign: 'center' }}>{monthName}</span>
-                  <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
-                  <button onClick={() => setCalendarDate(new Date())} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.78rem', color: '#8a8070' }}>Today</button>
+                  <button onClick={() => setCalendarDate(new Date(year, month + 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.9rem' }}>›</button>
+                  <button onClick={() => setCalendarDate(new Date())} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.78rem', color: '#8a8070' }}>Today</button>
                   {!isGuest && <button onClick={() => { setCalendarForm({ title: '', date: calendarSelected ? calendarSelected.toISOString().split('T')[0] : '', time: '', company: '', notes: '', assignedTo: '' }); setShowCalendarModal(true) }} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: '500' }}>{isMobile ? '+' : '+ Event'}</button>}
                 </div>
               </div>
@@ -3069,7 +3069,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', alignSelf: 'start' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', alignSelf: 'start' }}>
                   {!calendarSelected ? (
                     <div style={{ textAlign: 'center', color: '#8a8070', fontSize: '0.85rem', padding: '2rem 0' }}>Click a day to see events</div>
                   ) : (
@@ -3080,7 +3080,7 @@ export default function Home() {
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           {selectedEvents.map((ev, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: '#f4f0e8' }}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: ev.color, flexShrink: 0 }} />
                               <div style={{ fontSize: '0.82rem', color: '#3a3530', flex: 1 }}>{ev.label}</div>
                               {ev.id && <button onClick={async () => {
@@ -3100,9 +3100,9 @@ export default function Home() {
         })()}
 
         {commentPanel && activeCommentProject && (
-          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: isMobile ? '100%' : '420px', background: 'white', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: isMobile ? '100%' : '420px', background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '-4px 0 24px rgba(0,0,0,0.12)', zIndex: 300, display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e8e2d9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#0f0e0d', color: '#f5f1ea' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#0f0e0d', color: '#f5f1ea' }}>
               <div>
                 <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '0.25rem' }}>{activeCommentProject.company}</div>
                 <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{activeCommentProject.name}</div>
@@ -3123,7 +3123,7 @@ export default function Home() {
                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1a1814' }}>{c.author}</span>
+                        <span style={{ fontSize: '0.78rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{c.author}</span>
                         <span style={{ fontSize: '0.65rem', color: '#a09880' }}>{time}</span>
                       </div>
                       <div style={{ fontSize: '0.82rem', color: '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{c.text}</div>
@@ -3135,7 +3135,7 @@ export default function Home() {
                           </button>
                         ))}
                         <div style={{ position: 'relative' }}>
-                          <button onClick={() => setShowEmojiFor(showEmojiFor === c.id ? null : c.id)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#8a8070' }}>+😊</button>
+                          <button onClick={() => setShowEmojiFor(showEmojiFor === c.id ? null : c.id)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#8a8070' }}>+😊</button>
                           {showEmojiFor === c.id && (
                             <div style={{ position: 'absolute', bottom: '100%', left: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem', display: 'flex', gap: '0.35rem', zIndex: 10, flexWrap: 'wrap', width: '160px' }}>
                               {['👍','👎','✅','❌','🔥','⚠️','💡','🎉'].map(e => (
@@ -3152,14 +3152,14 @@ export default function Home() {
               })}
             </div>
             {/* Input */}
-            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: '#faf8f4' }}>
+            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: theme === 'dark' ? '#121212' : '#faf8f4' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                 <textarea
                   value={projectCommentText}
                   onChange={e => setProjectCommentText(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment() } }}
                   placeholder="Write a comment... (Enter to send)"
-                  style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', resize: 'none', height: '70px', fontFamily: 'inherit', color: '#1a1814', background: 'white' }}
+                  style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', resize: 'none', height: '70px', fontFamily: 'inherit', color: '#1a1814', background: theme === 'dark' ? '#1e1e1e' : 'white' }}
                 />
                 <button onClick={addProjectComment} disabled={!projectCommentText.trim()} style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: projectCommentText.trim() ? 'pointer' : 'not-allowed', fontSize: '0.82rem', fontWeight: '500', opacity: projectCommentText.trim() ? 1 : 0.5, flexShrink: 0 }}>Send</button>
               </div>
@@ -3169,7 +3169,7 @@ export default function Home() {
 
         {showCalendarModal && (
           <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '440px', maxWidth: '100%' }}>
+            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', padding: '1.5rem', width: '440px', maxWidth: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New Event</h2>
                 <button onClick={() => setShowCalendarModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
@@ -3208,7 +3208,7 @@ export default function Home() {
                   <textarea value={calendarForm.notes} onChange={e => setCalendarForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optional notes" style={{ ...inputStyle, height: '70px', resize: 'vertical' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                  <button onClick={() => setShowCalendarModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                  <button onClick={() => setShowCalendarModal(false)} style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                   <button onClick={async () => {
                     if (!calendarForm.title || !calendarForm.date) return
                     const res = await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', ...calendarForm, createdBy: currentUser?.name || '' }) })
@@ -3230,33 +3230,33 @@ export default function Home() {
             </div>
 
             {showNewConvo && (
-              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', marginBottom: '1rem' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', padding: '1.25rem', marginBottom: '1rem' }}>
                 <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem' }}>New Conversation</h3>
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  <button onClick={() => setNewConvoType('dm')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoType === 'dm' ? '#0f0e0d' : 'white', color: newConvoType === 'dm' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Direct Message</button>
-                  <button onClick={() => setNewConvoType('group')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoType === 'group' ? '#0f0e0d' : 'white', color: newConvoType === 'group' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Group</button>
+                  <button onClick={() => setNewConvoType('dm')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: newConvoType === 'dm' ? '#0f0e0d' : 'white', color: newConvoType === 'dm' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Direct Message</button>
+                  <button onClick={() => setNewConvoType('group')} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: newConvoType === 'group' ? '#0f0e0d' : 'white', color: newConvoType === 'group' ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.8rem' }}>Group</button>
                 </div>
                 {newConvoType === 'group' && (
-                  <input value={newConvoName} onChange={e => setNewConvoName(e.target.value)} placeholder="Group name..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '4px', border: '1px solid #e0d8cc', fontSize: '0.85rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
+                  <input value={newConvoName} onChange={e => setNewConvoName(e.target.value)} placeholder="Group name..." style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '4px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.85rem', marginBottom: '0.75rem', boxSizing: 'border-box', outline: 'none' }} />
                 )}
                 <div style={{ marginBottom: '0.75rem' }}>
                   <p style={{ fontSize: '0.75rem', color: '#8a8070', margin: '0 0 0.4rem 0' }}>Select members:</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                     {userList.filter(u => u.id !== currentUser?.id).map(u => (
-                      <button key={u.id} onClick={() => setNewConvoMembers(m => m.includes(u.id) ? m.filter(x => x !== u.id) : [...m, u.id])} style={{ padding: '0.25rem 0.6rem', borderRadius: '20px', border: '1px solid #e0d8cc', background: newConvoMembers.includes(u.id) ? '#0f0e0d' : 'white', color: newConvoMembers.includes(u.id) ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.78rem' }}>{u.name}</button>
+                      <button key={u.id} onClick={() => setNewConvoMembers(m => m.includes(u.id) ? m.filter(x => x !== u.id) : [...m, u.id])} style={{ padding: '0.25rem 0.6rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: newConvoMembers.includes(u.id) ? '#0f0e0d' : 'white', color: newConvoMembers.includes(u.id) ? 'white' : '#3a3530', cursor: 'pointer', fontSize: '0.78rem' }}>{u.name}</button>
                     ))}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button onClick={createConversation} disabled={newConvoMembers.length === 0} style={{ padding: '0.4rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.82rem', opacity: newConvoMembers.length === 0 ? 0.4 : 1 }}>Start</button>
-                  <button onClick={() => { setShowNewConvo(false); setNewConvoMembers([]); setNewConvoName('') }} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
+                  <button onClick={() => { setShowNewConvo(false); setNewConvoMembers([]); setNewConvoName('') }} style={{ padding: '0.4rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.82rem' }}>Cancel</button>
                 </div>
               </div>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '280px 1fr', gap: '1rem', height: 'calc(100vh - 200px)' }}>
               {/* Conversation list */}
-              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflowY: 'auto' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', overflowY: 'auto' }}>
                 {conversations.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No conversations yet.<br/>Click "+ New" to start one.</div>}
                 {conversations.map(convo => {
                   const otherMembers = convo.members.filter(id => id !== currentUser?.id)
@@ -3279,7 +3279,7 @@ export default function Home() {
               </div>
 
               {/* Message view */}
-              <div style={{ background: 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column' }}>
                 {!activeConvo ? (
                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a8070', fontSize: '0.85rem' }}>Select a conversation to start messaging</div>
                 ) : (
@@ -3305,7 +3305,7 @@ export default function Home() {
                       })}
                     </div>
                     <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #f0ece0', display: 'flex', gap: '0.5rem' }}>
-                      <input value={messageText} onChange={e => setMessageText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message... (Enter to send)" style={{ flex: 1, padding: '0.5rem 0.85rem', borderRadius: '20px', border: '1px solid #e0d8cc', fontSize: '0.85rem', outline: 'none' }} />
+                      <input value={messageText} onChange={e => setMessageText(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()} placeholder="Type a message... (Enter to send)" style={{ flex: 1, padding: '0.5rem 0.85rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.85rem', outline: 'none' }} />
                       <button onClick={sendMessage} disabled={!messageText.trim()} style={{ padding: '0.5rem 1rem', borderRadius: '20px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.82rem', opacity: !messageText.trim() ? 0.4 : 1 }}>Send</button>
                     </div>
                   </>
@@ -3317,7 +3317,7 @@ export default function Home() {
 
         {!drilldown && page === 'settings' && (
           <div style={{ marginBottom: '2rem' }}>
-            <h2 style={{ fontSize: '1rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9', fontWeight: '600' }}>Notification Preferences</h2>
+            <h2 style={{ fontSize: '1rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontWeight: '600' }}>Notification Preferences</h2>
             <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {[{key:'dueSoon',label:'Task due tomorrow',desc:'Email when a task assigned to you is due the next day'},{key:'overdue',label:'Task overdue',desc:'Email when a task assigned to you is past its due date'},{key:'newComment',label:'New project comment',desc:'Email when someone comments on a project discussion'},{key:'assigned',label:'Assigned to a task',desc:'Email when a task is assigned to you'}].map(({key,label,desc}) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid #f4f0e8' }}>
@@ -3357,7 +3357,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.5rem' }}>
-              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                 <h2 style={{ fontSize: '0.95rem', margin: '0 0 1rem 0' }}>Create User Account</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div>
@@ -3405,10 +3405,10 @@ export default function Home() {
                 </div>
               </div>
 
-              <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+              <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h2 style={{ fontSize: '0.95rem', margin: 0 }}>User Accounts</h2>
-                  <button onClick={async () => { const r = await fetch('/api/users?action=list'); setUserList(await r.json()) }} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer' }}>Refresh</button>
+                  <button onClick={async () => { const r = await fetch('/api/users?action=list'); setUserList(await r.json()) }} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer' }}>Refresh</button>
                 </div>
                 {userList.length === 0 && <p style={{ color: '#8a8070', fontSize: '0.8rem' }}>Click Refresh to load users</p>}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -3420,8 +3420,8 @@ export default function Home() {
                         <div style={{ fontSize: '0.72rem', color: '#8a8070' }}>@{u.username} · {u.role}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
-                        <button onClick={() => { setEditingUser(u); setEditUserForm({ name: u.name, email: u.email || '', role: u.role }) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
-                        <button onClick={() => { setResetPasswordUser(u); setNewPassword('') }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Reset PW</button>
+                        <button onClick={() => { setEditingUser(u); setEditUserForm({ name: u.name, email: u.email || '', role: u.role }) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
+                        <button onClick={() => { setResetPasswordUser(u); setNewPassword('') }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.7rem', cursor: 'pointer', color: '#3a3530' }}>Reset PW</button>
                         {u.id !== currentUser?.id && (
                           <button onClick={async () => {
                             if (!confirm('Delete ' + u.name + '?')) return
@@ -3441,7 +3441,7 @@ export default function Home() {
 
         {editingUser && (
           <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
+            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Edit User</h2>
                 <button onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
@@ -3449,15 +3449,15 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Full Name</label>
-                  <input value={editUserForm.name} onChange={e => setEditUserForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  <input value={editUserForm.name} onChange={e => setEditUserForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Email</label>
-                  <input value={editUserForm.email} onChange={e => setEditUserForm(f => ({ ...f, email: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
+                  <input value={editUserForm.email} onChange={e => setEditUserForm(f => ({ ...f, email: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#8a8070', display: 'block', marginBottom: '0.3rem' }}>Role</label>
-                  <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }}>
+                  <select value={editUserForm.role} onChange={e => setEditUserForm(f => ({ ...f, role: e.target.value }))} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box' }}>
                     <option value="member">Member</option>
                     <option value="admin">Admin</option>
                     <option value="developer">Developer</option>
@@ -3477,13 +3477,13 @@ export default function Home() {
 
         {resetPasswordUser && (
           <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
+            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Reset Password</h2>
                 <button onClick={() => setResetPasswordUser(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>✕</button>
               </div>
               <p style={{ margin: '0 0 1rem', fontSize: '0.85rem', color: '#8a8070' }}>Set a new password for <strong>{resetPasswordUser.name}</strong></p>
-              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box', marginBottom: '0.75rem' }} />
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.9rem', boxSizing: 'border-box', marginBottom: '0.75rem' }} />
               <button onClick={async () => {
                 if (!newPassword) return
                 await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reset_password_admin', userId: resetPasswordUser.id, newPassword, adminPassword: 'Nectera2026!' }) })
@@ -3519,8 +3519,8 @@ export default function Home() {
                   const group = employees.filter(e => e.company === subsidiary)
                   return (
                     <div key={subsidiary}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
-                        <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#1a1814' }}>{subsidiary}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
+                        <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{subsidiary}</h2>
                         <span style={{ fontSize: '0.72rem', color: '#a09880', background: theme === 'dark' ? '#2a2825' : '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{group.length}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.75rem' }}>
@@ -3541,7 +3541,7 @@ export default function Home() {
                                   {emp.department && <div style={{ fontSize: '0.7rem', color: '#a09880' }}>{emp.department}</div>}
                                 </div>
                                 {!isGuest && <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
-                                  <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.68rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
+                                  <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.68rem', cursor: 'pointer', color: '#3a3530' }}>Edit</button>
                                   <button onClick={() => deleteEmployee(globalIdx)} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.68rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
                                 </div>}
                               </div>
@@ -3567,7 +3567,7 @@ export default function Home() {
                 })}
                 {unassigned.length > 0 && (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                       <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#a09880' }}>Unassigned</h2>
                       <span style={{ fontSize: '0.72rem', color: '#a09880', background: theme === 'dark' ? '#2a2825' : '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{unassigned.length}</span>
                     </div>
@@ -3584,7 +3584,7 @@ export default function Home() {
                                 {emp.role && <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{emp.role}</div>}
                               </div>
                               <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.68rem', cursor: 'pointer' }}>Edit</button>
+                                <button onClick={() => { setEmployeeForm({...emp, department: emp.department||'', startDate: emp.startDate||'', notes: emp.notes||''}); setEditingEmployee(globalIdx); setShowEmployeeModal(true) }} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.68rem', cursor: 'pointer' }}>Edit</button>
                                 <button onClick={() => deleteEmployee(globalIdx)} style={{ padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.68rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
                               </div>
                             </div>
@@ -3605,7 +3605,7 @@ export default function Home() {
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500 }}>
           {aiOpen && (
-            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, background: theme === 'dark' ? '#1e1e1e' : 'white', display: 'flex', flexDirection: 'column', overflow: 'hidden' } : { position: 'absolute', bottom: '60px', right: 0, ...(noraExpanded ? { position: 'fixed', inset: 0, zIndex: 300, width: '100%', maxHeight: '100%', borderRadius: 0 } : { width: isMobile ? 'calc(100vw - 2rem)' : '380px', maxHeight: '520px', borderRadius: '16px' }), background: theme === 'dark' ? '#1e1e1e' : 'white', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* Header */}
               <div style={{ background: '#0f0e0d', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -3624,12 +3624,12 @@ export default function Home() {
               {/* Memory Panel */}
               {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
                 </div>
                 {noraMemories.length === 0 ? <div style={{ fontSize: '0.72rem', color: '#8a8070', fontStyle: 'italic' }}>No memories yet. Nora will remember key details from your conversations.</div> : noraMemories.map((m, idx) => <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.3rem 0', borderBottom: idx < noraMemories.length - 1 ? '1px solid #ede8df' : 'none' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.72rem', color: '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
+                    <div style={{ fontSize: '0.72rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', lineHeight: 1.4 }}>{m.fact}</div>
                     <div style={{ fontSize: '0.6rem', color: '#a89f91', marginTop: '0.1rem' }}>{m.date}</div>
                   </div>
                   <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'delete', memoryIndex: idx }) }).then(r => r.json()).then(d => setNoraMemories(d.memories || [])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, padding: '0.1rem' }}>✕</button>
@@ -3641,20 +3641,20 @@ export default function Home() {
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
-                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
+                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{msg.actionType === 'calendar_create' ? 'New Calendar Event' : msg.actionType === 'task_create' ? 'New Task' : msg.actionType === 'note_create' ? 'New Note' : 'Send Message'}</span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => {
                             const labels = { name: 'Task', title: 'Title', date: 'Date', time: 'Time', dueDate: 'Due Date', companyKey: 'Company', company: 'Company', lead: 'Assigned To', status: 'Status', priority: 'Priority', notes: 'Notes', content: 'Content', recipientName: 'To', text: 'Message' }
                             const vals = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
                             const displayVal = k === 'companyKey' ? (vals[v] || String(v)) : String(v)
-                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
+                            return <div key={k} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', lineHeight: 1.4 }}><span style={{ color: '#8a8070', minWidth: '5rem', flexShrink: 0 }}>{labels[k] || k}</span><span style={{ color: theme === 'dark' ? '#e8e2d9' : '#1a1814', fontWeight: 500 }}>{displayVal}</span></div>
                           })}
                           </div>
                           {msg.done === 'loading' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontSize: '0.75rem', color: '#8a8070' }}><span style={{ display: 'inline-block', width: '0.75rem', height: '0.75rem', border: '2px solid #e0d8cc', borderTopColor: '#4a6741', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Executing...</div>}
-                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9' }}>
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
                             <button onClick={async () => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'loading' } : m))
                               const a = { type: msg.actionType, data: msg.actionData }
@@ -3689,18 +3689,18 @@ export default function Home() {
                             <button onClick={() => {
                               setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
                               setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
-                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
+                            }} style={{ padding: '0.4rem 1.2rem', borderRadius: '6px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: 'transparent', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500, transition: 'opacity 0.15s' }}>✗ Cancel</button>
                           </div>}
-                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
-                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
-                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
+                          {msg.done === 'confirmed' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#4a6741', fontWeight: 500 }}><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1rem', height: '1rem', borderRadius: '50%', background: '#4a6741', color: 'white', fontSize: '0.6rem' }}>✓</span> Action completed</div>}
+                          {msg.done === 'cancelled' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#8a8070' }}>Cancelled</div>}
+                          {msg.done === 'error' && <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.6rem', paddingTop: '0.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', fontSize: '0.75rem', color: '#b85c38' }}>⚠ Error — try again</div>}
                         </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
                 {aiLoading && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
+                    <div style={{ padding: '0.6rem 0.85rem', borderRadius: '12px 12px 12px 2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', fontSize: '0.82rem', color: '#8a8070' }}>Thinking...</div>
                   </div>
                 )}
               </div>
@@ -3746,7 +3746,7 @@ export default function Home() {
                     }
                   }}
                   placeholder="Ask Nora anything..."
-                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
+                  style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', fontSize: '0.82rem', outline: 'none', fontFamily: 'inherit', color: '#1a1814' }}
                 />
                 <button onClick={function() {
                   if (isListening) {
@@ -3828,7 +3828,7 @@ export default function Home() {
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
               <button onClick={() => handleDelete(confirmDelete)} style={{ padding: '0.5rem 1.25rem', borderRadius: '4px', border: 'none', background: '#b85c38', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Delete</button>
             </div>
           </div>
@@ -3844,7 +3844,7 @@ export default function Home() {
                 <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{reportData ? reportData.company : ''} · {selectedYear}</div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
+                {reportData && <button onClick={exportReportPDF} style={{ padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{display:"block",flexShrink:0}}><rect x="2" y="1" width="9" height="12" rx="1.5" fill="#6b6560" opacity="0.7"/><rect x="4" y="1" width="9" height="12" rx="1.5" fill="#6b6560"/><rect x="9" y="1" width="4" height="4" rx="0" fill="#3a3530" opacity="0.4"/><rect x="6" y="7" width="5" height="1" rx="0.5" fill="#f4f0e8" opacity="0.9"/><rect x="6" y="9.5" width="3" height="1" rx="0.5" fill="#f4f0e8" opacity="0.6"/><circle cx="12" cy="12" r="3.5" fill="#c9a84c"/><path d="M12 10.5 L12 13.5 M10.5 12 L13.5 12" stroke="#0f0e0d" strokeWidth="1.2" strokeLinecap="round"/></svg></button>}
                 <button onClick={() => { setReportModal(null); setReportData(null) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
               </div>
             </div>
@@ -3911,9 +3911,9 @@ export default function Home() {
           {/* Mobile top bar */}
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 60, background: '#0f0e0d', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}>
             <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', padding: '0.5rem' }}>
-              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
-              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
-              <span style={{ width: '18px', height: '2px', background: '#f4f0e8', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '2px', display: 'block' }} />
+              <span style={{ width: '18px', height: '2px', background: theme === 'dark' ? '#2a2825' : '#f4f0e8', borderRadius: '2px', display: 'block' }} />
             </button>
             <span style={{ color: 'white', fontSize: '1rem', fontWeight: '600', letterSpacing: '0.02em' }}>Nectera Holdings</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
