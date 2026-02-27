@@ -216,6 +216,17 @@ export async function POST(request) {
           for (const r of yearResults) {
             const metrics = calcMetrics(r.details && r.details.rows ? r.details.rows : [])
             multiYearData += `${names[r.key]} (${y}): Revenue $${metrics.totalIncome.toLocaleString()}, COGS $${metrics.totalCOGS.toLocaleString()}, Gross Profit $${metrics.grossProfit.toLocaleString()} (${metrics.grossMargin}%), Net Income $${metrics.netIncome.toLocaleString()} (${metrics.netMargin}%), EBITDA $${metrics.ebitda.toLocaleString()}\n`
+            if (r.details && r.details.monthly) {
+              const months = r.details.monthly
+              const q1 = months.filter(function(m) { return m.month && (m.month.startsWith('Jan') || m.month.startsWith('Feb') || m.month.startsWith('Mar')) })
+              const q2 = months.filter(function(m) { return m.month && (m.month.startsWith('Apr') || m.month.startsWith('May') || m.month.startsWith('Jun')) })
+              const q3 = months.filter(function(m) { return m.month && (m.month.startsWith('Jul') || m.month.startsWith('Aug') || m.month.startsWith('Sep')) })
+              const q4 = months.filter(function(m) { return m.month && (m.month.startsWith('Oct') || m.month.startsWith('Nov') || m.month.startsWith('Dec')) })
+              const sumIncome = function(arr) { return arr.reduce(function(s, m) { return s + (m.income || 0) }, 0) }
+              const sumNet = function(arr) { return arr.reduce(function(s, m) { return s + (m.net || 0) }, 0) }
+              multiYearData += `  Quarterly Revenue: Q1 $${sumIncome(q1).toLocaleString()}, Q2 $${sumIncome(q2).toLocaleString()}, Q3 $${sumIncome(q3).toLocaleString()}, Q4 $${sumIncome(q4).toLocaleString()}\n`
+              multiYearData += `  Quarterly Net Income: Q1 $${sumNet(q1).toLocaleString()}, Q2 $${sumNet(q2).toLocaleString()}, Q3 $${sumNet(q3).toLocaleString()}, Q4 $${sumNet(q4).toLocaleString()}\n`
+            }
           }
         }
         financialContext = multiYearData
