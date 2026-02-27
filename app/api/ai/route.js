@@ -326,14 +326,16 @@ IMPORTANT RULES FOR ACTIONS:
     if (userId && messages.length >= 1) {
       const doMemoryExtract = async () => {
         try {
-          const convoText = messages.slice(-6).map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply
+          const validMsgs = messages.filter(m => m.role === 'user' || m.role === 'assistant').slice(-6)
+          const convoText = validMsgs.map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply
           const memoryExtract = await anthropic.messages.create({
-            model: 'claude-haiku-4-5-20251001',
+            model: 'claude-sonnet-4-20250514',
             max_tokens: 200,
-            system: 'Extract 0-3 key facts worth remembering about this user from their conversation. Focus on: what they care about, preferences, priorities, concerns, decisions made, or personal context. Return ONLY a valid JSON array of short strings. Example: ["concerned about Xtract expenses", "wants to reduce Bug Control costs"]. If nothing notable, return []. Output only the JSON array, nothing else.',
+            system: 'Extract 1-3 key facts worth remembering about this user. Focus on: concerns, preferences, priorities, decisions, or personal context. Return ONLY a JSON array of short strings like ["worried about Xtract payroll", "board meetings on first Mondays"]. No explanation.',
             messages: [{ role: 'user', content: convoText }]
           })
           const raw = (memoryExtract.content[0]?.text || '[]').replace(/```json|```/g, '').trim()
+          console.log('Memory extraction raw:', raw)
           const newFacts = JSON.parse(raw)
           if (Array.isArray(newFacts) && newFacts.length > 0) {
             const today = new Date().toISOString().split('T')[0]
