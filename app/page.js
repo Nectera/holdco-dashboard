@@ -1523,8 +1523,50 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = { type: msg.actionType, data: msg.actionData }
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
+                                } else if (a.type === 'message_send') {
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                  }
+                                }
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
+                              } catch(err) {
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
+                              }
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>}
+                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                        </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
@@ -1558,7 +1600,17 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -1614,7 +1666,17 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
@@ -2244,8 +2306,50 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = { type: msg.actionType, data: msg.actionData }
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
+                                } else if (a.type === 'message_send') {
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                  }
+                                }
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
+                              } catch(err) {
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
+                              }
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>}
+                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                        </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
@@ -2279,7 +2383,17 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -2335,7 +2449,17 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
@@ -3410,8 +3534,50 @@ export default function Home() {
               <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                      {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+                    <div style={{ maxWidth: '85%', padding: '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#faf8f4' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                      {msg.role === 'action' ? <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+                            <span>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
+                            <span>{msg.actionType === 'calendar_create' ? 'Create Calendar Event' : msg.actionType === 'task_create' ? 'Create Task' : msg.actionType === 'note_create' ? 'Create Note' : 'Send Message'}</span>
+                          </div>
+                          {Object.entries(msg.actionData).filter(([,v]) => v).map(([k,v]) => <div key={k} style={{ fontSize: '0.75rem', marginBottom: '0.15rem' }}><span style={{ color: '#8a8070' }}>{k}: </span><span>{String(v)}</span></div>)}
+                          {!msg.done && <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
+                            <button onClick={async () => {
+                              const a = { type: msg.actionType, data: msg.actionData }
+                              try {
+                                if (a.type === 'calendar_create') {
+                                  await fetch('/api/calendar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', title: a.data.title, date: a.data.date, time: a.data.time || '', company: a.data.company || '', notes: a.data.notes || '', createdBy: currentUser?.name || '' }) })
+                                  fetch('/api/calendar').then(r => r.json()).then(setCalendarEvents)
+                                } else if (a.type === 'task_create') {
+                                  await fetch('/api/tasks/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ companyKey: a.data.companyKey || 'nectera', name: a.data.name, lead: a.data.lead || '', status: a.data.status || 'Not Started', priority: a.data.priority || 'Medium', dueDate: a.data.dueDate || '', notes: a.data.notes || '' }) })
+                                  fetch('/api/tasks?company=all').then(r => r.json()).then(setTasks)
+                                } else if (a.type === 'note_create') {
+                                  const co = a.data.company || 'Nectera Holdings'
+                                  const cur = notes[co] || []
+                                  const nn = { id: Date.now(), title: a.data.title, content: a.data.content || '', date: new Date().toISOString().split('T')[0] }
+                                  await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: [nn, ...cur] }) })
+                                  setNotes(p => ({ ...p, [co]: [nn, ...cur] }))
+                                } else if (a.type === 'message_send') {
+                                  const rec = employees.find(e => e.name.toLowerCase().includes(a.data.recipientName.toLowerCase()))
+                                  if (rec) {
+                                    const convos = await fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json())
+                                    const ex = convos.find(c => c.members.includes(String(rec.id)) && c.members.includes(String(currentUser.id)))
+                                    if (ex) await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'send_message', convoId: ex.id, senderId: currentUser.id, senderName: currentUser.name, text: a.data.text }) })
+                                  }
+                                }
+                                setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'confirmed' } : m))
+                                setAiMessages(p => [...p, { role: 'assistant', content: '✓ Done! Action completed successfully.\n\n—Nora' }])
+                              } catch(err) {
+                                setAiMessages(p => [...p, { role: 'assistant', content: 'Sorry, there was an error. Please try again.\n\n—Nora' }])
+                              }
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: 'none', background: '#4a6741', color: 'white', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 500 }}>Confirm</button>
+                            <button onClick={() => {
+                              setAiMessages(p => p.map((m, j) => j === i ? { ...m, done: 'cancelled' } : m))
+                              setAiMessages(p => [...p, { role: 'assistant', content: 'No problem, cancelled that action.\n\n—Nora' }])
+                            }} style={{ padding: '0.35rem 1rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: 'white', color: '#8a8070', fontSize: '0.75rem', cursor: 'pointer' }}>Cancel</button>
+                          </div>}
+                          {msg.done && <div style={{ fontSize: '0.75rem', color: msg.done === 'confirmed' ? '#4a6741' : '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{msg.done === 'confirmed' ? '✓ Confirmed' : '✗ Cancelled'}</div>}
+                        </div> : msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
                     </div>
                   </div>
                 ))}
@@ -3445,7 +3611,17 @@ export default function Home() {
                         const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                         const d = await res.json()
-                        setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                        setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                       } catch(err) {
                         setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                       }
@@ -3501,7 +3677,17 @@ export default function Home() {
                     const apiMessages = newMessages.filter(m => m.role !== 'assistant' || newMessages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content }))
                     const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: apiMessages, context, userId: currentUser?.id }) })
                     const d = await res.json()
-                    setAiMessages(prev => [...prev, { role: 'assistant', content: d.reply }])
+                    setAiMessages(prev => {
+                          let content = d.reply
+                          let actionData = d.action || null
+                          if (!actionData) {
+                            const am = content.match(/\[ACTION:(\w+):(\{.*\})\]/)
+                            if (am) { try { actionData = { type: am[1], data: JSON.parse(am[2]) }; content = content.replace(am[0], '').trim() } catch(e) {} }
+                          }
+                          const msgs = [...prev, { role: 'assistant', content }]
+                          if (actionData) msgs.push({ role: 'action', actionType: actionData.type, actionData: actionData.data })
+                          return msgs
+                        })
                   } catch(err) {
                     setAiMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I ran into an error. Please try again.' }])
                   }
