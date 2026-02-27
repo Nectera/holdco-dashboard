@@ -271,6 +271,8 @@ export default function Home() {
   const [commentPanel, setCommentPanel] = useState(false)
   const [activeCommentProject, setActiveCommentProject] = useState(null)
   const [projectAttachments, setProjectAttachments] = useState([])
+  const [subtasks, setSubtasks] = useState({})
+  const [newSubtaskText, setNewSubtaskText] = useState('')
   const [uploadingProjectFile, setUploadingProjectFile] = useState(false)
   const [comments, setComments] = useState([])
   const [projectCommentText, setProjectCommentText] = useState('')
@@ -1141,6 +1143,39 @@ export default function Home() {
     { id: 'team', label: 'Team' },
     ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings' }] : []),
   ]
+
+  const loadSubtasks = async (projectId) => {
+    try {
+      const res = await fetch('/api/subtasks?projectId=' + encodeURIComponent(projectId))
+      const d = await res.json()
+      setSubtasks(prev => ({ ...prev, [projectId]: d.subtasks || [] }))
+    } catch {}
+  }
+
+  const saveSubtasks = async (projectId, items) => {
+    setSubtasks(prev => ({ ...prev, [projectId]: items }))
+    try {
+      await fetch('/api/subtasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, subtasks: items }) })
+    } catch {}
+  }
+
+  const addSubtask = (projectId, text) => {
+    if (!text.trim()) return
+    const items = subtasks[projectId] || []
+    const newItem = { id: Date.now(), text: text.trim(), done: false, createdAt: new Date().toISOString() }
+    saveSubtasks(projectId, [...items, newItem])
+    setNewSubtaskText('')
+  }
+
+  const toggleSubtask = (projectId, subtaskId) => {
+    const items = (subtasks[projectId] || []).map(s => s.id === subtaskId ? { ...s, done: !s.done } : s)
+    saveSubtasks(projectId, items)
+  }
+
+  const deleteSubtask = (projectId, subtaskId) => {
+    const items = (subtasks[projectId] || []).filter(s => s.id !== subtaskId)
+    saveSubtasks(projectId, items)
+  }
 
   const effectiveCommenterName = currentUser ? currentUser.name : commenterName
 
@@ -2456,7 +2491,7 @@ export default function Home() {
                     <div key={i} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div onClick={() => setExpandedTask(isExpanded ? null : i)} style={{ fontWeight: '500', marginBottom: '0.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
+                          <div onClick={() => { setExpandedTask(isExpanded ? null : i); if (!isExpanded) { const pid = task.rowIndex || (task.companyKey + '-' + task.name.replace(/\s+/g, '-')); loadSubtasks(pid) } }} style={{ fontWeight: '500', marginBottom: '0.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
                             <span style={{ fontSize: '0.65rem', color: '#8a8070', flexShrink: 0 }}>{isExpanded ? 'v' : '>'}</span>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: isMobile ? 'nowrap' : 'normal' }}>{task.name}</span>
                           </div>
@@ -2492,6 +2527,42 @@ export default function Home() {
                             {task.dueDate && <span>Due: {task.dueDate}</span>}
                             {task.notes && <span style={{ color: theme === 'dark' ? '#a09880' : '#6b6560', fontStyle: 'italic' }}>{task.notes}</span>}
                           </div>
+                          {/* Subtasks */}
+                          {(() => {
+                            const pid = task.rowIndex || (task.companyKey + '-' + task.name.replace(/\s+/g, '-'))
+                            const items = subtasks[pid] || []
+                            const doneCount = items.filter(s => s.done).length
+                            const totalCount = items.length
+                            return (
+                              <div style={{ marginBottom: '0.75rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: '600', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Subtasks {totalCount > 0 && <span style={{ fontWeight: '400' }}>({doneCount}/{totalCount})</span>}
+                                  </div>
+                                  {totalCount > 0 && (
+                                    <div style={{ width: '60px', height: '4px', borderRadius: '2px', background: theme === 'dark' ? '#2a2825' : '#f0ece0', overflow: 'hidden' }}>
+                                      <div style={{ width: (doneCount / totalCount * 100) + '%', height: '100%', borderRadius: '2px', background: '#4a6741', transition: 'width 0.3s' }}></div>
+                                    </div>
+                                  )}
+                                </div>
+                                {items.map(s => (
+                                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0', fontSize: '0.82rem' }}>
+                                    <button onClick={() => toggleSubtask(pid, s.id)} style={{ background: 'none', border: '1.5px solid ' + (s.done ? '#4a6741' : (theme === 'dark' ? '#444' : '#ccc')), borderRadius: '4px', width: '16px', height: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0, background: s.done ? '#e8f0e8' : 'transparent' }}>
+                                      {s.done && <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#4a6741" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                    </button>
+                                    <span style={{ flex: 1, color: s.done ? '#8a8070' : (theme === 'dark' ? '#d4cfc6' : '#1a1814'), textDecoration: s.done ? 'line-through' : 'none' }}>{s.text}</span>
+                                    <button onClick={() => deleteSubtask(pid, s.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.7rem', padding: '0 0.2rem', flexShrink: 0 }}>✕</button>
+                                  </div>
+                                ))}
+                                {!isGuest && (
+                                  <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem' }}>
+                                    <input value={newSubtaskText} onChange={e => setNewSubtaskText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { addSubtask(pid, newSubtaskText); e.preventDefault() } }} placeholder="Add a subtask..." style={{ flex: 1, padding: '0.3rem 0.5rem', borderRadius: '6px', border: '1px solid ' + (theme === 'dark' ? '#333' : '#e0d8cc'), fontSize: '0.78rem', outline: 'none', background: theme === 'dark' ? '#161616' : '#faf8f4', color: theme === 'dark' ? '#d4cfc6' : '#1a1814' }} />
+                                    <button onClick={() => addSubtask(pid, newSubtaskText)} disabled={!newSubtaskText.trim()} style={{ padding: '0.3rem 0.6rem', borderRadius: '6px', border: 'none', background: '#0f0e0d', color: 'white', fontSize: '0.72rem', cursor: newSubtaskText.trim() ? 'pointer' : 'not-allowed', opacity: newSubtaskText.trim() ? 1 : 0.5 }}>Add</button>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })()}
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                             <button onClick={() => { setActiveCommentProject(task); setCommentPanel(true); loadComments(task); loadProjectAttachments(task.rowIndex || (task.companyKey + "-" + task.name.replace(/\s+/g, "-"))) }} style={{ padding: '0.3rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.75rem', cursor: 'pointer', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="9" rx="2" fill="#6b6560" opacity="0.7"/><path d="M3 13 L3 10 L7 10" fill="#6b6560" opacity="0.5"/><rect x="3" y="4" width="4" height="1.2" rx="0.6" fill="#f4f0e8"/><rect x="3" y="6.5" width="7" height="1.2" rx="0.6" fill="#f4f0e8" opacity="0.7"/></svg>
