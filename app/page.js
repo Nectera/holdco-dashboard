@@ -2446,7 +2446,7 @@ export default function Home() {
                   }, 0)
                 }
                 var match = data.find(function(s) {
-                  return s.company.toLowerCase().includes(compKey === 'xtract' ? 'xtract' : compKey === 'bcs' ? 'bug' : 'lush')
+                  return (s.company || s.name || '').toLowerCase().includes(compKey === 'xtract' ? 'xtract' : compKey === 'bcs' ? 'bug' : 'lush')
                 })
                 if (!match) return 0
                 return getMetric(match.report, metricDataKey)
@@ -2487,7 +2487,7 @@ export default function Home() {
                               <div key={metric.key}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
                                   <span style={{ fontSize: '0.8rem', color: '#3a3530', fontWeight: '500' }}>{metric.label}</span>
-                                  <span style={{ fontSize: '0.75rem', color: '#8a8070' }}>{fmt(actual)} / {fmt(target)}</span>
+                                  <span style={{ fontSize: '0.75rem', color: '#8a8070' }}>{metric.unit === 'percent' ? actual + '% / ' + target + '%' : fmt(actual) + ' / ' + fmt(target)}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                   <div style={{ flex: 1, height: '10px', background: '#f0ece0', borderRadius: '5px', overflow: 'hidden' }}>
