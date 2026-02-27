@@ -791,6 +791,15 @@ export default function Home() {
   const totalIncome = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Income'), 0)
   const totalExpenses = data.reduce((sum, s) => sum + getTotalExpenses(s.report), 0)
   const totalNet = data.reduce((sum, s) => sum + getMetric(s.report, 'Net Income'), 0)
+  const totalCOGS = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Cost of Goods Sold'), 0)
+  const totalGrossProfit = totalIncome - totalCOGS
+  const totalOpex = data.reduce((sum, s) => sum + getMetric(s.report, 'Total Expenses'), 0)
+  const totalDepreciation = data.reduce((sum, s) => sum + getMetric(s.report, 'Depreciation'), 0)
+  const totalInterest = data.reduce((sum, s) => sum + getMetric(s.report, 'Interest Expense'), 0)
+  const totalEBITDA = totalNet + totalInterest + totalDepreciation
+  const grossMarginPct = totalIncome > 0 ? ((totalGrossProfit / totalIncome) * 100).toFixed(1) : '0.0'
+  const netMarginPct = totalIncome > 0 ? ((totalNet / totalIncome) * 100).toFixed(1) : '0.0'
+  const operatingMarginPct = totalIncome > 0 ? (((totalGrossProfit - totalOpex) / totalIncome) * 100).toFixed(1) : '0.0'
 
   const chartData = data.map(sub => ({
     name: shortName(sub.name),
@@ -1665,6 +1674,21 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            {!loadingFinancials && (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                {[
+                  { label: 'EBITDA', value: totalEBITDA, isCurrency: true, color: '#c9a84c' },
+                  { label: 'Gross Margin', value: grossMarginPct, isCurrency: false, color: '#4a6741' },
+                  { label: 'Net Margin', value: netMarginPct, isCurrency: false, color: '#3d5a6e' },
+                  { label: 'Operating Margin', value: operatingMarginPct, isCurrency: false, color: '#8a6d3b' },
+                ].map((kpi) => (
+                  <div key={kpi.label} style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
+                    <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{kpi.label}</div>
+                    <div style={{ fontSize: isMobile ? '1.2rem' : '1.6rem', fontWeight: '600', color: parseFloat(kpi.value) < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.01em' }}>{kpi.isCurrency ? fmt(kpi.value) : kpi.value + '%'}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {!loadingFinancials && chartData.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
