@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
+
 
 /* Theme Variables */
 :root {
@@ -69,7 +71,6 @@
   color: var(--text-primary);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 :root {
   --font-display: 'DM Serif Display', serif;

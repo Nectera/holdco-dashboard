@@ -25,7 +25,7 @@ const renderMarkdown = (text) => {
     } else if (line.startsWith('# ')) {
       elements.push(<div key={key} style={{ fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem', color: '#0f0e0d' }} dangerouslySetInnerHTML={{ __html: formatted.slice(2) }} />)
     } else if (line.startsWith('---') || line.startsWith('—Nora') || line.startsWith('— Nora')) {
-      elements.push(<div key={key} style={{ borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
+      elements.push(<div key={key} style={{ borderTop: '1px solid #e8e2d9', marginTop: '0.4rem', paddingTop: '0.4rem', fontSize: '0.75rem', color: '#8a8070', fontStyle: 'italic' }}>{line.startsWith('---') ? '' : line}</div>)
     } else {
       elements.push(<div key={key} dangerouslySetInnerHTML={{ __html: formatted }} />)
     }
@@ -99,7 +99,7 @@ const shortName = (name) => {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
+      <div style={{ background: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '0.75rem 1rem', fontSize: '0.8rem' }}>
         <div style={{ fontWeight: '600', marginBottom: '0.4rem' }}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} style={{ color: p.color }}>{p.name}: {fmtK(p.value)}</div>
@@ -114,10 +114,10 @@ const inputStyle = {
   width: '100%',
   padding: '0.5rem 0.75rem',
   borderRadius: '4px',
-  border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc',
+  border: '1px solid #e0d8cc',
   fontSize: '0.85rem',
-  background: theme === 'dark' ? '#1e1e1e' : 'white',
-  color: theme === 'dark' ? '#e8e2d9' : '#1a1814',
+  background: 'white',
+  color: '#1a1814',
   boxSizing: 'border-box',
 }
 
