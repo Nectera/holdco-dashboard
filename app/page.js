@@ -301,6 +301,19 @@ export default function Home() {
   const [aiMessages, setAiMessages] = useState([{ role: 'assistant', content: "Hi! I'm Nora, your Nectera AI assistant. Ask me anything about your financials, projects, tasks, or team." }])
   const [noraMemories, setNoraMemories] = useState([])
   const [showMemoryPanel, setShowMemoryPanel] = useState(false)
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('nectera-theme') : null
+    if (saved) { setTheme(saved); document.documentElement.setAttribute('data-theme', saved) }
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    setTheme(next)
+    document.documentElement.setAttribute('data-theme', next)
+    localStorage.setItem('nectera-theme', next)
+  }
   const [aiInput, setAiInput] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [noraExpanded, setNoraExpanded] = useState(false)
@@ -1053,7 +1066,7 @@ export default function Home() {
   }
 
   const periodToggle = (
-    <div style={{ display: 'flex', gap: '0.25rem', background: '#f0ece0', borderRadius: '6px', padding: '0.2rem' }}>
+    <div style={{ display: 'flex', gap: '0.25rem', background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '6px', padding: '0.2rem' }}>
       {['monthly', 'quarterly', 'yearly'].map(p => (
         <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: 'none', background: period === p ? 'white' : 'transparent', color: period === p ? '#0f0e0d' : '#8a8070', fontSize: '0.7rem', cursor: 'pointer', fontWeight: period === p ? '600' : '400', textTransform: 'capitalize' }}>
           {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -1150,8 +1163,8 @@ export default function Home() {
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', fontFamily: 'sans-serif' }}>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '500px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '500px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New Task</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
@@ -1277,7 +1290,7 @@ export default function Home() {
             <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#e8f0e8', color: '#4a6741', fontWeight: '600' }}>Note</span>
+                  <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: theme === 'dark' ? '#1a2a1a' : '#e8f0e8', color: '#4a6741', fontWeight: '600' }}>Note</span>
                   <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
                 </div>
                 <div style={{ fontSize: '0.85rem', fontWeight: '500', color: '#0f0e0d' }}>{n.task}</div>
@@ -1308,8 +1321,8 @@ export default function Home() {
       )}
 
       {showEmployeeModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingEmployee !== null ? 'Edit Employee' : 'Add Employee'}</h2>
               <button onClick={() => { setShowEmployeeModal(false); setEditingEmployee(null); setEmployeeForm({ name: '', role: '', company: '', phone: '', email: '', photo: '', department: '', startDate: '', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
@@ -1375,8 +1388,8 @@ export default function Home() {
       )}
 
       {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
               <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
@@ -1441,8 +1454,8 @@ export default function Home() {
       )}
 
       {showLightTaskModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
               <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
@@ -1527,7 +1540,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Memory Panel */}
-              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+              {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
@@ -1541,10 +1554,10 @@ export default function Home() {
                 </div>)}
               </div>}
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', background: theme === 'dark' ? '#121212' : 'transparent', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
@@ -1726,8 +1739,8 @@ export default function Home() {
       )}
 
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
             <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
@@ -1742,7 +1755,7 @@ export default function Home() {
 
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
@@ -1871,7 +1884,7 @@ export default function Home() {
                         { label: 'Gross Margin', value: dGPM, isCurrency: false, color: '#4a6741' },
                       ].map(function(kpi) {
                         return (
-                          <div key={kpi.label} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
+                          <div key={kpi.label} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid ' + kpi.color }}>
                             <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{kpi.label}</div>
                             <div style={{ fontSize: isMobile ? '1.1rem' : '1.4rem', fontWeight: '600', color: parseFloat(kpi.value) < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif" }}>{kpi.isCurrency ? fmt(kpi.value) : kpi.value + '%'}</div>
                           </div>
@@ -2013,7 +2026,7 @@ export default function Home() {
 
             {agingData && (
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Accounts Receivable Aging</div>
                   {agingData.map(comp => {
                     const rows = comp.ar && comp.ar.rows ? comp.ar.rows.filter(r => !r.colHeaders && !r.isHeader) : []
@@ -2049,7 +2062,7 @@ export default function Home() {
                     )
                   })}
                 </div>
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                   <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Accounts Payable Aging</div>
                   {agingData.map(comp => {
                     const rows = comp.ap && comp.ap.rows ? comp.ap.rows.filter(r => !r.colHeaders && !r.isHeader) : []
@@ -2119,7 +2132,7 @@ export default function Home() {
                           <span>Net margin</span>
                           <strong style={{ color: parseFloat(margin) < 0 ? '#b85c38' : '#4a6741' }}>{margin}%</strong>
                         </div>
-                        <div style={{ background: '#f0ece0', borderRadius: '4px', height: '8px', position: 'relative', overflow: 'visible' }}>
+                        <div style={{ background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '4px', height: '8px', position: 'relative', overflow: 'visible' }}>
                           <div style={{ width: marginPct + '%', height: '100%', background: parseFloat(margin) < 0 ? '#b85c38' : parseFloat(margin) >= 15 ? '#4a6741' : '#c9a84c', borderRadius: '4px' }} />
                           <div style={{ position: 'absolute', top: '-4px', left: '50%', width: '3px', height: '16px', background: '#333', borderRadius: '2px', zIndex: 2 }} />
                         </div>
@@ -2146,7 +2159,7 @@ export default function Home() {
         {!drilldown && page === 'projects' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Projects</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>Projects</h1>
               {!isGuest && <button onClick={() => setShowModal(true)} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Project
               </button>}
@@ -2167,7 +2180,7 @@ export default function Home() {
                 {[...new Set(tasks.map(t => t.lead).filter(Boolean))].sort().map(l => <option key={l} value={l}>{l}</option>)}
               </select>
               <span style={{ fontSize: '0.8rem', color: '#8a8070', alignSelf: 'center' }}>{filteredTasks.length} tasks</span>
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', background: '#f0ece0', borderRadius: '8px', padding: '0.2rem' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '8px', padding: '0.2rem' }}>
                 <button onClick={() => setProjectsView('list')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'list' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'list' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'list' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>List</button>
                 <button onClick={() => setProjectsView('timeline')} style={{ padding: '0.3rem 0.65rem', borderRadius: '6px', border: 'none', background: projectsView === 'timeline' ? 'white' : 'transparent', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '500', color: projectsView === 'timeline' ? '#0f0e0d' : '#8a8070', boxShadow: projectsView === 'timeline' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', transition: 'all 0.15s' }}>Timeline</button>
               </div>
@@ -2181,7 +2194,7 @@ export default function Home() {
                 'Lush Green Landscapes': '#7a5c3e',
               }
               const timelineTasks = filteredTasks.filter(t => t.dueDate)
-              if (timelineTasks.length === 0) return <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No projects with due dates found.<br/>Add due dates to projects in Google Sheets.</div>
+              if (timelineTasks.length === 0) return <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No projects with due dates found.<br/>Add due dates to projects in Google Sheets.</div>
 
               // Calculate date range
               const today = new Date()
@@ -2204,7 +2217,7 @@ export default function Home() {
               const todayPct = ((today - minDate) / (maxDate - minDate)) * 100
 
               return (
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', overflowX: 'auto' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', overflowX: 'auto' }}>
                   <div style={{ minWidth: '600px' }}>
                     {/* Month headers */}
                     <div style={{ display: 'flex', marginBottom: '0.5rem', position: 'relative', height: '20px' }}>
@@ -2289,7 +2302,7 @@ export default function Home() {
                             <option value="Complete">Complete</option>
                           </select>
                           {!isMobile && (
-                            <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '20px', background: '#f0ece0', color: '#8a8070' }}>
+                            <span style={{ fontSize: '0.65rem', padding: '0.15rem 0.5rem', borderRadius: '20px', background: theme === 'dark' ? '#2a2825' : '#f0ece0', color: '#8a8070' }}>
                               {task.company?.split(' ')[0]}
                             </span>
                           )}
@@ -2341,7 +2354,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Memory Panel */}
-              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+              {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
@@ -2355,10 +2368,10 @@ export default function Home() {
                 </div>)}
               </div>}
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', background: theme === 'dark' ? '#121212' : 'transparent', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
@@ -2540,8 +2553,8 @@ export default function Home() {
       )}
 
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
             <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
@@ -2556,7 +2569,7 @@ export default function Home() {
 
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
@@ -2631,7 +2644,7 @@ export default function Home() {
         {!drilldown && page === 'tasks' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Tasks</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Tasks</h1>
               {!isGuest && <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Task
               </button>}
@@ -2660,7 +2673,7 @@ export default function Home() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                           <span style={{ fontWeight: '600', fontSize: '0.9rem', color: task.status === 'Complete' ? '#8a8070' : '#0f0e0d', textDecoration: task.status === 'Complete' ? 'line-through' : 'none' }}>{task.name}</span>
-                          <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#f0ece0', color: priorityColor, fontWeight: '600' }}>{task.priority}</span>
+                          <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: theme === 'dark' ? '#2a2825' : '#f0ece0', color: priorityColor, fontWeight: '600' }}>{task.priority}</span>
                           {isOverdue && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#fde8e8', color: '#b85c38', fontWeight: '600' }}>Overdue</span>}
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#8a8070', flexWrap: 'wrap' }}>
@@ -2738,7 +2751,7 @@ export default function Home() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {companiesConfig.map(function(comp) {
                     return (
-                      <div key={comp.key} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', borderLeft: '4px solid ' + comp.color }}>
+                      <div key={comp.key} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', borderLeft: '4px solid ' + comp.color }}>
                         <div style={{ fontWeight: '600', fontSize: '1rem', marginBottom: '1rem', color: '#0f0e0d' }}>{comp.label}</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                           {allMetricsForComp(comp.key).map(function(metric) {
@@ -2787,7 +2800,7 @@ export default function Home() {
                                   <span style={{ fontSize: '0.75rem', color: '#8a8070' }}>{metric.unit === 'percent' ? actual + '% / ' + target + '%' : fmt(actual) + ' / ' + fmt(target)}</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                  <div style={{ flex: 1, height: '10px', background: '#f0ece0', borderRadius: '5px', overflow: 'hidden' }}>
+                                  <div style={{ flex: 1, height: '10px', background: theme === 'dark' ? '#2a2825' : '#f0ece0', borderRadius: '5px', overflow: 'hidden' }}>
                                     <div style={{ width: Math.min(pct, 100) + '%', height: '100%', background: barColor, borderRadius: '5px', transition: 'width 0.5s ease' }} />
                                   </div>
                                   <span style={{ fontSize: '0.8rem', fontWeight: '600', color: barColor, minWidth: '50px', textAlign: 'right' }}>{displayPct}%</span>
@@ -2817,7 +2830,7 @@ export default function Home() {
         {!drilldown && page === 'notes' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Notes</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Notes</h1>
               {!isGuest && <button onClick={() => {
                 const newNote = { id: Date.now(), title: 'Untitled', content: '', date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), pinned: false }
                 const updated = { ...notes, [selectedNoteCompany]: [newNote, ...(notes[selectedNoteCompany] || [])] }
@@ -2923,7 +2936,7 @@ export default function Home() {
                             const icon = isImage ? '🖼️' : isPDF ? '📄' : '📎'
                             const sizeKB = att.size ? (att.size / 1024).toFixed(0) + ' KB' : ''
                             return (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem', background: 'white', border: '1px solid #e0d8cc', borderRadius: '4px' }}>
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.6rem', background: theme === 'dark' ? '#1e1e1e' : 'white', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', borderRadius: '4px' }}>
                                 <span style={{ fontSize: '0.85rem' }}>{icon}</span>
                                 <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontSize: '0.78rem', color: '#3d5a6e', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name}</a>
                                 <span style={{ fontSize: '0.65rem', color: '#8a8070', flexShrink: 0 }}>{sizeKB}</span>
@@ -3017,7 +3030,7 @@ export default function Home() {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Calendar</h1>
+                <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Calendar</h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <button onClick={() => setCalendarDate(new Date(year, month - 1, 1))} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: '1px solid #ede8df', background: 'white', cursor: 'pointer', fontSize: '0.9rem' }}>‹</button>
                   <span style={{ fontSize: '0.95rem', fontWeight: '600', minWidth: isMobile ? '110px' : '140px', textAlign: 'center' }}>{monthName}</span>
@@ -3124,7 +3137,7 @@ export default function Home() {
                         <div style={{ position: 'relative' }}>
                           <button onClick={() => setShowEmojiFor(showEmojiFor === c.id ? null : c.id)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: 'white', fontSize: '0.75rem', cursor: 'pointer', color: '#8a8070' }}>+😊</button>
                           {showEmojiFor === c.id && (
-                            <div style={{ position: 'absolute', bottom: '100%', left: 0, background: 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem', display: 'flex', gap: '0.35rem', zIndex: 10, flexWrap: 'wrap', width: '160px' }}>
+                            <div style={{ position: 'absolute', bottom: '100%', left: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem', display: 'flex', gap: '0.35rem', zIndex: 10, flexWrap: 'wrap', width: '160px' }}>
                               {['👍','👎','✅','❌','🔥','⚠️','💡','🎉'].map(e => (
                                 <button key={e} onClick={() => reactToProjectComment(c.id, e)} style={{ background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', padding: '0.1rem' }}>{e}</button>
                               ))}
@@ -3155,7 +3168,7 @@ export default function Home() {
         )}
 
         {showCalendarModal && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
             <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '440px', maxWidth: '100%' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>New Event</h2>
@@ -3212,7 +3225,7 @@ export default function Home() {
         {!drilldown && page === 'messages' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0 }}>Messages</h1>
+              <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Messages</h1>
               {!isGuest && <button onClick={() => setShowNewConvo(true)} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500' }}>+ New</button>}
             </div>
 
@@ -3278,7 +3291,7 @@ export default function Home() {
                       </div>
                       <button onClick={async () => { await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_conversation', convoId: activeConvo.id, userId: currentUser?.id }) }); setActiveConvo(null); setConvoMessages([]); loadConversations() }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.75rem' }}>Delete</button>
                     </div>
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div style={{ flex: 1, overflowY: 'auto', background: theme === 'dark' ? '#121212' : 'transparent', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       {convoMessages.length === 0 && <div style={{ textAlign: 'center', color: '#8a8070', fontSize: '0.82rem', marginTop: '2rem' }}>No messages yet. Say hello! 👋</div>}
                       {convoMessages.map(msg => {
                         const isMe = msg.senderId === currentUser?.id
@@ -3305,7 +3318,7 @@ export default function Home() {
         {!drilldown && page === 'settings' && (
           <div style={{ marginBottom: '2rem' }}>
             <h2 style={{ fontSize: '1rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9', fontWeight: '600' }}>Notification Preferences</h2>
-            <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {[{key:'dueSoon',label:'Task due tomorrow',desc:'Email when a task assigned to you is due the next day'},{key:'overdue',label:'Task overdue',desc:'Email when a task assigned to you is past its due date'},{key:'newComment',label:'New project comment',desc:'Email when someone comments on a project discussion'},{key:'assigned',label:'Assigned to a task',desc:'Email when a task is assigned to you'}].map(({key,label,desc}) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid #f4f0e8' }}>
                   <div><div style={{ fontSize: '0.88rem', fontWeight: '500' }}>{label}</div><div style={{ fontSize: '0.74rem', color: '#8a8070' }}>{desc}</div></div>
@@ -3327,6 +3340,19 @@ export default function Home() {
           <>
             <div style={{ marginBottom: '1.5rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: '0 0 0.25rem 0' }}>Settings</h1>
+            
+            {/* Theme Toggle */}
+            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>Appearance</div>
+                  <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.2rem' }}>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</div>
+                </div>
+                <button onClick={toggleTheme} style={{ width: '48px', height: '26px', borderRadius: '13px', border: 'none', background: theme === 'dark' ? '#c9a84c' : '#e0d8cc', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}>
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'white', position: 'absolute', top: '2px', left: theme === 'dark' ? '24px' : '2px', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </button>
+              </div>
+            </div>
               <p style={{ color: '#8a8070', fontSize: '0.8rem', margin: 0 }}>Manage user accounts</p>
             </div>
 
@@ -3414,7 +3440,7 @@ export default function Home() {
         )}
 
         {editingUser && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Edit User</h2>
@@ -3450,7 +3476,7 @@ export default function Home() {
         )}
 
         {resetPasswordUser && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ background: 'white', borderRadius: '14px', padding: '1.5rem', width: '400px', maxWidth: '90vw' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Reset Password</h2>
@@ -3482,7 +3508,7 @@ export default function Home() {
               </div>
 
               {employees.length === 0 && (
-                <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
+                <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '3rem', textAlign: 'center', color: '#8a8070' }}>
                   <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>No contacts yet</div>
                   <div style={{ fontSize: '0.8rem' }}>Click "+ Contact" to get started</div>
                 </div>
@@ -3495,14 +3521,14 @@ export default function Home() {
                     <div key={subsidiary}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
                         <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#1a1814' }}>{subsidiary}</h2>
-                        <span style={{ fontSize: '0.72rem', color: '#a09880', background: '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{group.length}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#a09880', background: theme === 'dark' ? '#2a2825' : '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{group.length}</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.75rem' }}>
                         {group.map((emp, idx) => {
                           const globalIdx = employees.indexOf(emp)
                           const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                           return (
-                            <div key={idx} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                            <div key={idx} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '0.85rem' }}>
                                 {emp.photo ? (
                                   <img src={emp.photo} alt={emp.name} style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -3543,14 +3569,14 @@ export default function Home() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
                       <h2 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400', color: '#a09880' }}>Unassigned</h2>
-                      <span style={{ fontSize: '0.72rem', color: '#a09880', background: '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{unassigned.length}</span>
+                      <span style={{ fontSize: '0.72rem', color: '#a09880', background: theme === 'dark' ? '#2a2825' : '#f0ece0', padding: '0.15rem 0.5rem', borderRadius: '10px' }}>{unassigned.length}</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.75rem' }}>
                       {unassigned.map((emp, idx) => {
                         const globalIdx = employees.indexOf(emp)
                         const initials = emp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                         return (
-                          <div key={idx} style={{ background: 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+                          <div key={idx} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: theme === 'dark' ? '0 2px 12px rgba(0,0,0,0.3)' : '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                               <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600', flexShrink: 0 }}>{initials}</div>
                               <div style={{ flex: 1 }}>
@@ -3596,7 +3622,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Memory Panel */}
-              {showMemoryPanel && <div style={{ background: '#faf8f4', borderBottom: '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
+              {showMemoryPanel && <div style={{ background: theme === 'dark' ? '#1a1a1a' : '#faf8f4', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', padding: '0.75rem 1rem', maxHeight: '200px', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#1a1814' }}>🧠 Nora's Memory</span>
                   {noraMemories.length > 0 && <button onClick={() => { fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser?.id, action: 'clear' }) }).then(() => setNoraMemories([])) }} style={{ fontSize: '0.65rem', color: '#b85c38', background: 'none', border: 'none', cursor: 'pointer' }}>Clear all</button>}
@@ -3610,10 +3636,10 @@ export default function Home() {
                 </div>)}
               </div>}
               {/* Messages */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', background: theme === 'dark' ? '#121212' : 'transparent', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: noraExpanded ? 'none' : '360px' }}>
                 {aiMessages.map((msg, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? '1px solid #e0d8cc' : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? '#ffffff' : '#f4f0e8', color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
+                    <div style={{ maxWidth: '85%', padding: msg.role === 'action' ? '0.75rem 0.9rem' : '0.6rem 0.85rem', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', border: msg.role === 'action' ? (theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc') : 'none', boxShadow: msg.role === 'action' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none', background: msg.role === 'user' ? '#0f0e0d' : msg.role === 'action' ? (theme === 'dark' ? '#1e1e1e' : '#ffffff') : (theme === 'dark' ? '#2a2825' : '#f4f0e8'), color: msg.role === 'user' ? '#f5f1ea' : msg.role === 'action' ? '#1a1814' : '#1a1814', fontSize: '0.82rem', lineHeight: 1.5 }}>
                       {msg.role === 'action' ? <div style={{ padding: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', paddingBottom: '0.5rem', borderBottom: '1px solid #e8e2d9' }}>
                             <span style={{ fontSize: '1rem' }}>{msg.actionType === 'calendar_create' ? '📅' : msg.actionType === 'task_create' ? '✅' : msg.actionType === 'note_create' ? '📝' : '💬'}</span>
@@ -3795,8 +3821,8 @@ export default function Home() {
       )}
 
       {confirmDelete && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
+        <div style={{ position: 'fixed', inset: 0, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.75rem', width: '400px', maxWidth: '90vw' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>Delete Task?</h3>
             <p style={{ color: '#8a8070', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
               "{confirmDelete.name}" will be permanently removed from the spreadsheet. This cannot be undone.
@@ -3811,7 +3837,7 @@ export default function Home() {
 
       {reportModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', width: '700px', maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e0d8cc' }}>
               <div>
                 <div style={{ fontWeight: '600', fontSize: '1rem' }}>{reportData ? reportData.title : '...'}</div>
@@ -3926,7 +3952,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <div onClick={() => setMobileMenuOpen(false)} style={{ flex: 1, background: 'rgba(0,0,0,0.5)' }} />
+              <div onClick={() => setMobileMenuOpen(false)} style={{ flex: 1, background: theme === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)' }} />
             </div>
           )}
         </>
