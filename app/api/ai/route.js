@@ -328,7 +328,7 @@ IMPORTANT RULES FOR ACTIONS:
         try {
           const validMsgs = messages.filter(m => m.role === 'user' || m.role === 'assistant').slice(-6)
           const convoText = validMsgs.map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply
-          const memoryExtract = await anthropic.messages.create({
+          const memoryExtract = await client.messages.create({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 200,
             system: 'Extract 1-3 key facts worth remembering about this user. Focus on: concerns, preferences, priorities, decisions, or personal context. Return ONLY a JSON array of short strings like ["worried about Xtract payroll", "board meetings on first Mondays"]. No explanation.',
