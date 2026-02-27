@@ -322,36 +322,45 @@ IMPORTANT RULES FOR ACTIONS:
         reply = reply.replace(actionMatch[0], '').trim()
       } catch(e) {}
     }
-    // Extract memories from this conversation
+    // Extract memories from this conversation (non-blocking)
     if (userId && messages.length >= 1) {
-      try {
-        const memoryExtract = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
-          system: 'Extract 0-3 key facts worth remembering from this conversation. Focus on: user preferences, important decisions, things they care about, recurring topics, action items, or personal details they shared. Return ONLY a JSON array of short strings, e.g. ["prefers detailed breakdowns", "tracking Xtract expenses closely"]. If nothing worth remembering, return []. No explanation, just the JSON array.',
-          messages: [{ role: 'user', content: messages.slice(-6).map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply }]
-        })
-        const extractText = memoryExtract.content[0]?.text || '[]'
-        const newFacts = JSON.parse(extractText.replace(/```json|```/g, '').trim())
-        if (Array.isArray(newFacts) && newFacts.length > 0) {
-          const today = new Date().toISOString().split('T')[0]
-          const newMemories = newFacts.map(f => ({ fact: f, date: today }))
-          const combined = [...memories, ...newMemories]
-          // Deduplicate similar memories and keep last 30
-          const unique = combined.filter((m, idx) => {
-            const isDupe = combined.slice(idx + 1).some(other => {
-              const words1 = m.fact.toLowerCase().split(/\s+/)
-              const words2 = other.fact.toLowerCase().split(/\s+/)
-              const overlap = words1.filter(w => words2.includes(w)).length
-              return overlap / Math.max(words1.length, words2.length) > 0.6
-            })
-            return !isDupe
-          }).slice(-30)
-          await redis.set('nectera:nora_memory_v2:' + userId, unique)
+      const doMemoryExtract = async () => {
+        try {
+          const convoText = messages.slice(-6).map(m => m.role + ': ' + m.content).join('\n') + '\nassistant: ' + reply
+          const memoryExtract = await anthropic.messages.create({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 300,
+            system: 'Extract 0-3 key facts worth remembering about this user from their conversation. Focus on: what they care about, preferences, priorities, concerns, decisions made, or personal context. Return ONLY a valid JSON array of short strings. Example: ["concerned about Xtract expenses", "wants to reduce Bug Control costs"]. If nothing notable, return []. Output only the JSON array, nothing else.',
+            messages: [{ role: 'user', content: convoText }]
+          })
+          const raw = (memoryExtract.content[0]?.text || '[]').replace(/```json|```/g, '').trim()
+          const newFacts = JSON.parse(raw)
+          if (Array.isArray(newFacts) && newFacts.length > 0) {
+            const today = new Date().toISOString().split('T')[0]
+            const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
+            const newMems = newFacts.map(f => ({ fact: String(f), date: today }))
+            const all = [...currentMem, ...newMems]
+            const unique = all.filter((m, i) => !all.slice(i + 1).some(o => {
+              const w1 = m.fact.toLowerCase().split(/\s+/)
+              const w2 = o.fact.toLowerCase().split(/\s+/)
+              return w1.filter(w => w2.includes(w)).length / Math.max(w1.length, w2.length) > 0.6
+            })).slice(-30)
+            await redis.set('nectera:nora_memory_v2:' + userId, unique)
+          }
+        } catch(e) {
+          // Fallback: just store the user's question topic
+          try {
+            const lastQ = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || ''
+            if (lastQ.length > 10) {
+              const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
+              const topic = 'Asked about: ' + lastQ.slice(0, 80)
+              currentMem.push({ fact: topic, date: new Date().toISOString().split('T')[0] })
+              await redis.set('nectera:nora_memory_v2:' + userId, currentMem.slice(-30))
+            }
+          } catch(e2) {}
         }
-      } catch(memErr) {
-        console.log('Memory extraction error:', memErr.message)
       }
+      doMemoryExtract()  // Fire and forget - don't block the response
     }
 
     return new Response(JSON.stringify({ reply, action }), {
