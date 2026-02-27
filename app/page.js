@@ -258,6 +258,7 @@ export default function Home() {
   const [dismissedNotifications, setDismissedNotifications] = useState([])
   const [notifTab, setNotifTab] = useState('projects')
   const [filterStatus, setFilterStatus] = useState('In Progress')
+  const [filterLead, setFilterLead] = useState('all')
   const [saving, setSaving] = useState({})
   const [showModal, setShowModal] = useState(false)
   const [expandedTask, setExpandedTask] = useState(null)
@@ -933,7 +934,8 @@ export default function Home() {
     .filter(t => {
       const companyMatch = filterCompany === 'all' || t.companyKey === filterCompany
       const statusMatch = filterStatus === 'all' || (t.status || '').toLowerCase() === filterStatus.toLowerCase()
-      return companyMatch && statusMatch
+      const leadMatch = filterLead === 'all' || (t.lead || '') === filterLead
+      return companyMatch && statusMatch && leadMatch
     })
     .sort((a, b) => {
       const aDate = a.dueDate ? new Date(a.dueDate) : null
@@ -2159,6 +2161,10 @@ export default function Home() {
               </select>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
                 {statuses.map(s => <option key={s} value={s}>{s === 'all' ? 'All Statuses' : s}</option>)}
+              </select>
+              <select value={filterLead} onChange={e => setFilterLead(e.target.value)} style={{ padding: '0.35rem 0.6rem', borderRadius: '4px', border: '1px solid #ede8df', borderRadius: '8px', background: 'white', fontSize: '0.8rem', cursor: 'pointer' }}>
+                <option value="all">All Leads</option>
+                {[...new Set(tasks.map(t => t.lead).filter(Boolean))].sort().map(l => <option key={l} value={l}>{l}</option>)}
               </select>
               <span style={{ fontSize: '0.8rem', color: '#8a8070', alignSelf: 'center' }}>{filteredTasks.length} tasks</span>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem', background: '#f0ece0', borderRadius: '8px', padding: '0.2rem' }}>
