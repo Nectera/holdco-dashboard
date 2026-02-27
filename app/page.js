@@ -1747,7 +1747,6 @@ export default function Home() {
                   {agingData.map(comp => {
                     const rows = comp.ar && comp.ar.rows ? comp.ar.rows.filter(r => !r.colHeaders && !r.isHeader) : []
                     const total = rows.find(r => r.isTotal)
-                    const items = rows.filter(r => !r.isTotal && r.value > 0)
                     if (!total || total.value === 0) return null
                     const currentPct = total.value > 0 ? ((total.current || 0) / total.value * 100) : 0
                     const over30Pct = total.value > 0 ? ((total.over30 || 0) / total.value * 100) : 0
@@ -1774,16 +1773,7 @@ export default function Home() {
                           {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
                           {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
                         </div>
-                        {items.length > 0 && (
-                          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
-                            {items.slice(0, 3).map((item, idx) => (
-                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0', color: '#3a3530' }}>
-                                <span>{item.label}</span>
-                                <span style={{ fontWeight: '500', color: item.over91 > 0 ? '#8b0000' : item.over60 > 0 ? '#b85c38' : '#0f0e0d' }}>{'$' + item.value.toLocaleString()}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+
                       </div>
                     )
                   })}
@@ -1793,7 +1783,6 @@ export default function Home() {
                   {agingData.map(comp => {
                     const rows = comp.ap && comp.ap.rows ? comp.ap.rows.filter(r => !r.colHeaders && !r.isHeader) : []
                     const total = rows.find(r => r.isTotal)
-                    const items = rows.filter(r => !r.isTotal && r.value > 0)
                     if (!total || total.value === 0) return null
                     const currentPct = total.value > 0 ? ((total.current || 0) / total.value * 100) : 0
                     const over30Pct = total.value > 0 ? ((total.over30 || 0) / total.value * 100) : 0
@@ -1820,16 +1809,7 @@ export default function Home() {
                           {total.over90 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#9a4a2a', borderRadius: 2, marginRight: 3 }} />61-90 {'$' + total.over90.toLocaleString()}</span>}
                           {total.over91 > 0 && <span><span style={{ display: 'inline-block', width: 8, height: 8, background: '#8b0000', borderRadius: 2, marginRight: 3 }} />91+ {'$' + total.over91.toLocaleString()}</span>}
                         </div>
-                        {items.length > 0 && (
-                          <div style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
-                            {items.slice(0, 3).map((item, idx) => (
-                              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0', color: '#3a3530' }}>
-                                <span>{item.label}</span>
-                                <span style={{ fontWeight: '500', color: item.over91 > 0 ? '#8b0000' : item.over60 > 0 ? '#b85c38' : '#0f0e0d' }}>{'$' + item.value.toLocaleString()}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+
                       </div>
                     )
                   })}
