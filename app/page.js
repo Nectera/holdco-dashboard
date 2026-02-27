@@ -2329,6 +2329,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={() => { fetch('/api/memory?userId=' + currentUser?.id).then(r => r.json()).then(d => setNoraMemories(d.memories || [])); setShowMemoryPanel(!showMemoryPanel) }} style={{ background: showMemoryPanel ? '#c9a84c' : 'none', border: 'none', color: showMemoryPanel ? '#0f0e0d' : '#8a8070', cursor: 'pointer', padding: '0.2rem 0.35rem', display: 'flex', alignItems: 'center', fontSize: '0.8rem', lineHeight: 1, borderRadius: '4px', transition: 'all 0.15s' }} title="Nora's Memory">🧠</button>
                   <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
@@ -3583,6 +3584,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button onClick={() => { fetch('/api/memory?userId=' + currentUser?.id).then(r => r.json()).then(d => setNoraMemories(d.memories || [])); setShowMemoryPanel(!showMemoryPanel) }} style={{ background: showMemoryPanel ? '#c9a84c' : 'none', border: 'none', color: showMemoryPanel ? '#0f0e0d' : '#8a8070', cursor: 'pointer', padding: '0.2rem 0.35rem', display: 'flex', alignItems: 'center', fontSize: '0.8rem', lineHeight: 1, borderRadius: '4px', transition: 'all 0.15s' }} title="Nora's Memory">🧠</button>
                   <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
