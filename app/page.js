@@ -351,6 +351,7 @@ export default function Home() {
       .then(res => res.json())
       .then(d => { setData(d); setLoadingFinancials(false) })
       // Fetch goals
+      fetch('/api/qb/financials?year=' + selectedYear).then(function(r) { return r.json() }).then(function(d) { setData(d) }).catch(function() {})
       fetch('/api/goals').then(function(r) { return r.json() }).then(function(g) { setGoals(g) }).catch(function() {})
       // Fetch AR/AP aging for all companies
       const companies = ['xtract', 'bcs', 'lush']
@@ -2435,7 +2436,7 @@ export default function Home() {
               var customMetrics = goals._customMetrics || []
               var allMetricsForComp = function(compKey) {
                 var defaults = defaultMetrics.map(function(m) { return { ...m, isCustom: false } })
-                var customs = customMetrics.filter(function(m) { return m.company === compKey || m.company === 'all' }).map(function(m) { return { key: m.key, label: m.label, dataKey: null, isCustom: true } })
+                var customs = customMetrics.filter(function(m) { return m.company === compKey || m.company === 'all' }).map(function(m) { return { key: m.key, label: m.label, dataKey: null, isCustom: true, unit: m.unit || 'dollar' } })
                 return defaults.concat(customs)
               }
 
@@ -2480,7 +2481,7 @@ export default function Home() {
                                     <span style={{ fontSize: '0.8rem', color: '#8a8070' }}>{metric.isCustom ? '' : 'Current: ' + fmt(actual)}</span>
                                       <button onClick={function() { var nd = {...goalDrafts}; delete nd[goalKey]; if (metric.isCustom) { nd._customMetrics = (nd._customMetrics || []).filter(function(m) { return m.key !== metric.key }) }; setGoalDrafts(nd) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b85c38', fontSize: '0.75rem', padding: '0' }}>remove</button>
                                   </div>
-                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder="Enter target amount" style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                                  <input type="number" value={goalDrafts[goalKey] || ''} onChange={function(e) { var nd = {...goalDrafts}; nd[goalKey] = e.target.value ? parseFloat(e.target.value) : 0; setGoalDrafts(nd) }} placeholder={metric.unit === 'percent' ? 'Enter target %' : 'Enter target amount'} style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e0d8cc', fontSize: '0.85rem', boxSizing: 'border-box' }} />
                                 </div>
                               )
                             }
@@ -2503,7 +2504,7 @@ export default function Home() {
                             )
                           })}
                           {editingGoals && (
-                            <button onClick={function() { var name = prompt('Goal name (e.g. EBITDA, Headcount, New Clients):'); if (!name) return; var key = name.toLowerCase().replace(/[^a-z0-9]/g, '_'); var nd = {...goalDrafts}; var cm = nd._customMetrics || []; cm.push({ key: key, label: name, company: comp.key }); nd._customMetrics = cm; setGoalDrafts(nd) }} style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px dashed #d4cfc8', background: 'transparent', fontSize: '0.8rem', cursor: 'pointer', color: '#8a8070', width: '100%', textAlign: 'center', marginTop: '0.25rem' }}>+ Add Custom Goal</button>
+                            <button onClick={function() { var name = prompt('Goal name (e.g. EBITDA, Headcount, Gross Margin):'); if (!name) return; var type = prompt('Goal type: enter dollar or percent'); if (!type) type = 'dollar'; var isDollar = type.toLowerCase().indexOf('p') === -1; var key = name.toLowerCase().replace(/[^a-z0-9]/g, '_'); var nd = {...goalDrafts}; var cm = nd._customMetrics || []; cm.push({ key: key, label: name, company: comp.key, unit: isDollar ? 'dollar' : 'percent' }); nd._customMetrics = cm; setGoalDrafts(nd) }} style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px dashed #d4cfc8', background: 'transparent', fontSize: '0.8rem', cursor: 'pointer', color: '#8a8070', width: '100%', textAlign: 'center', marginTop: '0.25rem' }}>+ Add Custom Goal</button>
                           )}
                         </div>
                       </div>
