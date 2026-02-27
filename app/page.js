@@ -2046,13 +2046,16 @@ export default function Home() {
                         const isOverdue = new Date(task.dueDate) < today
                         const priorityColor = task.priority === 'High' ? '#b85c38' : task.priority === 'Medium' ? '#9a6a20' : '#4a6741'
                         return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderBottom: i < upcomingTasks.length - 1 ? '1px solid ' + (theme === 'dark' ? '#2a2825' : '#f0ece0') : 'none' }}>
+                          <div key={i} onClick={() => setPage('tasks')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderBottom: i < upcomingTasks.length - 1 ? '1px solid ' + (theme === 'dark' ? '#2a2825' : '#f0ece0') : 'none', cursor: 'pointer' }}>
                             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: priorityColor, flexShrink: 0 }}></div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#d4cfc8' : '#1a1814', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.name}</div>
                               <div style={{ fontSize: '0.7rem', color: isOverdue ? '#b85c38' : '#8a8070' }}>{isOverdue ? 'Overdue — ' : ''}{new Date(task.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{task.assignedTo ? ' · ' + task.assignedTo : ''}</div>
                             </div>
                             <span style={{ fontSize: '0.6rem', padding: '0.1rem 0.35rem', borderRadius: '20px', background: task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : (theme === 'dark' ? '#2a2825' : '#f0ece0'), color: task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070', flexShrink: 0 }}>{task.status}</span>
+                            <button onClick={(e) => { e.stopPropagation(); const idx = lightTasks.findIndex(lt => lt.name === task.name && lt.dueDate === task.dueDate); if (idx !== -1) { const updated = lightTasks.map((t, j) => j === idx ? { ...t, status: 'Complete' } : t); setLightTasks(updated); fetch('/api/lighttasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks: updated }) }).catch(() => {}) } }} title="Mark complete" style={{ background: 'none', border: '1px solid ' + (theme === 'dark' ? '#333' : '#e0d8cc'), borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}>
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#4a6741" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            </button>
                           </div>
                         )
                       })}
@@ -2100,7 +2103,7 @@ export default function Home() {
                       <div key={i} style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: theme === 'dark' ? '#252220' : '#faf8f4', border: '1px solid ' + (theme === 'dark' ? '#333' : '#e8e2d9'), cursor: 'pointer' }} onClick={() => setPage('projects')}>
                         <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#d4cfc8' : '#1a1814', marginBottom: '0.25rem' }}>{proj.name}</div>
                         <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: '#8a8070' }}>
-                          {proj.dueDate && <span>Due {new Date(proj.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                          {proj.dueDate && !isNaN(new Date(proj.dueDate + 'T12:00:00').getTime()) && <span>Due {new Date(proj.dueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
                           {proj.company && <span>· {proj.company.split(' ')[0]}</span>}
                         </div>
                       </div>
@@ -2858,6 +2861,7 @@ export default function Home() {
                         {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <button onClick={() => { const newStatus = task.status === 'Complete' ? 'Not Started' : 'Complete'; const updated = lightTasks.map((t, j) => j === idx ? { ...t, status: newStatus } : t); setLightTasks(updated); fetch('/api/lighttasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks: updated }) }).catch(() => {}) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: task.status === 'Complete' ? '1px solid #fdf3e0' : '1px solid #e8f0e8', background: task.status === 'Complete' ? '#fdf3e0' : '#e8f0e8', fontSize: '0.7rem', cursor: 'pointer', color: task.status === 'Complete' ? '#9a6a20' : '#4a6741' }}>{task.status === 'Complete' ? 'Undo' : '✓ Done'}</button>
                         <button onClick={() => { setLightTaskForm(task); setEditingLightTask(idx); setShowLightTaskModal(true) }} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.7rem', cursor: 'pointer' }}>Edit</button>
                         <button onClick={() => deleteLightTask(idx)} style={{ padding: '0.25rem 0.6rem', borderRadius: '4px', border: '1px solid #fde8e8', background: '#fde8e8', fontSize: '0.7rem', cursor: 'pointer', color: '#b85c38' }}>✕</button>
                       </div>
@@ -3016,8 +3020,9 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
               {['Nectera Holdings', 'Xtract Environmental Services', 'Bug Control Specialist', 'Lush Green Landscapes'].map(co => (
-                <button key={co} onClick={() => { setSelectedNoteCompany(co); setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: selectedNoteCompany === co ? '#0f0e0d' : 'white', color: selectedNoteCompany === co ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button key={co} onClick={() => { setSelectedNoteCompany(co); setSelectedNoteId(null); setNoteEditTitle(''); setNoteEditContent('') }} style={{ padding: '0.3rem 0.75rem', borderRadius: '20px', border: theme === 'dark' ? '1px solid #333' : '1px solid #e0d8cc', background: selectedNoteCompany === co ? '#0f0e0d' : 'white', color: selectedNoteCompany === co ? 'white' : '#3a3530', fontSize: '0.75rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   {co.split(' ')[0]}
+                  {(notes[co] || []).length > 0 && <span style={{ fontSize: '0.6rem', background: selectedNoteCompany === co ? 'rgba(255,255,255,0.25)' : (theme === 'dark' ? '#333' : '#e8e2d9'), color: selectedNoteCompany === co ? 'white' : '#8a8070', borderRadius: '10px', padding: '0 0.35rem', minWidth: '16px', textAlign: 'center', lineHeight: '16px' }}>{(notes[co] || []).length}</span>}
                 </button>
               ))}
             </div>
