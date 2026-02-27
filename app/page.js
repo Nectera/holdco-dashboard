@@ -1515,7 +1515,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', fontSize: '0.85rem' }}>{noraExpanded ? '↙' : '↗'}</button>
+                  <button onClick={function() { setNoraExpanded(!noraExpanded) }} style={{ background: 'none', border: 'none', color: '#f5f1ea', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center', fontSize: '1.1rem', lineHeight: 1 }}>{noraExpanded ? '⊖' : '⊕'}</button>
                   <button onClick={function() { setAiOpen(false); setNoraExpanded(false) }} style={{ background: 'none', border: 'none', color: '#8a8070', cursor: 'pointer', fontSize: '1rem' }}>✕</button>
                 </div>
               </div>
