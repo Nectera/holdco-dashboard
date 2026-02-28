@@ -1363,9 +1363,7 @@ export default function Home() {
               <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null) }} style={{ background: page === item.id && !drilldown ? 'rgba(201,168,76,0.08)' : 'transparent', color: page === item.id && !drilldown ? '#c9a84c' : '#d4cfc8', border: 'none', borderLeft: page === item.id && !drilldown ? '2px solid #c9a84c' : '2px solid transparent', borderRadius: '0 6px 6px 0', padding: '0.5rem 0.75rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <NavIcon id={item.id} active={page === item.id && !drilldown} />
                 {item.label}
-                {item.id === 'tasks' && lightTasks.filter(t => t.status !== 'Complete').length > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: page === 'tasks' ? 'rgba(201,168,76,0.2)' : (theme === 'dark' ? '#2a2825' : '#f0ece0'), color: page === 'tasks' ? '#c9a84c' : '#8a8070', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{lightTasks.filter(t => t.status !== 'Complete').length}</span>}
-                {item.id === 'messages' && unreadMessages > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: '#b85c38', color: 'white', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
-                {item.id === 'projects' && activeTasks.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: page === 'projects' ? 'rgba(201,168,76,0.2)' : (theme === 'dark' ? '#2a2825' : '#f0ece0'), color: page === 'projects' ? '#c9a84c' : '#8a8070', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{activeTasks.length}</span>}
+
               </button>
             ))}
           </nav>
@@ -4299,9 +4297,7 @@ export default function Home() {
                     <button key={item.id} onClick={() => { setPage(item.id); setDrilldown(null); setMobileMenuOpen(false) }} style={{ background: page === item.id && !drilldown ? 'rgba(201,168,76,0.15)' : 'none', color: page === item.id && !drilldown ? '#c9a84c' : '#f5f1ea', border: 'none', borderRadius: '8px', padding: '0.75rem 1rem', textAlign: 'left', cursor: 'pointer', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <NavIcon id={item.id} active={page === item.id && !drilldown} />
                       {item.label}
-                      {item.id === 'tasks' && lightTasks.filter(t => t.status !== 'Complete').length > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: 'rgba(201,168,76,0.2)', color: '#c9a84c', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{lightTasks.filter(t => t.status !== 'Complete').length}</span>}
-                      {item.id === 'messages' && unreadMessages > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: '#b85c38', color: 'white', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{unreadMessages}</span>}
-                      {item.id === 'projects' && activeTasks.length > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', background: 'rgba(201,168,76,0.2)', color: '#c9a84c', borderRadius: '10px', padding: '0.05rem 0.4rem', minWidth: '18px', textAlign: 'center', fontWeight: '600' }}>{activeTasks.length}</span>}
+
                     </button>
                   ))}
                 </nav>
