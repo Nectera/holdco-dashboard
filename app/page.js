@@ -285,7 +285,7 @@ export default function Home() {
   const [lightTasks, setLightTasks] = useState([])
   const [showLightTaskModal, setShowLightTaskModal] = useState(false)
   const [editingLightTask, setEditingLightTask] = useState(null)
-  const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
+  const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
   const [userList, setUserList] = useState([])
   const [conversations, setConversations] = useState([])
@@ -592,7 +592,7 @@ export default function Home() {
     fetch('/api/lighttasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks: updated }) }).catch(() => {})
     setShowLightTaskModal(false)
     setEditingLightTask(null)
-    setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' })
+    setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' })
   }
 
   const deleteLightTask = (idx) => {
@@ -1190,6 +1190,32 @@ export default function Home() {
     saveSubtasks(projectId, items)
   }
 
+  // Process recurring tasks
+  useEffect(() => {
+    if (lightTasks.length === 0) return
+    const today = new Date().toISOString().split('T')[0]
+    let updated = [...lightTasks]
+    let changed = false
+    updated.forEach((task, idx) => {
+      if (task.recurrence && task.recurrence !== 'none' && task.status === 'Complete' && task.dueDate) {
+        const due = new Date(task.dueDate + 'T12:00:00')
+        let nextDue = new Date(due)
+        if (task.recurrence === 'daily') nextDue.setDate(due.getDate() + 1)
+        else if (task.recurrence === 'weekly') nextDue.setDate(due.getDate() + 7)
+        else if (task.recurrence === 'monthly') nextDue.setMonth(due.getMonth() + 1)
+        const nextDueStr = nextDue.toISOString().split('T')[0]
+        if (nextDueStr <= today && !updated.some(t => t.name === task.name && t.dueDate === nextDueStr && t !== task)) {
+          updated.push({ ...task, status: 'Not Started', dueDate: nextDueStr, createdDate: today, completedDate: undefined })
+          changed = true
+        }
+      }
+    })
+    if (changed) {
+      setLightTasks(updated)
+      fetch('/api/lighttasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tasks: updated }) }).catch(() => {})
+    }
+  }, [lightTasks.filter(t => t.status === 'Complete').length])
+
   const effectiveCommenterName = currentUser ? currentUser.name : commenterName
 
   const handleUserLogin = async () => {
@@ -1486,7 +1512,7 @@ export default function Home() {
           <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
@@ -1522,8 +1548,18 @@ export default function Home() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={labelStyle}>Company</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Repeat</label>
+                  <select value={lightTaskForm.recurrence || 'none'} onChange={e => setLightTaskForm(f => ({ ...f, recurrence: e.target.value }))} style={inputStyle}>
+                    <option value="none">No repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Company</label>
                 <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
                   <option value="">All Companies</option>
                   <option>Nectera Holdings</option>
@@ -1531,13 +1567,14 @@ export default function Home() {
                   <option>Bug Control Specialist</option>
                   <option>Lush Green Landscapes</option>
                 </select>
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Notes</label>
                 <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
@@ -1552,7 +1589,7 @@ export default function Home() {
           <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', padding: '1.5rem', width: '480px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{editingLightTask !== null ? 'Edit Task' : 'Add Task'}</h2>
-              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
+              <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }) }} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#8a8070' }}>X</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
@@ -1588,8 +1625,18 @@ export default function Home() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={labelStyle}>Company</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Repeat</label>
+                  <select value={lightTaskForm.recurrence || 'none'} onChange={e => setLightTaskForm(f => ({ ...f, recurrence: e.target.value }))} style={inputStyle}>
+                    <option value="none">No repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Company</label>
                 <select value={lightTaskForm.company} onChange={e => setLightTaskForm(f => ({ ...f, company: e.target.value }))} style={inputStyle}>
                   <option value="">All Companies</option>
                   <option>Nectera Holdings</option>
@@ -1597,13 +1644,14 @@ export default function Home() {
                   <option>Bug Control Specialist</option>
                   <option>Lush Green Landscapes</option>
                 </select>
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Notes</label>
                 <textarea value={lightTaskForm.notes} onChange={e => setLightTaskForm(f => ({ ...f, notes: e.target.value }))} placeholder="Additional details..." style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
+                <button onClick={() => { setShowLightTaskModal(false); setEditingLightTask(null); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }) }} style={{ padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button>
                 <button onClick={() => saveLightTask(lightTaskForm)} disabled={!lightTaskForm.name} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: '0.85rem', fontWeight: '500', opacity: !lightTaskForm.name ? 0.5 : 1 }}>
                   {editingLightTask !== null ? 'Save Changes' : 'Add Task'}
                 </button>
@@ -2916,7 +2964,7 @@ export default function Home() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
               <h1 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', margin: 0, color: theme === 'dark' ? '#e8e2d9' : undefined }}>Tasks</h1>
-              {!isGuest && <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
+              {!isGuest && <button onClick={() => { setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ padding: isMobile ? '0.4rem 0.75rem' : '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s', fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: '500' }}>
                 + Task
               </button>}
             </div>
@@ -2952,6 +3000,7 @@ export default function Home() {
                           {task.dueDate && <span style={{ color: isOverdue ? '#b85c38' : '#8a8070' }}>📅 {task.dueDate}</span>}
                           {task.company && <span>🏢 {task.company.split(' ')[0]}</span>}
                           <span style={{ padding: '0.05rem 0.4rem', borderRadius: '20px', background: task.status === 'Complete' ? '#e8f0e8' : task.status === 'Blocked' ? '#fde8e8' : task.status === 'In Progress' ? '#fdf3e0' : '#f0ece0', color: task.status === 'Complete' ? '#4a6741' : task.status === 'Blocked' ? '#b85c38' : task.status === 'In Progress' ? '#9a6a20' : '#8a8070' }}>{task.status}</span>
+                          {task.recurrence && task.recurrence !== 'none' && <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: theme === 'dark' ? '#2a2825' : '#f0ece0', color: '#8a8070' }}>{task.recurrence === 'daily' ? '\u21BB Daily' : task.recurrence === 'weekly' ? '\u21BB Weekly' : '\u21BB Monthly'}</span>}
                         </div>
                         {task.notes && <div style={{ fontSize: '0.78rem', color: '#8a8070', marginTop: '0.4rem', fontStyle: 'italic' }}>{task.notes}</div>}
                       </div>
