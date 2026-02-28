@@ -421,7 +421,7 @@ export default function Home() {
     }).catch(function() {})
     fetch('/api/tasks?company=all')
       .then(res => res.json())
-      .then(d => { setTasks(d.tasks || []); setLoadingTasks(false) })
+      .then(d => { setTasks(d.tasks || []); setLoadingTasks(false); loadAllSubtasks(d.tasks || []) })
       .catch(() => setLoadingTasks(false))
   }, [authed, selectedYear])
 
@@ -1143,6 +1143,19 @@ export default function Home() {
     { id: 'team', label: 'Team' },
     ...(currentUser?.role === 'admin' ? [{ id: 'settings', label: 'Settings' }] : []),
   ]
+
+  const loadAllSubtasks = async (taskList) => {
+    const ids = taskList.map(t => t.rowIndex || (t.companyKey + '-' + t.name.replace(/\s+/g, '-')))
+    const results = {}
+    await Promise.all(ids.map(async (pid) => {
+      try {
+        const res = await fetch('/api/subtasks?projectId=' + encodeURIComponent(pid))
+        const d = await res.json()
+        if ((d.subtasks || []).length > 0) results[pid] = d.subtasks
+      } catch {}
+    }))
+    setSubtasks(prev => ({ ...prev, ...results }))
+  }
 
   const loadSubtasks = async (projectId) => {
     try {
@@ -2496,6 +2509,14 @@ export default function Home() {
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: isMobile ? 'nowrap' : 'normal' }}>{task.name}</span>
                           </div>
                           {task.dueDate && <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>Due: {task.dueDate}</div>}
+                          {(() => { const pid = task.rowIndex || (task.companyKey + '-' + task.name.replace(/\s+/g, '-')); const items = subtasks[pid] || []; if (items.length === 0) return null; const done = items.filter(s => s.done).length; const pct = Math.round(done / items.length * 100); return (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.25rem' }}>
+                              <div style={{ width: '80px', height: '4px', borderRadius: '2px', background: theme === 'dark' ? '#2a2825' : '#e8e2d9', overflow: 'hidden' }}>
+                                <div style={{ width: pct + '%', height: '100%', borderRadius: '2px', background: pct === 100 ? '#4a6741' : '#c9a84c', transition: 'width 0.3s' }}></div>
+                              </div>
+                              <span style={{ fontSize: '0.65rem', color: pct === 100 ? '#4a6741' : '#8a8070' }}>{done}/{items.length}</span>
+                            </div>
+                          ) })()}
                         </div>
                         <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexShrink: 0 }}>
                           {!isMobile && (
