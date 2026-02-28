@@ -284,6 +284,7 @@ export default function Home() {
   const [employees, setEmployees] = useState([])
   const [lightTasks, setLightTasks] = useState([])
   const [showLightTaskModal, setShowLightTaskModal] = useState(false)
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [editingLightTask, setEditingLightTask] = useState(null)
   const [lightTaskForm, setLightTaskForm] = useState({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' })
   const [lightTaskFilter, setLightTaskFilter] = useState('all')
@@ -1659,6 +1660,28 @@ export default function Home() {
         </div>
       )}
 
+      {/* Quick Add FAB */}
+      {!isGuest && !aiOpen && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '4.5rem' : '5rem', zIndex: 490 }}>
+          {quickAddOpen && (
+            <div style={{ position: 'absolute', bottom: '52px', right: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', padding: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: '160px' }}>
+              <button onClick={() => { setQuickAddOpen(false); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✓</span> New Task
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('notes'); const co = selectedNoteCompany || 'Nectera Holdings'; const newNote = { id: Date.now().toString(), title: '', content: '', createdAt: new Date().toISOString(), pinned: false }; const updated = { ...notes, [co]: [newNote, ...(notes[co] || [])] }; setNotes(updated); setSelectedNoteId(newNote.id); setNoteEditTitle(''); setNoteEditContent(''); fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: updated[co] }) }).catch(() => {}) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✎</span> New Note
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('calendar') }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>📅</span> New Event
+              </button>
+            </div>
+          )}
+          <button onClick={() => setQuickAddOpen(!quickAddOpen)} style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#c9a84c', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(201,168,76,0.4)', transition: 'transform 0.2s', transform: quickAddOpen ? 'rotate(45deg)' : 'none' }}>
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2V14M2 8H14" stroke="#0f0e0d" strokeWidth="2" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+      )}
+
       {/* AI Chat Bubble */}
       {!isGuest && (
         <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '1rem' : '1.5rem', zIndex: 500, display: (activeCommentProject || (page === 'notes' && selectedNoteId)) ? 'none' : 'block' }}>
@@ -2649,6 +2672,28 @@ export default function Home() {
             )}
           </>
         )}
+
+      {/* Quick Add FAB */}
+      {!isGuest && !aiOpen && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '4.5rem' : '5rem', zIndex: 490 }}>
+          {quickAddOpen && (
+            <div style={{ position: 'absolute', bottom: '52px', right: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', padding: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: '160px' }}>
+              <button onClick={() => { setQuickAddOpen(false); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✓</span> New Task
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('notes'); const co = selectedNoteCompany || 'Nectera Holdings'; const newNote = { id: Date.now().toString(), title: '', content: '', createdAt: new Date().toISOString(), pinned: false }; const updated = { ...notes, [co]: [newNote, ...(notes[co] || [])] }; setNotes(updated); setSelectedNoteId(newNote.id); setNoteEditTitle(''); setNoteEditContent(''); fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: updated[co] }) }).catch(() => {}) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✎</span> New Note
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('calendar') }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>📅</span> New Event
+              </button>
+            </div>
+          )}
+          <button onClick={() => setQuickAddOpen(!quickAddOpen)} style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#c9a84c', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(201,168,76,0.4)', transition: 'transform 0.2s', transform: quickAddOpen ? 'rotate(45deg)' : 'none' }}>
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2V14M2 8H14" stroke="#0f0e0d" strokeWidth="2" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+      )}
 
       {/* AI Chat Bubble */}
       {!isGuest && (
@@ -3956,6 +4001,28 @@ export default function Home() {
         })()}
       </div>
 
+
+      {/* Quick Add FAB */}
+      {!isGuest && !aiOpen && (
+        <div style={{ position: 'fixed', bottom: isMobile ? '1rem' : '1.5rem', right: isMobile ? '4.5rem' : '5rem', zIndex: 490 }}>
+          {quickAddOpen && (
+            <div style={{ position: 'absolute', bottom: '52px', right: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.15)', padding: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: '160px' }}>
+              <button onClick={() => { setQuickAddOpen(false); setLightTaskForm({ name: '', assignedTo: '', dueDate: '', priority: 'Medium', company: '', status: 'Not Started', notes: '', recurrence: 'none' }); setEditingLightTask(null); setShowLightTaskModal(true) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✓</span> New Task
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('notes'); const co = selectedNoteCompany || 'Nectera Holdings'; const newNote = { id: Date.now().toString(), title: '', content: '', createdAt: new Date().toISOString(), pinned: false }; const updated = { ...notes, [co]: [newNote, ...(notes[co] || [])] }; setNotes(updated); setSelectedNoteId(newNote.id); setNoteEditTitle(''); setNoteEditContent(''); fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company: co, notes: updated[co] }) }).catch(() => {}) }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>✎</span> New Note
+              </button>
+              <button onClick={() => { setQuickAddOpen(false); setPage('calendar') }} style={{ background: 'none', border: 'none', padding: '0.55rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#1a1814', borderRadius: '8px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onMouseEnter={e => e.target.style.background = theme === 'dark' ? '#2a2825' : '#f5f1ea'} onMouseLeave={e => e.target.style.background = 'transparent'}>
+                <span style={{ fontSize: '0.9rem' }}>📅</span> New Event
+              </button>
+            </div>
+          )}
+          <button onClick={() => setQuickAddOpen(!quickAddOpen)} style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#c9a84c', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 12px rgba(201,168,76,0.4)', transition: 'transform 0.2s', transform: quickAddOpen ? 'rotate(45deg)' : 'none' }}>
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2V14M2 8H14" stroke="#0f0e0d" strokeWidth="2" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+      )}
 
       {/* AI Chat Bubble */}
       {!isGuest && (
