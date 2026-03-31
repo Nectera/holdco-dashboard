@@ -1,11 +1,6 @@
-import { Redis } from '@upstash/redis'
 import { createHash, randomBytes } from 'crypto'
+import { supabase } from '../../lib/supabase.js'
 import { sendWelcomeEmail } from '../../lib/email.js'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
 
 const hashPassword = (password) => createHash('sha256').update(password + 'nectera_salt_2026').digest('hex')
 
@@ -16,28 +11,75 @@ export async function GET(request) {
   if (action === 'login') {
     const username = searchParams.get('username')
     const password = searchParams.get('password')
-    const users = await redis.get('nectera:users') || []
-    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase() && u.passwordHash === hashPassword(password))
-    if (user) {
+    const passwordHash = hashPassword(password)
+
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .ilike('username', username)
+      .eq('password_hash', passwordHash)
+
+    if (error) {
+      return new Response(JSON.stringify({ success: false, error: 'Database error' }), { status: 500 })
+    }
+
+    if (users && users.length > 0) {
+      const user = users[0]
       return new Response(JSON.stringify({ success: true, user: { id: user.id, name: user.name, username: user.username, role: user.role, email: user.email } }), { headers: { 'Content-Type': 'application/json' } })
     }
     return new Response(JSON.stringify({ success: false, error: 'Invalid username or password' }), { status: 401 })
   }
 
   if (action === 'list') {
-    const users = await redis.get('nectera:users') || []
-    return new Response(JSON.stringify(users.map(u => ({ id: u.id, name: u.name, username: u.username, role: u.role, email: u.email }))), { headers: { 'Content-Type': 'application/json' } })
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, name, username, role, email')
+
+    if (error) {
+      return new Response(JSON.stringify({ error: 'Database error' }), { status: 500 })
+    }
+
+    return new Response(JSON.stringify(users || []), { headers: { 'Content-Type': 'application/json' } })
   }
 
   if (action === 'reset_password') {
     const token = searchParams.get('token')
     const newPassword = searchParams.get('password')
-    const resetData = await redis.get('nectera:reset:' + token)
-    if (!resetData) return new Response(JSON.stringify({ error: 'Invalid or expired reset link' }), { status: 400 })
-    const users = await redis.get('nectera:users') || []
-    const updated = users.map(u => u.id === resetData.userId ? { ...u, passwordHash: hashPassword(newPassword) } : u)
-    await redis.set('nectera:users', updated)
-    await redis.del('nectera:reset:' + token)
+
+    const { data: resetTokens, error: selectError } = await supabase
+      .from('password_reset_tokens')
+      .select('user_id, expires_at')
+      .eq('token', token)
+
+    if (selectError || !resetTokens || resetTokens.length === 0) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired reset link' }), { status: 400 })
+    }
+
+    const resetToken = resetTokens[0]
+    const now = new Date()
+    if (new Date(resetToken.expires_at) < now) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired reset link' }), { status: 400 })
+    }
+
+    const newPasswordHash = hashPassword(newPassword)
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password_hash: newPasswordHash, updated_at: new Date().toISOString() })
+      .eq('id', resetToken.user_id)
+
+    if (updateError) {
+      return new Response(JSON.stringify({ error: 'Failed to reset password' }), { status: 500 })
+    }
+
+    const { error: deleteError } = await supabase
+      .from('password_reset_tokens')
+      .delete()
+      .eq('token', token)
+
+    if (deleteError) {
+      console.error('Failed to delete reset token:', deleteError)
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
@@ -47,14 +89,36 @@ export async function GET(request) {
 export async function POST(request) {
   const body = await request.json()
   const { action } = body
-  const users = await redis.get('nectera:users') || []
 
   if (action === 'forgot_password') {
     const { email } = body
-    const user = users.find(u => u.email === email)
-    if (!user) return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+
+    const { data: users, error: selectError } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('email', email)
+
+    if (selectError) {
+      return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+    }
+
+    if (!users || users.length === 0) {
+      return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+    }
+
+    const user = users[0]
     const token = randomBytes(32).toString('hex')
-    await redis.set('nectera:reset:' + token, { userId: user.id }, { ex: 3600 })
+    const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString()
+
+    const { error: insertError } = await supabase
+      .from('password_reset_tokens')
+      .insert({ user_id: user.id, token, expires_at: expiresAt })
+
+    if (insertError) {
+      console.error('Failed to create reset token:', insertError)
+      return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
+    }
+
     const resetUrl = process.env.NEXT_PUBLIC_APP_URL + '/reset-password?token=' + token
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -69,49 +133,111 @@ export async function POST(request) {
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
+  // Check admin authorization for actions that require it
   const { adminPassword } = body
-  const admin = users.find(u => u.role === 'admin' && u.passwordHash === hashPassword(adminPassword))
+
+  let admin = null
+  if (adminPassword) {
+    const adminPasswordHash = hashPassword(adminPassword)
+    const { data: adminUsers, error: adminError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', 'admin')
+      .eq('password_hash', adminPasswordHash)
+
+    if (!adminError && adminUsers && adminUsers.length > 0) {
+      admin = adminUsers[0]
+    }
+  }
 
   if (action === 'create') {
-    if (users.length > 0 && !admin) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-    if (users.find(u => u.username.toLowerCase() === body.username.toLowerCase())) return new Response(JSON.stringify({ error: 'Username already exists' }), { status: 400 })
-    const newUser = { id: Date.now(), name: body.name, username: body.username, email: body.email || '', passwordHash: hashPassword(body.password), role: body.role || 'member' }
-    await redis.set('nectera:users', [...users, newUser])
-    if (body.email) {
-      try { await sendWelcomeEmail({ name: body.name, username: body.username, password: body.password, email: body.email }) } catch(e) { console.error('email failed',e) }
+    // Check if any users exist
+    const { data: existingUsers, error: countError } = await supabase
+      .from('users')
+      .select('id')
+
+    if (existingUsers && existingUsers.length > 0 && !admin) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
+
+    // Check if username already exists
+    const { data: usernameCheck, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('username', body.username)
+
+    if (!checkError && usernameCheck && usernameCheck.length > 0) {
+      return new Response(JSON.stringify({ error: 'Username already exists' }), { status: 400 })
+    }
+
+    const newUser = {
+      name: body.name,
+      username: body.username,
+      email: body.email || '',
+      password_hash: hashPassword(body.password),
+      role: body.role || 'member'
+    }
+
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert(newUser)
+
+    if (insertError) {
+      return new Response(JSON.stringify({ error: 'Failed to create user' }), { status: 500 })
+    }
+
+    if (body.email) {
+      try {
+        await sendWelcomeEmail({ name: body.name, username: body.username, password: body.password, email: body.email })
+      } catch (e) {
+        console.error('email failed', e)
+      }
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
-  if (!admin) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  if (!admin) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
 
   if (action === 'update') {
-    const updated = users.map(u => u.id === body.userId ? { ...u, name: body.name, email: body.email, role: body.role } : u)
-    await redis.set('nectera:users', updated)
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ name: body.name, email: body.email, role: body.role, updated_at: new Date().toISOString() })
+      .eq('id', body.userId)
+
+    if (updateError) {
+      return new Response(JSON.stringify({ error: 'Failed to update user' }), { status: 500 })
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
   if (action === 'reset_password_admin') {
-    const updated = users.map(u => u.id === body.userId ? { ...u, passwordHash: hashPassword(body.newPassword) } : u)
-    await redis.set('nectera:users', updated)
-    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
-  }
+    const newPasswordHash = hashPassword(body.newPassword)
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ password_hash: newPasswordHash, updated_at: new Date().toISOString() })
+      .eq('id', body.userId)
 
-  if (action === 'update') {
-    const updated = users.map(u => u.id === body.userId ? { ...u, name: body.name, email: body.email, role: body.role } : u)
-    await redis.set('nectera:users', updated)
-    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
-  }
+    if (updateError) {
+      return new Response(JSON.stringify({ error: 'Failed to reset password' }), { status: 500 })
+    }
 
-  if (action === 'reset_password_admin') {
-    const updated = users.map(u => u.id === body.userId ? { ...u, passwordHash: hashPassword(body.newPassword) } : u)
-    await redis.set('nectera:users', updated)
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
   if (action === 'delete') {
-    const updated = users.filter(u => u.id !== body.userId)
-    await redis.set('nectera:users', updated)
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', body.userId)
+
+    if (deleteError) {
+      return new Response(JSON.stringify({ error: 'Failed to delete user' }), { status: 500 })
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 

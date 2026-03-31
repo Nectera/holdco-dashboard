@@ -1,11 +1,6 @@
 import QuickBooks from 'node-quickbooks'
 import OAuthClient from 'intuit-oauth'
-import { Redis } from '@upstash/redis'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+import { supabase } from '../../../lib/supabase'
 
 const oauthClient = new OAuthClient({
   clientId: process.env.INTUIT_CLIENT_ID,
@@ -15,8 +10,20 @@ const oauthClient = new OAuthClient({
 })
 
 const getValidToken = async (company) => {
-  const t = await redis.get(`tokens:${company}`)
-  if (!t) return null
+  const { data, error } = await supabase
+    .from('qb_tokens')
+    .select('*')
+    .eq('company', company)
+    .single()
+
+  if (error || !data) return null
+
+  const t = {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    realmId: data.realm_id,
+    expiresAt: data.expires_at,
+  }
 
   if (!t.expiresAt || Date.now() > t.expiresAt - 300000) {
     try {
@@ -24,12 +31,20 @@ const getValidToken = async (company) => {
       const newTokens = response.getJson()
 
       const updated = {
-        ...t,
         accessToken: newTokens.access_token,
         refreshToken: newTokens.refresh_token || t.refreshToken,
+        realmId: t.realmId,
         expiresAt: Date.now() + (newTokens.expires_in * 1000),
       }
-      await redis.set(`tokens:${company}`, updated)
+      await supabase
+        .from('qb_tokens')
+        .update({
+          access_token: updated.accessToken,
+          refresh_token: updated.refreshToken,
+          expires_at: updated.expiresAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('company', company)
       return updated
     } catch (err) {
       console.error(`Token refresh failed for ${company}:`, err.message)

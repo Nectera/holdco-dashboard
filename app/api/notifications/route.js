@@ -1,14 +1,8 @@
-import { Redis } from '@upstash/redis'
+import { supabase } from '../../lib/supabase.js'
 import { sendNotificationEmail } from '../../lib/email.js'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
 
 const DASHBOARD_URL = 'https://necteraholdings.com'
 
-// Default preferences for new users
 const defaultPrefs = {
   dueSoon: true,
   overdue: true,
@@ -22,18 +16,35 @@ export async function GET(request) {
   const userId = searchParams.get('userId')
 
   if (action === 'prefs') {
-    const prefs = await redis.get('nectera:notif_prefs:' + userId) || defaultPrefs
+    const { data, error } = await supabase
+      .from('notification_preferences')
+      .select('due_soon, overdue, new_comment, assigned')
+      .eq('user_id', parseInt(userId))
+      .single()
+
+    const prefs = {
+      dueSoon: data?.due_soon !== undefined ? data.due_soon : defaultPrefs.dueSoon,
+      overdue: data?.overdue !== undefined ? data.overdue : defaultPrefs.overdue,
+      newComment: data?.new_comment !== undefined ? data.new_comment : defaultPrefs.newComment,
+      assigned: data?.assigned !== undefined ? data.assigned : defaultPrefs.assigned,
+    }
+
     return new Response(JSON.stringify(prefs), { headers: { 'Content-Type': 'application/json' } })
   }
 
-  // Cron: check due/overdue tasks and send emails
   if (action === 'cron') {
     const secret = searchParams.get('secret')
     if (secret !== process.env.CRON_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
-    const users = await redis.get('nectera:users') || []
+    const { data: employeeData } = await supabase
+      .from('employees')
+      .select('data')
+      .limit(1)
+      .single()
+
+    const users = employeeData?.data || []
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
@@ -43,20 +54,32 @@ export async function GET(request) {
 
     for (const user of users) {
       if (!user.email) continue
-      const prefs = await redis.get('nectera:notif_prefs:' + user.id) || defaultPrefs
 
-      // Get tasks assigned to this user from light tasks
-      const lightTasks = await redis.get('nectera:light_tasks') || []
+      const { data: prefData } = await supabase
+        .from('notification_preferences')
+        .select('due_soon, overdue')
+        .eq('user_id', parseInt(user.id))
+        .single()
+
+      const prefs = {
+        dueSoon: prefData?.due_soon !== undefined ? prefData.due_soon : defaultPrefs.dueSoon,
+        overdue: prefData?.overdue !== undefined ? prefData.overdue : defaultPrefs.overdue,
+      }
+
+      const { data: tasksData } = await supabase
+        .from('light_tasks')
+        .select('*')
+
+      const lightTasks = tasksData || []
       const userTasks = lightTasks.filter(t =>
-        t.assignedTo && t.assignedTo.toLowerCase().includes(user.name.toLowerCase().split(' ')[0])
+        t.assigned_to && t.assigned_to.toLowerCase().includes(user.name.toLowerCase().split(' ')[0])
         && t.status !== 'Complete'
       )
 
       for (const task of userTasks) {
-        if (!task.dueDate) continue
-        const due = new Date(task.dueDate + 'T12:00:00')
+        if (!task.due_date) continue
+        const due = new Date(task.due_date + 'T12:00:00')
 
-        // Due tomorrow
         if (prefs.dueSoon && due.toDateString() === tomorrow.toDateString()) {
           await sendNotificationEmail({
             toEmail: user.email,
@@ -70,7 +93,6 @@ export async function GET(request) {
           sent++
         }
 
-        // Overdue
         if (prefs.overdue && due < today) {
           const daysAgo = Math.floor((today - due) / (1000 * 60 * 60 * 24))
           await sendNotificationEmail({
@@ -97,23 +119,42 @@ export async function POST(request) {
   const body = await request.json()
   const { action } = body
 
-  // Save preferences
   if (action === 'save_prefs') {
-    await redis.set('nectera:notif_prefs:' + body.userId, {
-      dueSoon: body.dueSoon,
-      overdue: body.overdue,
-      newComment: body.newComment,
-      assigned: body.assigned,
-    })
+    const { error } = await supabase
+      .from('notification_preferences')
+      .upsert(
+        {
+          user_id: parseInt(body.userId),
+          due_soon: body.dueSoon,
+          overdue: body.overdue,
+          new_comment: body.newComment,
+          assigned: body.assigned,
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'user_id' }
+      )
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+    }
+
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } })
   }
 
-  // Send instant notification (comment or assignment)
   if (action === 'send') {
     const { toEmail, toName, toUserId, subject, title, body: msgBody, actionUrl, actionLabel } = body
 
-    // Check user prefs
-    const prefs = await redis.get('nectera:notif_prefs:' + toUserId) || defaultPrefs
+    const { data: prefData } = await supabase
+      .from('notification_preferences')
+      .select('new_comment, assigned')
+      .eq('user_id', parseInt(toUserId))
+      .single()
+
+    const prefs = {
+      newComment: prefData?.new_comment !== undefined ? prefData.new_comment : defaultPrefs.newComment,
+      assigned: prefData?.assigned !== undefined ? prefData.assigned : defaultPrefs.assigned,
+    }
 
     const triggerMap = { comment: 'newComment', assigned: 'assigned' }
     const prefKey = triggerMap[body.trigger]

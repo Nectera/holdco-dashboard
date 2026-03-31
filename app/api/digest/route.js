@@ -1,8 +1,7 @@
-import { Redis } from '@upstash/redis'
+import { supabase } from '../../lib/supabase'
 import nodemailer from 'nodemailer'
 import Anthropic from '@anthropic-ai/sdk'
 
-const redis = new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const transporter = nodemailer.createTransport({
@@ -13,13 +12,6 @@ const transporter = nodemailer.createTransport({
 const fetchData = async (endpoint) => {
   const base = process.env.NEXTAUTH_URL || 'https://nexus-orcin-psi.vercel.app'
   try {
-    // Only run on the second Monday of the month
-    const today = new Date()
-    const dayOfMonth = today.getUTCDate()
-    if (dayOfMonth < 8 || dayOfMonth > 14) {
-      return new Response(JSON.stringify({ skipped: true, message: 'Not the second Monday' }), { headers: { 'Content-Type': 'application/json' } })
-    }
-
     const res = await fetch(base + '/api/qb/' + endpoint)
     return await res.json()
   } catch (e) { return null }
@@ -49,7 +41,6 @@ export async function GET(request) {
       return { key, name: names[key], details, priorDetails, cashflow, ar, ap }
     }))
 
-    // Build context for Nora
     let context = 'WEEKLY FINANCIAL DIGEST DATA:\n\n'
     const findVal = (rows, match) => {
       if (!rows) return 0
@@ -112,7 +103,6 @@ export async function GET(request) {
       context += '\n'
     }
 
-    // Ask Nora to write the digest
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2048,
@@ -122,7 +112,6 @@ export async function GET(request) {
 
     const digestContent = response.content.filter(b => b.type === 'text').map(b => b.text).join('')
 
-    // Send email
     const emailHtml = `
     <html>
     <body style="margin:0;padding:0;background:#0f0e0d;font-family:Arial,sans-serif;">

@@ -1,8 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { Redis } from '@upstash/redis'
+import { supabase } from '../../lib/supabase'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const redis = new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
 
 const fetchQBData = async (endpoint, params) => {
   const base = process.env.NEXTAUTH_URL || 'https://nexus-orcin-psi.vercel.app'
@@ -199,7 +198,20 @@ export async function POST(request) {
   const body = await request.json()
   const { messages, context, userId } = body
 
-  const memories = userId ? (await redis.get('nectera:nora_memory_v2:' + userId) || []) : []
+  let memories = []
+  if (userId) {
+    const { data, error } = await supabase
+      .from('ai_memories')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (!error && data) {
+      memories = data.map(m => ({ fact: m.fact, date: m.date }))
+    }
+  }
+
   const memoryContext = memories.length > 0 ? '\n\nYOUR MEMORY OF THIS USER (things you remember from past conversations):\n' + memories.map(m => '- [' + m.date + '] ' + m.fact).join('\n') + '\n\nUse these memories naturally — reference past conversations when relevant, but don\'t force it. You remember these things about this person.' : ''
 
   const lastMsg = messages.length > 0 ? messages[messages.length - 1].content : ''
@@ -322,7 +334,7 @@ IMPORTANT RULES FOR ACTIONS:
         reply = reply.replace(actionMatch[0], '').trim()
       } catch(e) {}
     }
-    // Extract memories from this conversation (non-blocking)
+
     if (userId && messages.length >= 1) {
       const doMemoryExtract = async () => {
         try {
@@ -339,26 +351,22 @@ IMPORTANT RULES FOR ACTIONS:
           const newFacts = JSON.parse(raw)
           if (Array.isArray(newFacts) && newFacts.length > 0) {
             const today = new Date().toISOString().split('T')[0]
-            const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
-            const newMems = newFacts.map(f => ({ fact: String(f), date: today }))
-            const all = [...currentMem, ...newMems]
-            const unique = all.filter((m, i) => !all.slice(i + 1).some(o => {
-              const w1 = m.fact.toLowerCase().split(/\s+/)
-              const w2 = o.fact.toLowerCase().split(/\s+/)
-              return w1.filter(w => w2.includes(w)).length / Math.max(w1.length, w2.length) > 0.6
-            })).slice(-30)
-            await redis.set('nectera:nora_memory_v2:' + userId, unique)
+            const newMems = newFacts.map(f => ({ fact: String(f), date: today, user_id: userId }))
+            for (const mem of newMems) {
+              await supabase
+                .from('ai_memories')
+                .insert([mem])
+            }
           }
         } catch(e) {
-          // Fallback: store question + error info for debugging
           try {
             const lastQ = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || ''
-            const currentMem = await redis.get('nectera:nora_memory_v2:' + userId) || []
             if (lastQ.length > 10) {
               const topic = 'Asked about: ' + lastQ.slice(0, 80)
-              currentMem.push({ fact: topic, date: new Date().toISOString().split('T')[0] })
+              await supabase
+                .from('ai_memories')
+                .insert([{ fact: topic, date: new Date().toISOString().split('T')[0], user_id: userId }])
             }
-            await redis.set('nectera:nora_memory_v2:' + userId, currentMem.slice(-30))
           } catch(e2) {}
         }
       }

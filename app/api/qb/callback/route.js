@@ -1,10 +1,5 @@
 import OAuthClient from 'intuit-oauth'
-import { Redis } from '@upstash/redis'
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN,
-})
+import { supabase } from '../../../lib/supabase'
 
 const oauthClient = new OAuthClient({
   clientId: process.env.INTUIT_CLIENT_ID,
@@ -24,12 +19,16 @@ export async function GET(request) {
 
     const company = state.replace('holdco-', '') || 'unknown'
 
-    await redis.set(`tokens:${company}`, {
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      realmId: realmId,
-      expiresAt: Date.now() + (tokens.expires_in * 1000),
-    })
+    await supabase
+      .from('qb_tokens')
+      .upsert({
+        company: company,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        realm_id: realmId,
+        expires_at: Date.now() + (tokens.expires_in * 1000),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'company' })
 
     return new Response(JSON.stringify({ success: true, company, realmId }, null, 2), {
       headers: { 'content-type': 'application/json' },
