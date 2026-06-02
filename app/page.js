@@ -254,8 +254,9 @@ export default function Home() {
   const [agingData, setAgingData] = useState(null)
   const [bankingData, setBankingData] = useState([])
   const [loadingBanking, setLoadingBanking] = useState(true)
-  const [hiddenBankAccounts, setHiddenBankAccounts] = useState(() => { try { return JSON.parse(localStorage.getItem('hiddenBankAccounts') || '[]') } catch { return [] } })
+  const [hiddenBankAccounts, setHiddenBankAccounts] = useState([])
   const [financialsTab, setFinancialsTab] = useState('overview')
+  const [showManageAccounts, setShowManageAccounts] = useState(false)
   const [expenseTrends, setExpenseTrends] = useState(null)
   const [expenseTrendCompany, setExpenseTrendCompany] = useState('xtract')
   const [goals, setGoals] = useState({})
@@ -1090,12 +1091,16 @@ export default function Home() {
       return ap - bp
     })
 
-  // Load dismissed notifications from localStorage
+  // Load dismissed notifications and hidden bank accounts from localStorage
 
   useEffect(() => {
     try {
       const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]')
       setDismissedNotifications(dismissed)
+    } catch {}
+    try {
+      const hidden = JSON.parse(localStorage.getItem('hiddenBankAccounts') || '[]')
+      setHiddenBankAccounts(hidden)
     } catch {}
     // Employees loaded after auth
     // lightTasks loaded after auth
@@ -2594,8 +2599,15 @@ export default function Home() {
                       const visibleAccounts = allAccounts.filter(a => !hiddenBankAccounts.includes(a.companyKey + '-' + a.id))
                       const totalCash = visibleAccounts.filter(a => a.type === 'Bank').reduce((s, a) => s + a.balance, 0)
                       const totalCC = visibleAccounts.filter(a => a.type === 'Credit Card').reduce((s, a) => s + a.balance, 0)
+                      const hiddenCount = allAccounts.length - visibleAccounts.length
                       return (
                         <>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                            <button onClick={() => setShowManageAccounts(true)} style={{ padding: '0.35rem 0.75rem', borderRadius: '8px', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', background: theme === 'dark' ? '#1e1e1e' : 'white', fontSize: '0.78rem', cursor: 'pointer', color: '#8a8070', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v11M1.5 7h11" stroke="#8a8070" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                              Manage Accounts{hiddenCount > 0 ? ' (' + hiddenCount + ' hidden)' : ''}
+                            </button>
+                          </div>
                           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
                             <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid #4a6741' }}>
                               <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Cash</div>
@@ -2614,53 +2626,95 @@ export default function Home() {
                       )
                     })()}
 
-                    {/* Per-company accounts */}
+                    {/* Per-company visible accounts */}
                     {bankingData.map(comp => {
-                      if (!comp.accounts || comp.accounts.length === 0) return null
+                      const visibleAccounts = (comp.accounts || []).filter(a => !hiddenBankAccounts.includes(comp.companyKey + '-' + a.id))
+                      if (visibleAccounts.length === 0) return null
+                      const companyBank = visibleAccounts.filter(a => a.type === 'Bank').reduce((s, a) => s + a.balance, 0)
+                      const companyCC = visibleAccounts.filter(a => a.type === 'Credit Card').reduce((s, a) => s + a.balance, 0)
                       return (
                         <div key={comp.companyKey} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                             <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>{comp.company}</h3>
-                            <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{comp.accounts.length} account{comp.accounts.length !== 1 ? 's' : ''}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{visibleAccounts.length} account{visibleAccounts.length !== 1 ? 's' : ''}</div>
                           </div>
 
-                          {comp.accounts.map(account => {
-                            const accountKey = comp.companyKey + '-' + account.id
-                            const isHidden = hiddenBankAccounts.includes(accountKey)
-                            return (
-                              <div key={account.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0', borderBottom: theme === 'dark' ? '1px solid #2a2825' : '1px solid #f0ece4', opacity: isHidden ? 0.4 : 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                  <div onClick={() => {
-                                    const updated = isHidden ? hiddenBankAccounts.filter(k => k !== accountKey) : [...hiddenBankAccounts, accountKey]
-                                    setHiddenBankAccounts(updated)
-                                    try { localStorage.setItem('hiddenBankAccounts', JSON.stringify(updated)) } catch {}
-                                  }} style={{ width: '20px', height: '20px', borderRadius: '4px', border: theme === 'dark' ? '2px solid #555' : '2px solid #d0c8bc', background: isHidden ? 'transparent' : '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                                    {!isHidden && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6 L5 8.5 L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{account.name}</div>
-                                    <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>{account.type}{account.subType ? ' · ' + account.subType : ''}</div>
-                                  </div>
-                                </div>
-                                <div style={{ fontSize: '1.05rem', fontWeight: '600', color: account.balance < 0 ? '#b85c38' : (theme === 'dark' ? '#e8e2d9' : '#0f0e0d'), fontFamily: "'DM Serif Display', serif" }}>
-                                  {account.balance < 0 ? '-' : ''}{fmt(Math.abs(account.balance))}
-                                </div>
+                          {visibleAccounts.map(account => (
+                            <div key={account.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0', borderBottom: theme === 'dark' ? '1px solid #2a2825' : '1px solid #f0ece4' }}>
+                              <div>
+                                <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{account.name}</div>
+                                <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>{account.type}{account.subType ? ' · ' + account.subType : ''}</div>
                               </div>
-                            )
-                          })}
+                              <div style={{ fontSize: '1.05rem', fontWeight: '600', color: account.balance < 0 ? '#b85c38' : (theme === 'dark' ? '#e8e2d9' : '#0f0e0d'), fontFamily: "'DM Serif Display', serif" }}>
+                                {account.balance < 0 ? '-' : ''}{fmt(Math.abs(account.balance))}
+                              </div>
+                            </div>
+                          ))}
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0 0', marginTop: '0.25rem' }}>
                             <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Net Cash</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: comp.netCash < 0 ? '#b85c38' : '#4a6741', fontFamily: "'DM Serif Display', serif" }}>{fmt(comp.netCash)}</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: (companyBank + companyCC) < 0 ? '#b85c38' : '#4a6741', fontFamily: "'DM Serif Display', serif" }}>{fmt(companyBank + companyCC)}</div>
                           </div>
                         </div>
                       )
                     })}
 
-                    {bankingData.every(c => !c.accounts || c.accounts.length === 0) && (
-                      <div style={{ textAlign: 'center', padding: '3rem', color: '#8a8070', fontSize: '0.85rem' }}>No bank accounts found. Make sure QuickBooks is connected.</div>
+                    {bankingData.every(c => !(c.accounts || []).some(a => !hiddenBankAccounts.includes(c.companyKey + '-' + a.id))) && (
+                      <div style={{ textAlign: 'center', padding: '3rem', color: '#8a8070', fontSize: '0.85rem' }}>No visible accounts. Click "Manage Accounts" to show accounts.</div>
                     )}
                   </>
+                )}
+
+                {/* Manage Accounts Modal */}
+                {showManageAccounts && (
+                  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                    <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '14px', width: '480px', maxWidth: '100%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ padding: '1.25rem 1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '1rem' }}>Manage Accounts</div>
+                          <div style={{ fontSize: '0.75rem', color: '#8a8070', marginTop: '0.15rem' }}>Toggle which accounts appear on your dashboard</div>
+                        </div>
+                        <button onClick={() => setShowManageAccounts(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1.2rem' }}>✕</button>
+                      </div>
+                      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
+                        {bankingData.map(comp => {
+                          if (!comp.accounts || comp.accounts.length === 0) return null
+                          return (
+                            <div key={comp.companyKey}>
+                              <div style={{ padding: '0.75rem 1.5rem 0.4rem', fontSize: '0.7rem', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600' }}>{comp.company}</div>
+                              {comp.accounts.map(account => {
+                                const accountKey = comp.companyKey + '-' + account.id
+                                const isVisible = !hiddenBankAccounts.includes(accountKey)
+                                return (
+                                  <div key={account.id} onClick={() => {
+                                    const updated = isVisible ? [...hiddenBankAccounts, accountKey] : hiddenBankAccounts.filter(k => k !== accountKey)
+                                    setHiddenBankAccounts(updated)
+                                    try { localStorage.setItem('hiddenBankAccounts', JSON.stringify(updated)) } catch {}
+                                  }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 1.5rem', cursor: 'pointer', background: 'transparent', transition: 'background 0.1s' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                      <div style={{ width: '20px', height: '20px', borderRadius: '4px', border: theme === 'dark' ? '2px solid #555' : '2px solid #d0c8bc', background: isVisible ? '#c9a84c' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                                        {isVisible && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6 L5 8.5 L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                      </div>
+                                      <div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{account.name}</div>
+                                        <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{account.type}{account.subType ? ' · ' + account.subType : ''}</div>
+                                      </div>
+                                    </div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '500', color: account.balance < 0 ? '#b85c38' : '#8a8070' }}>
+                                      {fmt(Math.abs(account.balance))}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <div style={{ padding: '1rem 1.5rem', borderTop: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setShowManageAccounts(false)} style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>Done</button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
