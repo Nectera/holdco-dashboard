@@ -252,6 +252,10 @@ export default function Home() {
   const [tasks, setTasks] = useState([])
   const [loadingFinancials, setLoadingFinancials] = useState(true)
   const [agingData, setAgingData] = useState(null)
+  const [bankingData, setBankingData] = useState([])
+  const [loadingBanking, setLoadingBanking] = useState(true)
+  const [hiddenBankAccounts, setHiddenBankAccounts] = useState(() => { try { return JSON.parse(localStorage.getItem('hiddenBankAccounts') || '[]') } catch { return [] } })
+  const [financialsTab, setFinancialsTab] = useState('overview')
   const [expenseTrends, setExpenseTrends] = useState(null)
   const [expenseTrendCompany, setExpenseTrendCompany] = useState('xtract')
   const [goals, setGoals] = useState({})
@@ -431,6 +435,11 @@ export default function Home() {
       .then(res => res.json())
       .then(d => { setTasks(d.tasks || []); setLoadingTasks(false); loadAllSubtasks(d.tasks || []) })
       .catch(() => setLoadingTasks(false))
+    setLoadingBanking(true)
+    fetch('/api/qb/banking')
+      .then(r => r.json())
+      .then(d => { setBankingData(d); setLoadingBanking(false) })
+      .catch(() => setLoadingBanking(false))
   }, [authed, selectedYear])
 
   const handleEdit = async (task, field, value) => {
@@ -2362,8 +2371,17 @@ export default function Home() {
                 </select>
               </div>
             </div>
-            <p style={{ color: '#8a8070', marginBottom: '1.5rem', fontSize: '0.85rem' }}>{selectedYear} · Live from QuickBooks</p>
+            <p style={{ color: '#8a8070', marginBottom: '1rem', fontSize: '0.85rem' }}>{selectedYear} · Live from QuickBooks</p>
 
+            <div style={{ display: 'flex', gap: '0', marginBottom: '1.5rem', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #e8e2d9' }}>
+              {[['overview', 'Overview'], ['banking', 'Banking']].map(([id, label]) => (
+                <button key={id} onClick={() => setFinancialsTab(id)} style={{ padding: '0.6rem 1.25rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: financialsTab === id ? '600' : '400', color: financialsTab === id ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', borderBottom: financialsTab === id ? '2px solid #c9a84c' : '2px solid transparent', marginBottom: '-1px' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {financialsTab === 'overview' && <>
             <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8070', marginBottom: '1rem' }}>Consolidated</h2>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
               {[
@@ -2560,6 +2578,90 @@ export default function Home() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+            </>}
+
+            {financialsTab === 'banking' && (
+              <div>
+                {loadingBanking ? (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#8a8070' }}>Loading bank accounts...</div>
+                ) : (
+                  <>
+                    {/* Consolidated banking summary */}
+                    {(() => {
+                      const allAccounts = bankingData.flatMap(c => (c.accounts || []).map(a => ({ ...a, companyKey: c.companyKey, companyName: c.company })))
+                      const visibleAccounts = allAccounts.filter(a => !hiddenBankAccounts.includes(a.companyKey + '-' + a.id))
+                      const totalCash = visibleAccounts.filter(a => a.type === 'Bank').reduce((s, a) => s + a.balance, 0)
+                      const totalCC = visibleAccounts.filter(a => a.type === 'Credit Card').reduce((s, a) => s + a.balance, 0)
+                      return (
+                        <>
+                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid #4a6741' }}>
+                              <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Cash</div>
+                              <div style={{ fontSize: isMobile ? '1.4rem' : '2rem', fontWeight: '600', color: '#0f0e0d', fontFamily: "'DM Serif Display', serif" }}>{fmt(totalCash)}</div>
+                            </div>
+                            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid #b85c38' }}>
+                              <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Credit Card Balances</div>
+                              <div style={{ fontSize: isMobile ? '1.4rem' : '2rem', fontWeight: '600', color: totalCC < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif" }}>{fmt(Math.abs(totalCC))}</div>
+                            </div>
+                            <div style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1rem', borderTop: '3px solid #3d5a6e' }}>
+                              <div style={{ fontSize: '0.7rem', color: '#8a8070', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Net Cash Position</div>
+                              <div style={{ fontSize: isMobile ? '1.4rem' : '2rem', fontWeight: '600', color: (totalCash + totalCC) < 0 ? '#b85c38' : '#0f0e0d', fontFamily: "'DM Serif Display', serif" }}>{fmt(totalCash + totalCC)}</div>
+                            </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+
+                    {/* Per-company accounts */}
+                    {bankingData.map(comp => {
+                      if (!comp.accounts || comp.accounts.length === 0) return null
+                      return (
+                        <div key={comp.companyKey} style={{ background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: '1.25rem', marginBottom: '1rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontFamily: "'DM Serif Display', serif", fontWeight: '400' }}>{comp.company}</h3>
+                            <div style={{ fontSize: '0.75rem', color: '#8a8070' }}>{comp.accounts.length} account{comp.accounts.length !== 1 ? 's' : ''}</div>
+                          </div>
+
+                          {comp.accounts.map(account => {
+                            const accountKey = comp.companyKey + '-' + account.id
+                            const isHidden = hiddenBankAccounts.includes(accountKey)
+                            return (
+                              <div key={account.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0', borderBottom: theme === 'dark' ? '1px solid #2a2825' : '1px solid #f0ece4', opacity: isHidden ? 0.4 : 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                  <div onClick={() => {
+                                    const updated = isHidden ? hiddenBankAccounts.filter(k => k !== accountKey) : [...hiddenBankAccounts, accountKey]
+                                    setHiddenBankAccounts(updated)
+                                    try { localStorage.setItem('hiddenBankAccounts', JSON.stringify(updated)) } catch {}
+                                  }} style={{ width: '20px', height: '20px', borderRadius: '4px', border: theme === 'dark' ? '2px solid #555' : '2px solid #d0c8bc', background: isHidden ? 'transparent' : '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                                    {!isHidden && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6 L5 8.5 L9.5 3.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{account.name}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#8a8070' }}>{account.type}{account.subType ? ' · ' + account.subType : ''}</div>
+                                  </div>
+                                </div>
+                                <div style={{ fontSize: '1.05rem', fontWeight: '600', color: account.balance < 0 ? '#b85c38' : (theme === 'dark' ? '#e8e2d9' : '#0f0e0d'), fontFamily: "'DM Serif Display', serif" }}>
+                                  {account.balance < 0 ? '-' : ''}{fmt(Math.abs(account.balance))}
+                                </div>
+                              </div>
+                            )
+                          })}
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0 0', marginTop: '0.25rem' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Net Cash</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: comp.netCash < 0 ? '#b85c38' : '#4a6741', fontFamily: "'DM Serif Display', serif" }}>{fmt(comp.netCash)}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {bankingData.every(c => !c.accounts || c.accounts.length === 0) && (
+                      <div style={{ textAlign: 'center', padding: '3rem', color: '#8a8070', fontSize: '0.85rem' }}>No bank accounts found. Make sure QuickBooks is connected.</div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </>
