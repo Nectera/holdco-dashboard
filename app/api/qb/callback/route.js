@@ -1,12 +1,5 @@
-import OAuthClient from 'intuit-oauth'
+import { oauthClient } from '../../../lib/qb-token'
 import { supabase } from '../../../lib/supabase'
-
-const oauthClient = new OAuthClient({
-  clientId: process.env.INTUIT_CLIENT_ID,
-  clientSecret: process.env.INTUIT_CLIENT_SECRET,
-  environment: 'production',
-  redirectUri: 'https://nexus-orcin-psi.vercel.app/api/qb/callback',
-})
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)

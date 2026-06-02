@@ -1,11 +1,4 @@
-import OAuthClient from 'intuit-oauth'
-
-const oauthClient = new OAuthClient({
-  clientId: process.env.INTUIT_CLIENT_ID,
-  clientSecret: process.env.INTUIT_CLIENT_SECRET,
-  environment: 'production',
-  redirectUri: process.env.NEXTAUTH_URL + '/api/qb/callback',
-})
+import { oauthClient, OAuthClient } from '../../lib/qb-token'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
