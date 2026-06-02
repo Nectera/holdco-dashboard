@@ -1496,6 +1496,7 @@ export default function Home() {
                       await fetch('/api/mentions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark_read', notificationId: n.id }) })
                       setMentionNotifications(prev => prev.map(mn => mn.id === n.id ? { ...mn, is_read: true } : mn))
                     }
+                    setPage('projects'); setShowNotifications(false)
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
                       <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#e8dcc8', color: '#0f0e0d', fontWeight: '600' }}>@mention</span>
@@ -1518,7 +1519,7 @@ export default function Home() {
           {notifTab === 'tasks' && taskNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No task alerts</div>}
           {notifTab === 'tasks' && taskNotifications.map(n => (
             <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => { setPage('tasks'); setShowNotifications(false) }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
                   <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: n.type === 'overdue' ? '#fde8e8' : '#fdf3e0', color: n.type === 'overdue' ? '#b85c38' : '#9a6a20', fontWeight: '600' }}>
                     {n.type === 'overdue' ? 'Overdue' : 'Due Soon'}
@@ -1534,7 +1535,7 @@ export default function Home() {
           {notifTab === 'notes' && notesNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No note notifications</div>}
           {notifTab === 'notes' && notesNotifications.map(n => (
             <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => { setPage('notes'); setSelectedNoteCompany(n.company); setShowNotifications(false) }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
                   <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: theme === 'dark' ? '#1a2a1a' : '#e8f0e8', color: '#4a6741', fontWeight: '600' }}>Note</span>
                   <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{n.company?.split(' ')[0]}</span>
@@ -1547,7 +1548,7 @@ export default function Home() {
           ))}
           {notifTab === 'projects' && notifications.map(n => (
             <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => { setPage('projects'); if (n.companyKey) setFilterCompany(n.companyKey); setShowNotifications(false) }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
                   <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px',
                     background: n.type === 'overdue' ? '#fde8e8' : n.type === 'soon' ? '#fdf3e0' : '#e8f0e8',
