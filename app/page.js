@@ -277,6 +277,10 @@ export default function Home() {
   const [comments, setComments] = useState([])
   const [projectCommentText, setProjectCommentText] = useState('')
   const [commentLoading, setCommentLoading] = useState(false)
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false)
+  const [mentionStartPos, setMentionStartPos] = useState(null)
+  const [mentionIndex, setMentionIndex] = useState(0)
   const [showEmojiFor, setShowEmojiFor] = useState(null)
   const [newTask, setNewTask] = useState({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
   const [creating, setCreating] = useState(false)
@@ -923,6 +927,29 @@ export default function Home() {
     setComments(await res.json())
   }
 
+  const renderCommentText = (text) => {
+    const parts = text.split(/(@\w[\w\s]*?)(?=\s@|\s[^@]|$)/g)
+    const userNames = userList.map(u => u.name.toLowerCase())
+    const result = []
+    let i = 0
+    const regex = /@([A-Za-z][\w\s]*?\w)/g
+    let lastIndex = 0
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      const mentionName = match[1]
+      const isUser = userNames.some(n => n === mentionName.toLowerCase() || n.startsWith(mentionName.toLowerCase()))
+      if (lastIndex < match.index) result.push(text.slice(lastIndex, match.index))
+      if (isUser) {
+        result.push(<span key={i++} style={{ background: '#e8dcc8', color: '#0f0e0d', borderRadius: '4px', padding: '0.05rem 0.3rem', fontWeight: '600', fontSize: '0.78rem' }}>@{mentionName}</span>)
+      } else {
+        result.push(match[0])
+      }
+      lastIndex = match.index + match[0].length
+    }
+    if (lastIndex < text.length) result.push(text.slice(lastIndex))
+    return result
+  }
+
   const addProjectComment = async () => {
     if (!projectCommentText.trim() || !activeCommentProject) return
     const projectId = activeCommentProject.rowIndex || (activeCommentProject.companyKey + '-' + activeCommentProject.name.replace(/\s+/g, '-'))
@@ -933,7 +960,35 @@ export default function Home() {
     })
     const d = await res.json()
     if (d.comment) setComments(prev => [...prev, d.comment])
+
+    // Send notifications to @mentioned users
+    const mentionRegex = /@([A-Za-z][\w\s]*?\w)/g
+    let m
+    while ((m = mentionRegex.exec(projectCommentText)) !== null) {
+      const mentionName = m[1].toLowerCase()
+      const mentionedUser = userList.find(u => u.name.toLowerCase() === mentionName || u.name.toLowerCase().startsWith(mentionName))
+      if (mentionedUser && mentionedUser.email && mentionedUser.id !== currentUser?.id) {
+        fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'send',
+            trigger: 'comment',
+            toEmail: mentionedUser.email,
+            toName: mentionedUser.name,
+            toUserId: mentionedUser.id,
+            subject: `${currentUser?.name || 'Someone'} mentioned you in ${activeCommentProject.name}`,
+            title: 'You were mentioned in a discussion',
+            body: `<strong>${currentUser?.name || 'Someone'}</strong> mentioned you in a comment on <strong>${activeCommentProject.name}</strong>:<br><br><em>"${projectCommentText}"</em>`,
+            actionUrl: 'https://necteraholdings.com',
+            actionLabel: 'View Discussion'
+          })
+        })
+      }
+    }
+
     setProjectCommentText('')
+    setShowMentionDropdown(false)
   }
 
   const reactToComment = async (commentId, emoji) => {
@@ -3502,7 +3557,7 @@ export default function Home() {
                         <span style={{ fontSize: '0.78rem', fontWeight: '600', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{c.author}</span>
                         <span style={{ fontSize: '0.65rem', color: '#a09880' }}>{time}</span>
                       </div>
-                      <div style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{c.text}</div>
+                      <div style={{ fontSize: '0.82rem', color: theme === 'dark' ? '#d4cfc6' : '#3a3530', lineHeight: 1.5, background: '#f9f7f4', borderRadius: '8px', padding: '0.5rem 0.75rem', wordBreak: 'break-word' }}>{renderCommentText(c.text)}</div>
                       {/* Reactions */}
                       <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                         {Object.entries(c.reactions || {}).map(([emoji, users]) => (
@@ -3555,13 +3610,75 @@ export default function Home() {
               )}
             </div>
             {/* Input */}
-            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: theme === 'dark' ? '#121212' : '#faf8f4' }}>
+            <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #e8e2d9', background: theme === 'dark' ? '#121212' : '#faf8f4', position: 'relative' }}>
+              {showMentionDropdown && (() => {
+                const filtered = userList.filter(u => u.id !== currentUser?.id && u.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+                return filtered.length > 0 ? (
+                  <div style={{ position: 'absolute', bottom: '100%', left: '1.25rem', right: '1.25rem', background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '10px', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', maxHeight: '180px', overflowY: 'auto', zIndex: 10 }}>
+                    <div style={{ padding: '0.4rem 0.75rem', fontSize: '0.65rem', color: '#8a8070', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>Mention a team member</div>
+                    {filtered.map((u, idx) => (
+                      <div key={u.id} onClick={() => {
+                        const before = projectCommentText.slice(0, mentionStartPos)
+                        const after = projectCommentText.slice(mentionStartPos + mentionQuery.length + 1)
+                        setProjectCommentText(before + '@' + u.name + ' ' + after)
+                        setShowMentionDropdown(false)
+                        setMentionQuery('')
+                        setMentionStartPos(null)
+                      }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', background: idx === mentionIndex ? (theme === 'dark' ? '#3a3530' : '#f4f0e8') : 'transparent', transition: 'background 0.1s' }}
+                      onMouseEnter={() => setMentionIndex(idx)}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#0f0e0d', color: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: '600', flexShrink: 0 }}>{u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}</div>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#1a1814' }}>{u.name}</div>
+                          {u.email && <div style={{ fontSize: '0.68rem', color: '#8a8070' }}>{u.email}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null
+              })()}
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
                 <textarea
                   value={projectCommentText}
-                  onChange={e => setProjectCommentText(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment() } }}
-                  placeholder="Write a comment... (Enter to send)"
+                  onChange={e => {
+                    const val = e.target.value
+                    setProjectCommentText(val)
+                    const pos = e.target.selectionStart
+                    const textBefore = val.slice(0, pos)
+                    const atIdx = textBefore.lastIndexOf('@')
+                    if (atIdx !== -1 && (atIdx === 0 || textBefore[atIdx - 1] === ' ' || textBefore[atIdx - 1] === '\n')) {
+                      const query = textBefore.slice(atIdx + 1)
+                      if (!query.includes('\n') && query.length <= 30) {
+                        setMentionQuery(query)
+                        setMentionStartPos(atIdx)
+                        setShowMentionDropdown(true)
+                        setMentionIndex(0)
+                        return
+                      }
+                    }
+                    setShowMentionDropdown(false)
+                  }}
+                  onKeyDown={e => {
+                    if (showMentionDropdown) {
+                      const filtered = userList.filter(u => u.id !== currentUser?.id && u.name.toLowerCase().includes(mentionQuery.toLowerCase()))
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setMentionIndex(i => Math.min(i + 1, filtered.length - 1)) }
+                      else if (e.key === 'ArrowUp') { e.preventDefault(); setMentionIndex(i => Math.max(i - 1, 0)) }
+                      else if (e.key === 'Enter' && filtered.length > 0) {
+                        e.preventDefault()
+                        const u = filtered[mentionIndex]
+                        const before = projectCommentText.slice(0, mentionStartPos)
+                        const after = projectCommentText.slice(mentionStartPos + mentionQuery.length + 1)
+                        setProjectCommentText(before + '@' + u.name + ' ' + after)
+                        setShowMentionDropdown(false)
+                        setMentionQuery('')
+                        setMentionStartPos(null)
+                      }
+                      else if (e.key === 'Escape') { e.preventDefault(); setShowMentionDropdown(false) }
+                    } else if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addProjectComment()
+                    }
+                  }}
+                  placeholder="Write a comment... (@ to mention, Enter to send)"
                   style={{ flex: 1, padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid #e0d8cc', fontSize: '0.82rem', resize: 'none', height: '70px', fontFamily: 'inherit', color: '#1a1814', background: theme === 'dark' ? '#1e1e1e' : 'white' }}
                 />
                 <button onClick={addProjectComment} disabled={!projectCommentText.trim()} style={{ padding: '0.6rem 1rem', borderRadius: '8px', border: 'none', background: '#0f0e0d', color: 'white', cursor: projectCommentText.trim() ? 'pointer' : 'not-allowed', fontSize: '0.82rem', fontWeight: '500', opacity: projectCommentText.trim() ? 1 : 0.5, flexShrink: 0 }}>Send</button>
