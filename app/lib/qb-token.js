@@ -5,7 +5,7 @@ const oauthClient = new OAuthClient({
   clientId: process.env.INTUIT_CLIENT_ID,
   clientSecret: process.env.INTUIT_CLIENT_SECRET,
   environment: 'production',
-  redirectUri: 'https://www.necteraholdings.com/api/qb/callback',
+  redirectUri: 'https://nexus-orcin-psi.vercel.app/api/qb/callback',
 })
 
 export { oauthClient, OAuthClient }
