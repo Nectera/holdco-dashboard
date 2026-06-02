@@ -1648,7 +1648,16 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} onFocus={e => e.target.setAttribute('data-open', 'true')} onBlur={e => setTimeout(() => e.target.removeAttribute('data-open'), 150)} placeholder="Name..." style={inputStyle} autoComplete="off" />
+                    {lightTaskForm.assignedTo && userList.filter(u => u.name.toLowerCase().includes(lightTaskForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== lightTaskForm.assignedTo.toLowerCase()).length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', zIndex: 20, maxHeight: '150px', overflowY: 'auto' }}>
+                        {userList.filter(u => u.name.toLowerCase().includes(lightTaskForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== lightTaskForm.assignedTo.toLowerCase()).map(u => (
+                          <div key={u.id} onMouseDown={e => { e.preventDefault(); setLightTaskForm(f => ({ ...f, assignedTo: u.name })) }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>{u.name}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Due Date</label>
@@ -1725,7 +1734,16 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Assigned To</label>
-                  <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <input value={lightTaskForm.assignedTo} onChange={e => setLightTaskForm(f => ({ ...f, assignedTo: e.target.value }))} onFocus={e => e.target.setAttribute('data-open', 'true')} onBlur={e => setTimeout(() => e.target.removeAttribute('data-open'), 150)} placeholder="Name..." style={inputStyle} autoComplete="off" />
+                    {lightTaskForm.assignedTo && userList.filter(u => u.name.toLowerCase().includes(lightTaskForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== lightTaskForm.assignedTo.toLowerCase()).length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', zIndex: 20, maxHeight: '150px', overflowY: 'auto' }}>
+                        {userList.filter(u => u.name.toLowerCase().includes(lightTaskForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== lightTaskForm.assignedTo.toLowerCase()).map(u => (
+                          <div key={u.id} onMouseDown={e => { e.preventDefault(); setLightTaskForm(f => ({ ...f, assignedTo: u.name })) }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>{u.name}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Due Date</label>
@@ -3933,7 +3951,16 @@ export default function Home() {
                 </div>
                 <div>
                   <label style={labelStyle}>Assigned To</label>
-                  <input value={calendarForm.assignedTo} onChange={e => setCalendarForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Name" style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <input value={calendarForm.assignedTo} onChange={e => setCalendarForm(f => ({ ...f, assignedTo: e.target.value }))} onFocus={e => e.target.setAttribute('data-open', 'true')} onBlur={e => setTimeout(() => e.target.removeAttribute('data-open'), 150)} placeholder="Name" style={inputStyle} autoComplete="off" />
+                    {calendarForm.assignedTo && userList.filter(u => u.name.toLowerCase().includes(calendarForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== calendarForm.assignedTo.toLowerCase()).length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', zIndex: 20, maxHeight: '150px', overflowY: 'auto' }}>
+                        {userList.filter(u => u.name.toLowerCase().includes(calendarForm.assignedTo.toLowerCase()) && u.name.toLowerCase() !== calendarForm.assignedTo.toLowerCase()).map(u => (
+                          <div key={u.id} onMouseDown={e => { e.preventDefault(); setCalendarForm(f => ({ ...f, assignedTo: u.name })) }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>{u.name}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Notes</label>
