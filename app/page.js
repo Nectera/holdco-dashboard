@@ -3773,7 +3773,7 @@ export default function Home() {
                       {/* Reactions */}
                       <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.35rem', flexWrap: 'wrap', alignItems: 'center' }}>
                         {Object.entries(c.reactions || {}).map(([emoji, users]) => (
-                          <button key={emoji} onClick={() => reactToProjectComment(c.id, emoji)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: users.includes(currentUser?.id) ? '#f0ece0' : 'white', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <button key={emoji} onClick={() => reactToComment(c.id, emoji)} style={{ padding: '0.15rem 0.4rem', borderRadius: '20px', border: '1px solid #e8e2d9', background: users.includes(currentUser?.id) ? '#f0ece0' : 'white', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
                             {emoji} <span style={{ fontSize: '0.65rem', color: '#8a8070' }}>{users.length}</span>
                           </button>
                         ))}
@@ -3782,7 +3782,7 @@ export default function Home() {
                           {showEmojiFor === c.id && (
                             <div style={{ position: 'absolute', bottom: '100%', left: 0, background: theme === 'dark' ? '#1e1e1e' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: '0.5rem', display: 'flex', gap: '0.35rem', zIndex: 10, flexWrap: 'wrap', width: '160px' }}>
                               {['👍','👎','✅','❌','🔥','⚠️','💡','🎉'].map(e => (
-                                <button key={e} onClick={() => reactToProjectComment(c.id, e)} style={{ background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', padding: '0.1rem' }}>{e}</button>
+                                <button key={e} onClick={() => reactToComment(c.id, e)} style={{ background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', padding: '0.1rem' }}>{e}</button>
                               ))}
                             </div>
                           )}
