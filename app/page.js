@@ -277,6 +277,7 @@ export default function Home() {
   const [comments, setComments] = useState([])
   const [projectCommentText, setProjectCommentText] = useState('')
   const [commentLoading, setCommentLoading] = useState(false)
+  const [mentionNotifications, setMentionNotifications] = useState([])
   const [mentionQuery, setMentionQuery] = useState('')
   const [showMentionDropdown, setShowMentionDropdown] = useState(false)
   const [mentionStartPos, setMentionStartPos] = useState(null)
@@ -391,6 +392,7 @@ export default function Home() {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
       fetch('/api/notifications?action=prefs&userId=' + currentUser.id).then(r => r.json()).then(setNotifPrefs).catch(() => {})
       fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
+      fetch('/api/mentions?userId=' + currentUser.id).then(r => r.json()).then(setMentionNotifications).catch(() => {})
     }
   }, [authed])
 
@@ -401,6 +403,7 @@ export default function Home() {
       fetch('/api/messages?action=conversations&userId=' + currentUser.id).then(r => r.json()).then(setConversations).catch(() => {})
       fetch('/api/notifications?action=prefs&userId=' + currentUser.id).then(r => r.json()).then(setNotifPrefs).catch(() => {})
       fetch('/api/messages?action=unread&userId=' + currentUser.id).then(r => r.json()).then(d => setUnreadMessages(d.unread || 0)).catch(() => {})
+      fetch('/api/mentions?userId=' + currentUser.id).then(r => r.json()).then(setMentionNotifications).catch(() => {})
       if (activeConvo) {
         fetch('/api/messages?action=messages&convoId=' + activeConvo.id).then(r => r.json()).then(setConvoMessages).catch(() => {})
       }
@@ -967,23 +970,40 @@ export default function Home() {
     while ((m = mentionRegex.exec(projectCommentText)) !== null) {
       const mentionName = m[1].toLowerCase()
       const mentionedUser = userList.find(u => u.name.toLowerCase() === mentionName || u.name.toLowerCase().startsWith(mentionName))
-      if (mentionedUser && mentionedUser.email && mentionedUser.id !== currentUser?.id) {
-        fetch('/api/notifications', {
+      if (mentionedUser && mentionedUser.id !== currentUser?.id) {
+        // In-app notification
+        fetch('/api/mentions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'send',
-            trigger: 'comment',
-            toEmail: mentionedUser.email,
-            toName: mentionedUser.name,
-            toUserId: mentionedUser.id,
-            subject: `${currentUser?.name || 'Someone'} mentioned you in ${activeCommentProject.name}`,
-            title: 'You were mentioned in a discussion',
-            body: `<strong>${currentUser?.name || 'Someone'}</strong> mentioned you in a comment on <strong>${activeCommentProject.name}</strong>:<br><br><em>"${projectCommentText}"</em>`,
-            actionUrl: 'https://necteraholdings.com',
-            actionLabel: 'View Discussion'
+            action: 'create',
+            mentionedUserId: mentionedUser.id,
+            mentionedByName: currentUser?.name || 'Someone',
+            mentionedById: currentUser?.id,
+            projectName: activeCommentProject.name,
+            projectId: projectId,
+            commentText: projectCommentText
           })
         })
+        // Email notification
+        if (mentionedUser.email) {
+          fetch('/api/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'send',
+              trigger: 'comment',
+              toEmail: mentionedUser.email,
+              toName: mentionedUser.name,
+              toUserId: mentionedUser.id,
+              subject: `${currentUser?.name || 'Someone'} mentioned you in ${activeCommentProject.name}`,
+              title: 'You were mentioned in a discussion',
+              body: `<strong>${currentUser?.name || 'Someone'}</strong> mentioned you in a comment on <strong>${activeCommentProject.name}</strong>:<br><br><em>"${projectCommentText}"</em>`,
+              actionUrl: 'https://necteraholdings.com',
+              actionLabel: 'View Discussion'
+            })
+          })
+        }
       }
     }
 
@@ -1438,12 +1458,48 @@ export default function Home() {
             <button onClick={() => setShowNotifications(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8a8070', fontSize: '1rem' }}>X</button>
           </div>
           <div style={{ display: 'flex', borderBottom: '1px solid #f0ece0' }}>
-            {[['projects', 'Projects', notifications.length], ['tasks', 'Tasks', taskNotifications.length], ['notes', 'Notes', notesNotifications.length]].map(([id, label, count]) => (
+            {[['mentions', 'Mentions', mentionNotifications.filter(n => !n.is_read).length], ['projects', 'Projects', notifications.length], ['tasks', 'Tasks', taskNotifications.length], ['notes', 'Notes', notesNotifications.length]].map(([id, label, count]) => (
               <button key={id} onClick={() => setNotifTab(id)} style={{ flex: 1, padding: '0.6rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.78rem', fontWeight: notifTab === id ? '600' : '400', color: notifTab === id ? (theme === 'dark' ? '#e8e2d9' : '#0f0e0d') : '#8a8070', borderBottom: notifTab === id ? '2px solid #c9a84c' : '2px solid transparent' }}>
                 {label}{count > 0 ? ' (' + count + ')' : ''}
               </button>
             ))}
           </div>
+          {notifTab === 'mentions' && mentionNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No mentions yet</div>}
+          {notifTab === 'mentions' && mentionNotifications.length > 0 && (
+            <div>
+              {mentionNotifications.filter(n => !n.is_read).length > 0 && (
+                <div style={{ padding: '0.5rem 1.25rem', textAlign: 'right' }}>
+                  <button onClick={async () => {
+                    await fetch('/api/mentions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark_all_read', userId: currentUser?.id }) })
+                    setMentionNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+                  }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c9a84c', fontSize: '0.72rem', fontWeight: '500' }}>Mark all read</button>
+                </div>
+              )}
+              {mentionNotifications.map(n => (
+                <div key={n.id} style={{ padding: '0.75rem 1.25rem', borderBottom: '1px solid #f5f1ea', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', background: n.is_read ? 'transparent' : (theme === 'dark' ? '#2a2520' : '#fdf8f0') }}>
+                  <div style={{ flex: 1, cursor: 'pointer' }} onClick={async () => {
+                    if (!n.is_read) {
+                      await fetch('/api/mentions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'mark_read', notificationId: n.id }) })
+                      setMentionNotifications(prev => prev.map(mn => mn.id === n.id ? { ...mn, is_read: true } : mn))
+                    }
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                      <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.4rem', borderRadius: '20px', background: '#e8dcc8', color: '#0f0e0d', fontWeight: '600' }}>@mention</span>
+                      {!n.is_read && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c9a84c', flexShrink: 0 }} />}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: '500', color: theme === 'dark' ? '#e8e2d9' : '#0f0e0d' }}>{n.mentioned_by_name} mentioned you</div>
+                    <div style={{ fontSize: '0.75rem', color: '#8a8070', marginTop: '0.15rem' }}>in {n.project_name}</div>
+                    <div style={{ fontSize: '0.72rem', color: theme === 'dark' ? '#a09880' : '#6b6560', marginTop: '0.3rem', fontStyle: 'italic', lineHeight: 1.4 }}>"{n.comment_text?.length > 80 ? n.comment_text.slice(0, 80) + '...' : n.comment_text}"</div>
+                    <div style={{ fontSize: '0.65rem', color: '#a09880', marginTop: '0.25rem' }}>{new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                  <button onClick={async () => {
+                    await fetch('/api/mentions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'dismiss', notificationId: n.id }) })
+                    setMentionNotifications(prev => prev.filter(mn => mn.id !== n.id))
+                  }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', fontSize: '0.85rem', padding: '0.1rem', flexShrink: 0 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
           {notifTab === 'projects' && notifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No project alerts</div>}
           {notifTab === 'tasks' && taskNotifications.length === 0 && <div style={{ padding: '2rem', textAlign: 'center', color: '#8a8070', fontSize: '0.85rem' }}>No task alerts</div>}
           {notifTab === 'tasks' && taskNotifications.map(n => (
@@ -2055,7 +2111,7 @@ export default function Home() {
             </button>
             <button onClick={() => setShowNotifications(!showNotifications)} style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: '0.3rem', display: 'flex', alignItems: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1.5 C6 1.5 4 3.5 4 6.5 L4 10 L2.5 12 L15.5 12 L14 10 L14 6.5 C14 3.5 12 1.5 9 1.5Z" fill="#6b6560" opacity="0.7"/><path d="M4 10 L2.5 12 L15.5 12 L14 10Z" fill="#3a3530" opacity="0.9"/><rect x="7" y="12" width="4" height="2.5" rx="1.25" fill="#6b6560" opacity="0.6"/><circle cx="13.5" cy="4.5" r="2.5" fill="#c9a84c"/></svg>
-              {(notifications.length + taskNotifications.length + notesNotifications.length) > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length}</span>}
+              {(notifications.length + taskNotifications.length + notesNotifications.length + mentionNotifications.filter(n => !n.is_read).length) > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#b85c38', color: 'white', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>{notifications.length + taskNotifications.length + notesNotifications.length + mentionNotifications.filter(n => !n.is_read).length}</span>}
             </button>
             {currentUser && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', paddingLeft: '0.75rem', borderLeft: '1px solid #e8e2d9' }}>

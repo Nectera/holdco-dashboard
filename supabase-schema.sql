@@ -181,6 +181,23 @@ CREATE TABLE notification_preferences (
 );
 
 -- ============================================
+-- MENTION NOTIFICATIONS (in-app)
+-- ============================================
+CREATE TABLE mention_notifications (
+  id BIGSERIAL PRIMARY KEY,
+  mentioned_user_id BIGINT NOT NULL,
+  mentioned_by_name VARCHAR(255),
+  mentioned_by_id BIGINT,
+  project_name VARCHAR(255),
+  project_id VARCHAR(255),
+  comment_text TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_mention_notifications_user ON mention_notifications(mentioned_user_id, is_read);
+
+-- ============================================
 -- QUICKBOOKS OAUTH TOKENS
 -- ============================================
 CREATE TABLE qb_tokens (
@@ -210,3 +227,4 @@ ALTER TABLE light_tasks DISABLE ROW LEVEL SECURITY;
 ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_preferences DISABLE ROW LEVEL SECURITY;
 ALTER TABLE qb_tokens DISABLE ROW LEVEL SECURITY;
+ALTER TABLE mention_notifications DISABLE ROW LEVEL SECURITY;
