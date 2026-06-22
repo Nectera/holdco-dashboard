@@ -1471,7 +1471,11 @@ export default function Home() {
                 </div>
                 <div>
                   <label style={labelStyle}>Due Date</label>
-                  <input value={newTask.dueDate} onChange={e => setNewTask(t => ({ ...t, dueDate: e.target.value }))} placeholder="MM/DD/YYYY" style={inputStyle} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input value={newTask.dueDate} onChange={e => setNewTask(t => ({ ...t, dueDate: e.target.value }))} placeholder="MM/DD/YYYY" style={{ ...inputStyle, paddingRight: '2.2rem' }} />
+                    <input type="date" id="newTaskDatePicker" onChange={e => { const v = e.target.value; if (v) { const [y, m, d] = v.split('-'); setNewTask(t => ({ ...t, dueDate: `${m}/${d}/${y}` })) } }} style={{ position: 'absolute', opacity: 0, width: 0, height: 0, right: '0.5rem' }} />
+                    <button type="button" onClick={() => document.getElementById('newTaskDatePicker').showPicker()} style={{ position: 'absolute', right: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', fontSize: '1rem', color: theme === 'dark' ? '#a09080' : '#8a8070', display: 'flex', alignItems: 'center' }} title="Pick a date">📅</button>
+                  </div>
                 </div>
               </div>
               <div>
