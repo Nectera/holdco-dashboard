@@ -15,6 +15,10 @@ export async function POST(request) {
     const sheetId = sheets[companyKey]
     if (!sheetId) return new Response(JSON.stringify({ error: 'Unknown company' }), { status: 400 })
 
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT || !process.env.GOOGLE_PRIVATE_KEY) {
+      return new Response(JSON.stringify({ error: 'Google Sheets credentials not configured. Check GOOGLE_SERVICE_ACCOUNT and GOOGLE_PRIVATE_KEY env vars in Vercel.' }), { status: 500 })
+    }
+
     const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT.replace(/"/g, '')
     const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/"/g, '').replace(/\\n/g, '\n')
 
