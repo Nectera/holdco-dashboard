@@ -198,6 +198,27 @@ CREATE TABLE mention_notifications (
 CREATE INDEX idx_mention_notifications_user ON mention_notifications(mentioned_user_id, is_read);
 
 -- ============================================
+-- TASKS (project tasks per company)
+-- ============================================
+CREATE TABLE tasks (
+  id BIGSERIAL PRIMARY KEY,
+  company_key VARCHAR(50) NOT NULL,
+  company VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  lead VARCHAR(255) DEFAULT '',
+  status VARCHAR(100) DEFAULT '',
+  priority VARCHAR(50) DEFAULT '',
+  due_date VARCHAR(50) DEFAULT '',
+  team_members TEXT DEFAULT '',
+  last_touched VARCHAR(50) DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_tasks_company_key ON tasks(company_key);
+
+-- ============================================
 -- QUICKBOOKS OAUTH TOKENS
 -- ============================================
 CREATE TABLE qb_tokens (
@@ -228,3 +249,4 @@ ALTER TABLE goals DISABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_preferences DISABLE ROW LEVEL SECURITY;
 ALTER TABLE qb_tokens DISABLE ROW LEVEL SECURITY;
 ALTER TABLE mention_notifications DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks DISABLE ROW LEVEL SECURITY;

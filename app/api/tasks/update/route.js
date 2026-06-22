@@ -1,49 +1,49 @@
-import { google } from 'googleapis'
-
-const sheets = {
-  nectera: '1hqMBV4fSNAwuOTTfEFG_ZQvSXAvJx8Wpa9zEj2M9hDg',
-  xtract: '1JbFv__n5ClYG-qwCZztRnL3nWs2vjdo-A8pZF67iS9M',
-  bcs: '1uLNoDqUrnIH8Tz9A8ZOMhMbtXLbysXtIxm2jawyPkss',
-  lush: '1_1YNJItBZLwT8DXaJQ3eikHi0zYh7zPDbBXQ9DpQXMg',
-}
+import { supabase } from '../../../lib/supabase'
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { companyKey, rowIndex, field, value } = body
-    const sheetId = sheets[companyKey]
-    if (!sheetId) return new Response(JSON.stringify({ error: 'Unknown company' }), { status: 400 })
-    const fieldToCol = { status: 'C', priority: 'D', dueDate: 'E', teamMembers: 'F', notes: 'H' }
-    const col = fieldToCol[field]
-    if (!col) return new Response(JSON.stringify({ error: 'Unknown field' }), { status: 400 })
-    const range = col + (rowIndex + 2)
+    const { id, companyKey, rowIndex, field, value } = body
 
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT.replace(/"/g, '')
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/"/g, '').replace(/\\n/g, '\n')
+    const fieldMap = {
+      status: 'status',
+      priority: 'priority',
+      dueDate: 'due_date',
+      teamMembers: 'team_members',
+      notes: 'notes',
+      lead: 'lead',
+      name: 'name',
+    }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey,
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    })
+    const dbField = fieldMap[field]
+    if (!dbField) return new Response(JSON.stringify({ error: 'Unknown field' }), { status: 400 })
 
-    const client = await auth.getClient()
-    const sheetsApi = google.sheets({ version: 'v4', auth: client })
     const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
 
-    await sheetsApi.spreadsheets.values.batchUpdate({
-      spreadsheetId: sheetId,
-      requestBody: {
-        valueInputOption: 'USER_ENTERED',
-        data: [
-          { range, values: [[value]] },
-          { range: 'G' + (rowIndex + 2), values: [[today]] },
-        ],
-      },
+    // Support both id-based (new) and rowIndex-based (legacy) updates
+    let query
+    if (id) {
+      query = supabase.from('tasks').update({ [dbField]: value, last_touched: today }).eq('id', id)
+    } else {
+      // Fallback: find by companyKey and offset
+      const { data: allTasks } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('company_key', companyKey)
+        .order('created_at', { ascending: true })
+
+      if (!allTasks || !allTasks[rowIndex]) {
+        return new Response(JSON.stringify({ error: 'Task not found' }), { status: 404 })
+      }
+      query = supabase.from('tasks').update({ [dbField]: value, last_touched: today }).eq('id', allTasks[rowIndex].id)
+    }
+
+    const { error } = await query
+    if (error) throw error
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'content-type': 'application/json' },
     })
-    return new Response(JSON.stringify({ success: true }), { headers: { 'content-type': 'application/json' } })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 })
   }

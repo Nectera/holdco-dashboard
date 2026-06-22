@@ -1,48 +1,41 @@
-import { google } from 'googleapis'
-
-const sheets = {
-  nectera: '1hqMBV4fSNAwuOTTfEFG_ZQvSXAvJx8Wpa9zEj2M9hDg',
-  xtract: '1JbFv__n5ClYG-qwCZztRnL3nWs2vjdo-A8pZF67iS9M',
-  bcs: '1uLNoDqUrnIH8Tz9A8ZOMhMbtXLbysXtIxm2jawyPkss',
-  lush: '1_1YNJItBZLwT8DXaJQ3eikHi0zYh7zPDbBXQ9DpQXMg',
-}
+import { supabase } from '../../../lib/supabase'
 
 export async function POST(request) {
   try {
     const body = await request.json()
     const { companyKey, name, lead, status, priority, dueDate, teamMembers, notes } = body
 
-    const sheetId = sheets[companyKey]
-    if (!sheetId) return new Response(JSON.stringify({ error: 'Unknown company' }), { status: 400 })
-
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT || !process.env.GOOGLE_PRIVATE_KEY) {
-      return new Response(JSON.stringify({ error: 'Google Sheets credentials not configured. Check GOOGLE_SERVICE_ACCOUNT and GOOGLE_PRIVATE_KEY env vars in Vercel.' }), { status: 500 })
+    const companyNames = {
+      nectera: 'Nectera Holdings',
+      xtract: 'Xtract Environmental Services',
+      bcs: 'Bug Control Specialist',
+      lush: 'Lush Green Landscapes',
     }
 
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT.replace(/"/g, '')
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/"/g, '').replace(/\\n/g, '\n')
+    if (!companyNames[companyKey]) {
+      return new Response(JSON.stringify({ error: 'Unknown company' }), { status: 400 })
+    }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey,
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    })
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        company_key: companyKey,
+        company: companyNames[companyKey],
+        name: name || '',
+        lead: lead || '',
+        status: status || '',
+        priority: priority || '',
+        due_date: dueDate || '',
+        team_members: teamMembers || '',
+        notes: notes || '',
+        last_touched: new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+      })
+      .select()
+      .single()
 
-    const client = await auth.getClient()
-    const sheetsApi = google.sheets({ version: 'v4', auth: client })
+    if (error) throw error
 
-    await sheetsApi.spreadsheets.values.append({
-      spreadsheetId: sheetId,
-      range: 'A:H',
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [[name, lead, status, priority, dueDate, teamMembers, '', notes]],
-      },
-    })
-
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, task: data }), {
       headers: { 'content-type': 'application/json' },
     })
   } catch (err) {

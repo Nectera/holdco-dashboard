@@ -78,11 +78,11 @@ const priorityColor = (priority) => {
   return { bg: '#f5f1ea', color: '#8a8070' }
 }
 
-const updateTask = async (companyKey, rowIndex, field, value) => {
+const updateTask = async (id, companyKey, rowIndex, field, value) => {
   const res = await fetch('/api/tasks/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ companyKey, rowIndex, field, value }),
+    body: JSON.stringify({ id, companyKey, rowIndex, field, value }),
   })
   return res.json()
 }
@@ -449,7 +449,7 @@ export default function Home() {
     const newTasks = [...tasks]
     newTasks[globalIndex] = { ...task, [field]: value }
     setTasks(newTasks)
-    await updateTask(task.companyKey, task.rowIndex, field, value)
+    await updateTask(task.id, task.companyKey, task.rowIndex, field, value)
     setSaving(s => ({ ...s, [`${globalIndex}-${field}`]: false }))
   }
 
@@ -465,7 +465,7 @@ export default function Home() {
       const result = await res.json()
       if (result.success) {
         const companyNames = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
-        setTasks(t => [...t, { ...newTask, company: companyNames[newTask.companyKey] }])
+        setTasks(t => [...t, { ...newTask, id: result.task?.id, company: companyNames[newTask.companyKey] }])
 
         // Notify the project lead
         if (newTask.lead) {
@@ -524,7 +524,7 @@ export default function Home() {
     const res = await fetch('/api/tasks/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyKey: task.companyKey, rowIndex: task.rowIndex }),
+      body: JSON.stringify({ id: task.id, companyKey: task.companyKey, rowIndex: task.rowIndex }),
     })
     const result = await res.json()
     if (result.success) {
