@@ -465,6 +465,48 @@ export default function Home() {
     if (result.success) {
       const companyNames = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
       setTasks(t => [...t, { ...newTask, company: companyNames[newTask.companyKey] }])
+
+      // Notify the project lead
+      if (newTask.lead) {
+        const leadUser = userList.find(u => u.name.toLowerCase() === newTask.lead.toLowerCase())
+        if (leadUser && leadUser.id !== currentUser?.id) {
+          const companyLabel = companyNames[newTask.companyKey] || newTask.companyKey
+          // In-app notification
+          fetch('/api/mentions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create',
+              mentionedUserId: leadUser.id,
+              mentionedByName: currentUser?.name || 'Someone',
+              mentionedById: currentUser?.id,
+              projectName: `Task: ${newTask.name}`,
+              projectId: newTask.companyKey,
+              commentText: `You've been assigned as project lead for "${newTask.name}" at ${companyLabel}`
+            })
+          })
+          // Email notification
+          if (leadUser.email) {
+            fetch('/api/notifications', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'send',
+                trigger: 'assigned',
+                toEmail: leadUser.email,
+                toName: leadUser.name,
+                toUserId: leadUser.id,
+                subject: `You've been assigned as lead on "${newTask.name}"`,
+                title: 'New Project Assignment',
+                body: `<strong>${currentUser?.name || 'Someone'}</strong> assigned you as project lead for <strong>${newTask.name}</strong> at <strong>${companyLabel}</strong>.${newTask.notes ? `<br><br>Notes: <em>"${newTask.notes}"</em>` : ''}`,
+                actionUrl: 'https://necteraholdings.com',
+                actionLabel: 'View Task'
+              })
+            })
+          }
+        }
+      }
+
       setNewTask({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
       setShowModal(false)
     }
@@ -1416,7 +1458,16 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={labelStyle}>Project Lead</label>
-                  <input value={newTask.lead} onChange={e => setNewTask(t => ({ ...t, lead: e.target.value }))} placeholder="Name..." style={inputStyle} />
+                  <div style={{ position: 'relative' }}>
+                    <input value={newTask.lead} onChange={e => setNewTask(t => ({ ...t, lead: e.target.value }))} onFocus={e => e.target.setAttribute('data-open', 'true')} onBlur={e => setTimeout(() => e.target.removeAttribute('data-open'), 150)} placeholder="Name..." style={inputStyle} autoComplete="off" />
+                    {newTask.lead && userList.filter(u => u.name.toLowerCase().includes(newTask.lead.toLowerCase()) && u.name.toLowerCase() !== newTask.lead.toLowerCase()).length > 0 && (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', zIndex: 20, maxHeight: '150px', overflowY: 'auto' }}>
+                        {userList.filter(u => u.name.toLowerCase().includes(newTask.lead.toLowerCase()) && u.name.toLowerCase() !== newTask.lead.toLowerCase()).map(u => (
+                          <div key={u.id} onMouseDown={e => { e.preventDefault(); setNewTask(t => ({ ...t, lead: u.name })) }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>{u.name}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label style={labelStyle}>Due Date</label>
