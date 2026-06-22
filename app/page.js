@@ -456,59 +456,66 @@ export default function Home() {
   const handleCreate = async () => {
     if (!newTask.name || !newTask.companyKey) return
     setCreating(true)
-    const res = await fetch('/api/tasks/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newTask),
-    })
-    const result = await res.json()
-    if (result.success) {
-      const companyNames = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
-      setTasks(t => [...t, { ...newTask, company: companyNames[newTask.companyKey] }])
+    try {
+      const res = await fetch('/api/tasks/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask),
+      })
+      const result = await res.json()
+      if (result.success) {
+        const companyNames = { nectera: 'Nectera Holdings', xtract: 'Xtract Environmental Services', bcs: 'Bug Control Specialist', lush: 'Lush Green Landscapes' }
+        setTasks(t => [...t, { ...newTask, company: companyNames[newTask.companyKey] }])
 
-      // Notify the project lead
-      if (newTask.lead) {
-        const leadUser = userList.find(u => u.name.toLowerCase() === newTask.lead.toLowerCase())
-        if (leadUser && leadUser.id !== currentUser?.id) {
-          const companyLabel = companyNames[newTask.companyKey] || newTask.companyKey
-          // In-app notification
-          fetch('/api/mentions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'create',
-              mentionedUserId: leadUser.id,
-              mentionedByName: currentUser?.name || 'Someone',
-              mentionedById: currentUser?.id,
-              projectName: `Task: ${newTask.name}`,
-              projectId: newTask.companyKey,
-              commentText: `You've been assigned as project lead for "${newTask.name}" at ${companyLabel}`
-            })
-          })
-          // Email notification
-          if (leadUser.email) {
-            fetch('/api/notifications', {
+        // Notify the project lead
+        if (newTask.lead) {
+          const leadUser = userList.find(u => u.name.toLowerCase() === newTask.lead.toLowerCase())
+          if (leadUser && leadUser.id !== currentUser?.id) {
+            const companyLabel = companyNames[newTask.companyKey] || newTask.companyKey
+            // In-app notification
+            fetch('/api/mentions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                action: 'send',
-                trigger: 'assigned',
-                toEmail: leadUser.email,
-                toName: leadUser.name,
-                toUserId: leadUser.id,
-                subject: `You've been assigned as lead on "${newTask.name}"`,
-                title: 'New Project Assignment',
-                body: `<strong>${currentUser?.name || 'Someone'}</strong> assigned you as project lead for <strong>${newTask.name}</strong> at <strong>${companyLabel}</strong>.${newTask.notes ? `<br><br>Notes: <em>"${newTask.notes}"</em>` : ''}`,
-                actionUrl: 'https://necteraholdings.com',
-                actionLabel: 'View Task'
+                action: 'create',
+                mentionedUserId: leadUser.id,
+                mentionedByName: currentUser?.name || 'Someone',
+                mentionedById: currentUser?.id,
+                projectName: `Task: ${newTask.name}`,
+                projectId: newTask.companyKey,
+                commentText: `You've been assigned as project lead for "${newTask.name}" at ${companyLabel}`
               })
             })
+            // Email notification
+            if (leadUser.email) {
+              fetch('/api/notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'send',
+                  trigger: 'assigned',
+                  toEmail: leadUser.email,
+                  toName: leadUser.name,
+                  toUserId: leadUser.id,
+                  subject: `You've been assigned as lead on "${newTask.name}"`,
+                  title: 'New Project Assignment',
+                  body: `<strong>${currentUser?.name || 'Someone'}</strong> assigned you as project lead for <strong>${newTask.name}</strong> at <strong>${companyLabel}</strong>.${newTask.notes ? `<br><br>Notes: <em>"${newTask.notes}"</em>` : ''}`,
+                  actionUrl: 'https://necteraholdings.com',
+                  actionLabel: 'View Task'
+                })
+              })
+            }
           }
         }
-      }
 
-      setNewTask({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
-      setShowModal(false)
+        setNewTask({ companyKey: '', name: '', lead: '', status: '', priority: '', dueDate: '', teamMembers: '', notes: '' })
+        setShowModal(false)
+      } else {
+        alert('Failed to create task: ' + (result.error || 'Unknown error'))
+      }
+    } catch (err) {
+      console.error('Task creation error:', err)
+      alert('Failed to create task. Please try again.')
     }
     setCreating(false)
   }
