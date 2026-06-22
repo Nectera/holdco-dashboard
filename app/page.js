@@ -1480,7 +1480,22 @@ export default function Home() {
               </div>
               <div>
                 <label style={labelStyle}>Team Members</label>
-                <input value={newTask.teamMembers} onChange={e => setNewTask(t => ({ ...t, teamMembers: e.target.value }))} placeholder="Names separated by commas..." style={inputStyle} />
+                <div style={{ position: 'relative' }}>
+                  <input value={newTask.teamMembers} onChange={e => setNewTask(t => ({ ...t, teamMembers: e.target.value }))} onFocus={e => e.target.setAttribute('data-open', 'true')} onBlur={e => setTimeout(() => e.target.removeAttribute('data-open'), 150)} placeholder="Names separated by commas..." style={inputStyle} autoComplete="off" />
+                  {(() => {
+                    const parts = newTask.teamMembers.split(',')
+                    const currentTyping = parts[parts.length - 1].trim().toLowerCase()
+                    const alreadyAdded = parts.slice(0, -1).map(p => p.trim().toLowerCase()).filter(Boolean)
+                    const matches = currentTyping ? userList.filter(u => u.name.toLowerCase().includes(currentTyping) && u.name.toLowerCase() !== currentTyping && !alreadyAdded.includes(u.name.toLowerCase())) : []
+                    return matches.length > 0 ? (
+                      <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: theme === 'dark' ? '#2a2825' : 'white', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', border: theme === 'dark' ? '1px solid #444' : '1px solid #e0d8cc', zIndex: 20, maxHeight: '150px', overflowY: 'auto' }}>
+                        {matches.map(u => (
+                          <div key={u.id} onMouseDown={e => { e.preventDefault(); const before = parts.slice(0, -1).map(p => p.trim()).filter(Boolean); before.push(u.name); setNewTask(t => ({ ...t, teamMembers: before.join(', ') + ', ' })) }} style={{ padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.82rem', color: theme === 'dark' ? '#e8e2d9' : '#1a1814', borderBottom: theme === 'dark' ? '1px solid #333' : '1px solid #f0ece4' }}>{u.name}</div>
+                        ))}
+                      </div>
+                    ) : null
+                  })()}
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Notes</label>
